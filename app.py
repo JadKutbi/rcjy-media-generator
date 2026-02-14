@@ -24,6 +24,7 @@ T = {
         "lang_label": "Language",
         "prompt_label": "Your Prompt",
         "prompt_placeholder": "Describe what you want to create...\ne.g. A professional poster about Jubail industrial city",
+        "output_lang_label": "Output Language",
         "url_label": "Reference URL (optional)",
         "attach_label": "Attach files",
         "attached": "Attached",
@@ -73,6 +74,7 @@ T = {
         "lang_label": "اللغة",
         "prompt_label": "الوصف",
         "prompt_placeholder": "اكتب وصفاً لما تريد إنشاءه...\nمثال: ملصق احترافي عن مدينة الجبيل الصناعية",
+        "output_lang_label": "لغة المحتوى",
         "url_label": "رابط مرجعي (اختياري)",
         "attach_label": "إرفاق ملفات",
         "attached": "مرفقات",
@@ -287,7 +289,7 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-lang_col, _ = st.columns([1, 4])
+lang_col, out_col, _ = st.columns([1, 1, 3])
 with lang_col:
     new_lang = st.selectbox(
         L["lang_label"],
@@ -300,7 +302,15 @@ with lang_col:
         st.session_state.ui_lang = target
         st.rerun()
 
-lang = st.session_state.ui_lang
+with out_col:
+    out_lang = st.selectbox(
+        L["output_lang_label"],
+        ["English", "العربية"],
+        index=0,
+        key="output_lang_sel",
+    )
+
+lang = "ar" if out_lang == "العربية" else "en"
 
 if not _api_ok:
     st.warning(L["warn_api"])
