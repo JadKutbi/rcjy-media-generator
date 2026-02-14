@@ -1,5 +1,4 @@
 import logging
-import time
 
 import streamlit as st
 
@@ -14,16 +13,6 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger("rcjy.app")
-
-_RATE_LIMIT_SECONDS = 5
-
-def _check_rate_limit() -> bool:
-    now = time.time()
-    last = st.session_state.get("_last_gen_time", 0)
-    if now - last < _RATE_LIMIT_SECONDS:
-        return False
-    st.session_state["_last_gen_time"] = now
-    return True
 
 T = {
     "en": {
@@ -67,7 +56,6 @@ T = {
         "warn_prompt": "Please enter a prompt above.",
         "warn_topic": "Please enter a topic or attach content.",
         "warn_text": "Please enter text.",
-        "warn_rate": "Please wait a few seconds between requests.",
         "warn_api": "API key not configured. Set GEMINI_API_KEY as an environment variable.",
         "spin_image": "Generating image...",
         "spin_video": "Generating video... (2-5 minutes)",
@@ -117,7 +105,6 @@ T = {
         "warn_prompt": "الرجاء إدخال وصف في الحقل أعلاه.",
         "warn_topic": "الرجاء إدخال موضوع أو إرفاق محتوى.",
         "warn_text": "الرجاء إدخال نص.",
-        "warn_rate": "الرجاء الانتظار بضع ثوانٍ بين الطلبات.",
         "warn_api": "لم يتم تعيين مفتاح API. قم بتعيين GEMINI_API_KEY كمتغير بيئة.",
         "spin_image": "جارٍ إنشاء الصورة...",
         "spin_video": "جارٍ إنشاء الفيديو... (٢-٥ دقائق)",
@@ -371,8 +358,6 @@ with tab_img:
         prompt = input_text.strip()
         if not prompt:
             st.warning(L["warn_prompt"])
-        elif not _check_rate_limit():
-            st.warning(L["warn_rate"])
         else:
             with st.spinner(L["spin_image"]):
                 try:
@@ -402,8 +387,6 @@ with tab_vid:
         prompt = input_text.strip()
         if not prompt:
             st.warning(L["warn_prompt"])
-        elif not _check_rate_limit():
-            st.warning(L["warn_rate"])
         else:
             with st.spinner(L["spin_video"]):
                 try:
@@ -445,8 +428,6 @@ with tab_voice:
         speak_text = tts_override.strip() or input_text.strip()
         if not speak_text:
             st.warning(L["warn_text"])
-        elif not _check_rate_limit():
-            st.warning(L["warn_rate"])
         else:
             with st.spinner(L["spin_voice"]):
                 try:
@@ -482,8 +463,6 @@ with tab_pod:
         prompt = input_text.strip()
         if not prompt and not has_context:
             st.warning(L["warn_topic"])
-        elif not _check_rate_limit():
-            st.warning(L["warn_rate"])
         else:
             with st.spinner(L["spin_podcast"]):
                 try:
