@@ -1,0 +1,39 @@
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Generated outputs
+generated_outputs/
+assets/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.so
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
