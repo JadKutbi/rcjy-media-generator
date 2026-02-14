@@ -115,7 +115,6 @@ def _lang_instruction(lang: str) -> str:
     return ""
 
 
-# Image generation
 def generate_image(
     prompt: str,
     context_text: str = "",
@@ -178,7 +177,6 @@ def generate_image(
     raise RuntimeError("No image in API response. Try a different prompt.")
 
 
-# Video generation
 def generate_video(
     prompt: str,
     context_text: str = "",
@@ -191,10 +189,27 @@ def generate_video(
     prompt = _validate_prompt(prompt)
     context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
     model_id = MODELS["video"]
-    lang_prefix = _lang_instruction(lang)
-    full_prompt = f"{lang_prefix}{context_text}\n\n{prompt}".strip() if context_text else f"{lang_prefix}{prompt}"
-    key = require_api_key()
 
+    # Video models can't render text correctly (especially Arabic), so we
+    # explicitly tell it to avoid any on-screen text, titles, or captions.
+    no_text_rule = (
+        "CRITICAL: Do NOT include any text, titles, subtitles, captions, watermarks, "
+        "labels, or writing of any kind in the video. The video must be purely visual "
+        "with no on-screen text whatsoever. "
+    )
+
+    lang_prefix = ""
+    if lang == "ar":
+        lang_prefix = "Create a video suitable for an Arabic-speaking audience. "
+    elif lang == "both":
+        lang_prefix = "Create a video suitable for a bilingual Arabic/English audience. "
+
+    full_prompt = f"{no_text_rule}{lang_prefix}"
+    if context_text:
+        full_prompt += f"{context_text}\n\n"
+    full_prompt += prompt
+
+    key = require_api_key()
     logger.info("Generating video: model=%s, aspect=%s, duration=%s, lang=%s", model_id, aspect_ratio, duration, lang)
 
     _saved = os.environ.pop("GOOGLE_GENAI_USE_VERTEXAI", None)
@@ -234,7 +249,6 @@ def generate_video(
             os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = _saved
 
 
-# Single-speaker TTS
 def _tts_single(text: str, voice_name: str, model_id: str, key: str) -> bytes:
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={key}"
     payload = {
@@ -253,7 +267,6 @@ def _tts_single(text: str, voice_name: str, model_id: str, key: str) -> bytes:
     raise RuntimeError("No audio in TTS response.")
 
 
-# Voice generation
 def generate_voice(
     text: str,
     context_text: str = "",
@@ -283,7 +296,6 @@ def generate_voice(
     return wav, "audio/wav"
 
 
-# Multi-speaker TTS (chunked)
 def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str) -> bytes:
     voice_id = (
         MODELS["voice"].get("flash", MODELS["voice"])
@@ -291,7 +303,6 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str)
     )
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{voice_id}:generateContent?key={key}"
 
-    # Split into ~150-word chunks
     lines = script.strip().split("\n")
     chunks, current_chunk, current_words = [], [], 0
     for line in lines:
@@ -339,7 +350,6 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str)
     return _concat_wavs(wav_parts)
 
 
-# Podcast generation
 def generate_podcast(
     prompt: str,
     context_text: str = "",
@@ -414,10 +424,8 @@ Content:
     if not script.strip():
         raise RuntimeError("Script generation returned empty result.")
 
-    # Remap Arabic speaker labels for TTS
     script = script.replace("المقدم:", "Host:").replace("الضيف:", "Guest:")
 
-    # Truncate if model ignored word limit
     words = script.split()
     if len(words) > 600:
         logger.warning("Script exceeded limit (%d words), truncating to 600", len(words))

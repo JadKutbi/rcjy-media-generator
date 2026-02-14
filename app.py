@@ -8,7 +8,6 @@ from content_extractor import get_content_from_input
 from generators import generate_image, generate_podcast, generate_video, generate_voice
 from generators import _sanitize_error
 
-# Logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
@@ -16,7 +15,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rcjy.app")
 
-# Rate limiting
 _RATE_LIMIT_SECONDS = 5
 
 def _check_rate_limit() -> bool:
@@ -27,7 +25,6 @@ def _check_rate_limit() -> bool:
     st.session_state["_last_gen_time"] = now
     return True
 
-# UI strings
 T = {
     "en": {
         "page_title": "RCJY Media Generator",
@@ -131,7 +128,6 @@ T = {
     },
 }
 
-# Page config
 st.set_page_config(
     page_title="RCJY Media Generator",
     page_icon="https://www.rcjy.gov.sa/o/rcjy-theme/images/favicon.ico",
@@ -139,14 +135,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Session state
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "en"
 for _key in ("result_image", "result_video", "result_voice", "result_podcast"):
     if _key not in st.session_state:
         st.session_state[_key] = None
 
-# CSS
 is_ar = st.session_state.ui_lang == "ar"
 rtl_css = """
     .stApp { direction: rtl; text-align: right; }
@@ -285,11 +279,9 @@ hr {{ border-color: #E8ECE9 !important; }}
 </style>
 """, unsafe_allow_html=True)
 
-# Language
 _api_ok = bool(get_api_key())
 L = T[st.session_state.ui_lang]
 
-# Header
 st.markdown('<div class="top-bar"></div>', unsafe_allow_html=True)
 st.markdown(f"""
 <div class="rcjy-header">
@@ -301,7 +293,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Hero
 st.markdown(f"""
 <div class="hero-banner">
     <h2>{L['hero_title']}</h2>
@@ -309,7 +300,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Language toggle
 lang_col, _ = st.columns([1, 4])
 with lang_col:
     new_lang = st.selectbox(
@@ -328,7 +318,6 @@ lang = st.session_state.ui_lang
 if not _api_ok:
     st.warning(L["warn_api"])
 
-# Prompt + attachments
 st.markdown(f'<div class="section-label">{L["prompt_label"]}</div>', unsafe_allow_html=True)
 
 input_text = st.text_area(
@@ -354,7 +343,6 @@ if has_context:
         unsafe_allow_html=True,
     )
 
-# Generation tabs
 st.markdown("---")
 st.markdown(f'<div class="section-label">{L["generate_label"]}</div>', unsafe_allow_html=True)
 
@@ -362,7 +350,6 @@ tab_img, tab_vid, tab_voice, tab_pod = st.tabs([
     L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"],
 ])
 
-# Image
 with tab_img:
     st.markdown('<span class="mtag">Imagen 4</span><span class="mtag">Nano Banana</span>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -403,7 +390,6 @@ with tab_img:
         st.image(img_data, use_container_width=True)
         st.download_button(L["btn_download"], data=img_data, file_name="rcjy_image.png", mime="image/png", key="dl_img")
 
-# Video
 with tab_vid:
     st.markdown('<span class="mtag">Veo 3.1</span>', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -435,7 +421,6 @@ with tab_vid:
         st.video(vid_data)
         st.download_button(L["btn_download"], data=vid_data, file_name="rcjy_video.mp4", mime="video/mp4", key="dl_vid")
 
-# Voice
 with tab_voice:
     st.markdown('<span class="mtag">Gemini TTS</span><span class="mtag">Chirp 3</span>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -479,7 +464,6 @@ with tab_voice:
         st.audio(voice_data, format="audio/wav")
         st.download_button(L["btn_download"], data=voice_data, file_name="rcjy_voice.wav", mime="audio/wav", key="dl_voice")
 
-# Podcast
 with tab_pod:
     st.markdown('<span class="mtag">Gemini 3</span><span class="mtag">NotebookLM</span>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -520,7 +504,6 @@ with tab_pod:
         st.audio(pod_data, format="audio/wav")
         st.download_button(L["btn_download"], data=pod_data, file_name="rcjy_podcast.wav", mime="audio/wav", key="dl_pod")
 
-# Footer
 st.markdown(f"""
 <div class="app-footer">
     <strong>{L['footer_org']}</strong><br>
