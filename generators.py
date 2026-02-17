@@ -115,6 +115,72 @@ def _lang_instruction(lang: str) -> str:
     return ""
 
 
+def generate_text(
+    prompt: str,
+    context_text: str = "",
+    url: str = "",
+    files: list = None,
+    text_type: str = "article",
+    tone: str = "professional",
+    model: str = "pro",
+    lang: str = "en",
+) -> str:
+    prompt = _validate_prompt(prompt)
+    combined_text, _ = get_content_from_input(text=prompt, url=url, files=files)
+    if context_text and context_text != "No content provided.":
+        combined_text = f"{context_text}\n\n---\n\n{combined_text}"
+
+    model_id = (
+        MODELS["text"].get(model, MODELS["text"]["pro"])
+        if isinstance(MODELS["text"], dict) else MODELS["text"]
+    )
+
+    lang_hint = _lang_instruction(lang)
+    if lang == "ar":
+        lang_hint = "IMPORTANT: اكتب المحتوى بالكامل باللهجة السعودية الخليجية أو العربية الفصحى. "
+
+    type_labels = {
+        "article": "article or blog post",
+        "social": "social media post (concise, engaging, with hashtags)",
+        "press": "press release (formal, newsworthy)",
+        "ad": "advertisement copy (persuasive, catchy)",
+        "email": "professional email",
+        "script": "video/presentation script",
+        "summary": "summary of the provided content",
+        "creative": "creative writing piece",
+    }
+    type_desc = type_labels.get(text_type, text_type)
+
+    system_prompt = f"""{lang_hint}You are an expert content writer for the Royal Commission for Jubail and Yanbu (RCJY) Communication & Media Department. Write a {type_desc} with a {tone} tone.
+
+Requirements:
+- High quality, publication-ready content
+- Well structured with clear sections if applicable
+- Engaging and informative
+- Appropriate for a government media department"""
+
+    user_content = combined_text[:30000] if combined_text else prompt
+
+    key = require_api_key()
+    url_api = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={key}"
+    logger.info("Generating text: type=%s, tone=%s, model=%s, lang=%s", text_type, tone, model, lang)
+
+    payload = {
+        "contents": [{"role": "user", "parts": [{"text": f"{system_prompt}\n\n{user_content}"}]}],
+        "generationConfig": {"temperature": 0.8, "maxOutputTokens": 8192},
+    }
+
+    data = _api_post(url_api, payload, timeout=_TIMEOUT_SLOW, retries=2)
+    result = "".join(
+        p.get("text", "")
+        for p in data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+    )
+    if not result.strip():
+        raise RuntimeError("Text generation returned empty result.")
+    logger.info("Text generated (%d chars)", len(result))
+    return result
+
+
 def generate_image(
     prompt: str,
     context_text: str = "",

@@ -4,7 +4,7 @@ import streamlit as st
 
 from config import RCJY_LOGO_URL, SUPPORTED_FILE_TYPES, get_api_key
 from content_extractor import get_content_from_input
-from generators import generate_image, generate_podcast, generate_video, generate_voice
+from generators import generate_image, generate_podcast, generate_text, generate_video, generate_voice
 from generators import _sanitize_error
 
 logging.basicConfig(
@@ -31,6 +31,7 @@ T = {
         "context_loaded": "Context loaded",
         "chars": "characters",
         "generate_label": "Generate",
+        "tab_text": "Text",
         "tab_image": "Image",
         "tab_video": "Video",
         "tab_voice": "Voice",
@@ -49,6 +50,24 @@ T = {
         "length_standard": "Standard (~10 min)",
         "host_label": "Host voice",
         "guest_label": "Guest voice",
+        "text_type_label": "Content Type",
+        "text_tone_label": "Tone",
+        "text_model_label": "Model",
+        "text_type_article": "Article / Blog",
+        "text_type_social": "Social Media",
+        "text_type_press": "Press Release",
+        "text_type_ad": "Ad Copy",
+        "text_type_email": "Email",
+        "text_type_script": "Script",
+        "text_type_summary": "Summary",
+        "text_type_creative": "Creative Writing",
+        "text_tone_professional": "Professional",
+        "text_tone_friendly": "Friendly",
+        "text_tone_formal": "Formal",
+        "text_tone_persuasive": "Persuasive",
+        "text_tone_informative": "Informative",
+        "btn_text": "Generate Text",
+        "btn_copy": "Copy to Clipboard",
         "btn_image": "Generate Image",
         "btn_video": "Generate Video",
         "btn_voice": "Generate Voice",
@@ -58,6 +77,7 @@ T = {
         "warn_topic": "Please enter a topic or attach content.",
         "warn_text": "Please enter text.",
         "warn_api": "API key not configured. Set GEMINI_API_KEY as an environment variable.",
+        "spin_text": "Generating text...",
         "spin_image": "Generating image...",
         "spin_video": "Generating video... (2-5 minutes)",
         "spin_voice": "Generating speech...",
@@ -81,6 +101,7 @@ T = {
         "context_loaded": "تم تحميل المحتوى",
         "chars": "حرف",
         "generate_label": "إنشاء المحتوى",
+        "tab_text": "نص",
         "tab_image": "صورة",
         "tab_video": "فيديو",
         "tab_voice": "صوت",
@@ -99,6 +120,24 @@ T = {
         "length_standard": "عادية (~١٠ دقائق)",
         "host_label": "صوت المقدّم",
         "guest_label": "صوت الضيف",
+        "text_type_label": "نوع المحتوى",
+        "text_tone_label": "الأسلوب",
+        "text_model_label": "النموذج",
+        "text_type_article": "مقال / مدونة",
+        "text_type_social": "منشور تواصل اجتماعي",
+        "text_type_press": "بيان صحفي",
+        "text_type_ad": "نص إعلاني",
+        "text_type_email": "بريد إلكتروني",
+        "text_type_script": "سيناريو",
+        "text_type_summary": "ملخص",
+        "text_type_creative": "كتابة إبداعية",
+        "text_tone_professional": "احترافي",
+        "text_tone_friendly": "ودّي",
+        "text_tone_formal": "رسمي",
+        "text_tone_persuasive": "إقناعي",
+        "text_tone_informative": "إعلامي",
+        "btn_text": "إنشاء النص",
+        "btn_copy": "نسخ",
         "btn_image": "إنشاء الصورة",
         "btn_video": "إنشاء الفيديو",
         "btn_voice": "إنشاء الصوت",
@@ -108,6 +147,7 @@ T = {
         "warn_topic": "الرجاء إدخال موضوع أو إرفاق محتوى.",
         "warn_text": "الرجاء إدخال نص.",
         "warn_api": "لم يتم تعيين مفتاح API. قم بتعيين GEMINI_API_KEY كمتغير بيئة.",
+        "spin_text": "جارٍ إنشاء النص...",
         "spin_image": "جارٍ إنشاء الصورة...",
         "spin_video": "جارٍ إنشاء الفيديو... (٢-٥ دقائق)",
         "spin_voice": "جارٍ إنشاء الصوت...",
@@ -126,7 +166,7 @@ st.set_page_config(
 
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "en"
-for _key in ("result_image", "result_video", "result_voice", "result_podcast"):
+for _key in ("result_text", "result_image", "result_video", "result_voice", "result_podcast"):
     if _key not in st.session_state:
         st.session_state[_key] = None
 
@@ -343,9 +383,65 @@ if has_context:
 st.markdown("---")
 st.markdown(f'<div class="section-label">{L["generate_label"]}</div>', unsafe_allow_html=True)
 
-tab_img, tab_vid, tab_voice, tab_pod = st.tabs([
-    L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"],
+tab_text, tab_img, tab_vid, tab_voice, tab_pod = st.tabs([
+    L["tab_text"], L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"],
 ])
+
+with tab_text:
+    st.markdown('<span class="mtag">Gemini 3 Pro</span><span class="mtag">Gemini 3 Flash</span>', unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    _type_map = {
+        L["text_type_article"]: "article",
+        L["text_type_social"]: "social",
+        L["text_type_press"]: "press",
+        L["text_type_ad"]: "ad",
+        L["text_type_email"]: "email",
+        L["text_type_script"]: "script",
+        L["text_type_summary"]: "summary",
+        L["text_type_creative"]: "creative",
+    }
+    _tone_map = {
+        L["text_tone_professional"]: "professional",
+        L["text_tone_friendly"]: "friendly",
+        L["text_tone_formal"]: "formal",
+        L["text_tone_persuasive"]: "persuasive",
+        L["text_tone_informative"]: "informative",
+    }
+    with c1:
+        text_type_label = st.selectbox(L["text_type_label"], list(_type_map.keys()), key="text_type")
+        text_type = _type_map[text_type_label]
+    with c2:
+        text_tone_label = st.selectbox(L["text_tone_label"], list(_tone_map.keys()), key="text_tone")
+        text_tone = _tone_map[text_tone_label]
+    with c3:
+        text_model_sel = st.selectbox(L["text_model_label"], ["Pro", "Flash"], key="text_model")
+        text_model = "pro" if text_model_sel == "Pro" else "flash"
+
+    if st.button(L["btn_text"], use_container_width=True, key="btn_text"):
+        prompt = input_text.strip()
+        if not prompt and not has_context:
+            st.warning(L["warn_prompt"])
+        else:
+            with st.spinner(L["spin_text"]):
+                try:
+                    result = generate_text(
+                        prompt=prompt or "Summarize the provided content",
+                        context_text=context_text if has_context else "",
+                        url=input_url or "", files=input_files,
+                        text_type=text_type, tone=text_tone,
+                        model=text_model, lang=lang,
+                    )
+                    st.session_state.result_text = result
+                except Exception as e:
+                    logger.exception("Text generation failed")
+                    st.error(_sanitize_error(e))
+
+    if st.session_state.result_text:
+        st.markdown(st.session_state.result_text)
+        st.download_button(
+            L["btn_download"], data=st.session_state.result_text,
+            file_name="rcjy_content.txt", mime="text/plain", key="dl_text",
+        )
 
 with tab_img:
     st.markdown('<span class="mtag">Imagen 4</span><span class="mtag">Nano Banana</span>', unsafe_allow_html=True)
@@ -512,7 +608,7 @@ st.markdown(f"""
     <strong>{L['footer_org']}</strong><br>
     {L['footer_dept']}<br>
     <span style="font-size:0.68rem; color:#8C9A90;">
-        Imagen 4 &bull; Nano Banana &bull; Veo 3.1 &bull; Gemini TTS &bull; Gemini 3 Flash
+        Gemini 3 Pro &bull; Imagen 4 &bull; Nano Banana &bull; Veo 3.1 &bull; Gemini TTS &bull; Gemini 3 Flash
     </span><br>
     <a href="https://www.rcjy.gov.sa/en/" target="_blank">rcjy.gov.sa</a>
     &bull; &copy; 2026

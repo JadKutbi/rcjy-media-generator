@@ -56,6 +56,10 @@ MODELS = {
         "pro": "gemini-2.5-pro-preview-tts",
     },
     "podcast": "gemini-3-flash-preview",
+    "text": {
+        "pro": "gemini-3-pro-preview",
+        "flash": "gemini-3-flash-preview",
+    },
 }
 
 RCJY_LOGO_URL = (
