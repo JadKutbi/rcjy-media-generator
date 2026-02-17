@@ -443,7 +443,8 @@ with tab_voice:
                 try:
                     data, mime = generate_voice(
                         text=speak_text, context_text="", voice_name=voice_name,
-                        style_hint=style_hint, tts_model="pro" if tts_quality == "Pro" else "flash", lang=lang,
+                        style_hint=style_hint, tts_model="pro" if tts_quality == "Pro" else "flash",
+                        lang=lang,
                     )
                     st.session_state.result_voice = (data, mime)
                 except Exception as e:
@@ -493,7 +494,8 @@ with tab_pod:
                         context_text=context_text if has_context else "",
                         url=input_url or "", files=input_files,
                         length="short" if pod_len_idx == 0 else "standard",
-                        voice_host=pod_host, voice_guest=pod_guest, lang=lang,
+                        voice_host=pod_host, voice_guest=pod_guest,
+                        lang=lang,
                     )
                     st.session_state.result_podcast = (data, mime)
                 except Exception as e:

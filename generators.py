@@ -281,7 +281,7 @@ def generate_voice(
         if isinstance(MODELS["voice"], dict) else MODELS["voice"]
     )
     if lang == "ar":
-        full_text = f"تحدث باللغة العربية بوضوح: {text}" if not style_hint else f"تحدث باللغة العربية {style_hint}: {text}"
+        full_text = f"تحدث باللهجة السعودية الخليجية بوضوح: {text}" if not style_hint else f"تحدث باللهجة السعودية الخليجية {style_hint}: {text}"
     elif lang == "both":
         full_text = f"Speak bilingually (Arabic and English): {text}" if not style_hint else f"Say {style_hint}, bilingually: {text}"
     else:
@@ -324,7 +324,7 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str,
     for i, chunk in enumerate(chunks):
         logger.info("  TTS chunk %d/%d (%d words)", i + 1, len(chunks), len(chunk.split()))
         if lang == "ar":
-            tts_instruction = f"اقرأ حوار البودكاست التالي باللغة العربية بشكل طبيعي وتعبيري:\n\n{chunk}"
+            tts_instruction = f"اقرأ حوار البودكاست التالي باللهجة السعودية الخليجية بشكل طبيعي وتعبيري:\n\n{chunk}"
         elif lang == "both":
             tts_instruction = f"Read this bilingual Arabic-English podcast dialogue naturally:\n\n{chunk}"
         else:
@@ -375,13 +375,14 @@ def generate_podcast(
     logger.info("Generating podcast: length=%s, voices=%s/%s, lang=%s", length, voice_host, voice_guest, lang)
 
     if lang == "ar":
-        script_prompt = f"""أنت كاتب سيناريو بودكاست محترف. أنشئ سيناريو بودكاست جذاب وطبيعي باللغة العربية الفصحى.
+        script_prompt = f"""أنت كاتب سيناريو بودكاست محترف. أنشئ سيناريو بودكاست جذاب وطبيعي باللهجة السعودية الخليجية.
 
 المتطلبات:
 - الطول المستهدف: {target_words} كلمة فقط (مهم جداً: لا تتجاوز هذا الحد)
 - متحدثان: Host و Guest
 - صيغة كل سطر: Host: [الحوار بالعربية] أو Guest: [الحوار بالعربية]
 - اكتب الحوار بالعربية لكن استخدم Host و Guest كأسماء المتحدثين
+- اكتب الحوار باللهجة السعودية الخليجية وليس بالإنجليزية
 - اجعله حوارياً وممتعاً وغنياً بالمعلومات
 - ابدأ بمقدمة واختم بملخص
 
