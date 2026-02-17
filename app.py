@@ -456,7 +456,7 @@ with tab_voice:
         st.download_button(L["btn_download"], data=voice_data, file_name="rcjy_voice.wav", mime="audio/wav", key="dl_voice")
 
 with tab_pod:
-    st.markdown('<span class="mtag">Gemini 3</span><span class="mtag">NotebookLM</span>', unsafe_allow_html=True)
+    st.markdown('<span class="mtag">Gemini 3 Flash</span><span class="mtag">Multi-Speaker TTS</span>', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1:
         _pod_options = [L["length_short"], L["length_standard"]]
@@ -464,10 +464,22 @@ with tab_pod:
             L["length_label"], range(len(_pod_options)),
             format_func=lambda i: _pod_options[i], key="pod_len",
         )
+    _voice_options = {
+        "Kore (♀)": "Kore",
+        "Aoede (♀)": "Aoede",
+        "Leda (♀)": "Leda",
+        "Puck (♂)": "Puck",
+        "Charon (♂)": "Charon",
+        "Fenrir (♂)": "Fenrir",
+        "Orus (♂)": "Orus",
+    }
+    _voice_labels = list(_voice_options.keys())
     with c2:
-        pod_host = st.selectbox(L["host_label"], ["Kore", "Puck", "Charon", "Aoede"], key="pod_host")
+        host_label = st.selectbox(L["host_label"], _voice_labels, index=0, key="pod_host")
+        pod_host = _voice_options[host_label]
     with c3:
-        pod_guest = st.selectbox(L["guest_label"], ["Puck", "Kore", "Fenrir", "Leda"], key="pod_guest")
+        guest_label = st.selectbox(L["guest_label"], _voice_labels, index=3, key="pod_guest")
+        pod_guest = _voice_options[guest_label]
 
     if st.button(L["btn_podcast"], use_container_width=True, key="btn_pod"):
         prompt = input_text.strip()
@@ -498,7 +510,7 @@ st.markdown(f"""
     <strong>{L['footer_org']}</strong><br>
     {L['footer_dept']}<br>
     <span style="font-size:0.68rem; color:#8C9A90;">
-        Imagen 4 &bull; Nano Banana &bull; Veo 3.1 &bull; Gemini TTS &bull; Gemini 3
+        Imagen 4 &bull; Nano Banana &bull; Veo 3.1 &bull; Gemini TTS &bull; Gemini 3 Flash
     </span><br>
     <a href="https://www.rcjy.gov.sa/en/" target="_blank">rcjy.gov.sa</a>
     &bull; &copy; 2026

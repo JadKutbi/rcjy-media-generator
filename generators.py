@@ -296,7 +296,7 @@ def generate_voice(
     return wav, "audio/wav"
 
 
-def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str) -> bytes:
+def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str, lang: str = "en") -> bytes:
     voice_id = (
         MODELS["voice"].get("flash", MODELS["voice"])
         if isinstance(MODELS["voice"], dict) else MODELS["voice"]
@@ -323,8 +323,14 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str)
     wav_parts = []
     for i, chunk in enumerate(chunks):
         logger.info("  TTS chunk %d/%d (%d words)", i + 1, len(chunks), len(chunk.split()))
+        if lang == "ar":
+            tts_instruction = f"اقرأ حوار البودكاست التالي باللغة العربية بشكل طبيعي وتعبيري:\n\n{chunk}"
+        elif lang == "both":
+            tts_instruction = f"Read this bilingual Arabic-English podcast dialogue naturally:\n\n{chunk}"
+        else:
+            tts_instruction = f"Read this podcast dialogue naturally:\n\n{chunk}"
         payload = {
-            "contents": [{"role": "user", "parts": [{"text": f"Read this podcast dialogue naturally:\n\n{chunk}"}]}],
+            "contents": [{"role": "user", "parts": [{"text": tts_instruction}]}],
             "generationConfig": {
                 "responseModalities": ["AUDIO"],
                 "speechConfig": {
@@ -432,6 +438,6 @@ Content:
         script = " ".join(words[:600])
 
     logger.info("Podcast script ready (%d words), starting TTS", len(script.split()))
-    wav = _multi_speaker_tts(script, voice_host, voice_guest, key)
+    wav = _multi_speaker_tts(script, voice_host, voice_guest, key, lang=lang)
     logger.info("Podcast generated (%d bytes)", len(wav))
     return wav, "audio/wav"
