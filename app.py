@@ -90,7 +90,7 @@ T = {
         "spin_voice":             "Generating speech…",
         "spin_podcast":           "Creating podcast… (2–3 min)",
         "footer_org":             "Royal Commission for Jubail and Yanbu",
-        "footer_dept":            "Communication & Media Department",
+        "footer_dept":            "General Administration of Communication and Media",
     },
     "ar": {
         "app_name":               "مولّد الوسائط",
