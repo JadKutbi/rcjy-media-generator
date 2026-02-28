@@ -24,7 +24,7 @@ logger = logging.getLogger("rcjy.app")
 T = {
     "en": {
         "app_name":               "Media Generator",
-        "dept":                   "الإدارة العامة للاتصال والإعلام",
+        "dept":                   "General Administration of Communication and Media",
         "lang_label":             "Interface",
         "output_lang_label":      "Output Language",
         "url_label":              "Reference URL (optional)",
@@ -33,7 +33,7 @@ T = {
         "attached":               "Attached",
         "context_loaded":         "Context loaded",
         "chars":                  "chars",
-        "context_label":          "📎  Reference Material",
+        "context_label":          "Attachments",
         "context_hint":           "Optionally attach a URL or files — the AI will use them as context.",
         "tab_text":               "✍️  Text",
         "tab_image":              "🖼️  Image",
@@ -103,7 +103,7 @@ T = {
         "attached":               "مرفقات",
         "context_loaded":         "تم تحميل المحتوى",
         "chars":                  "حرف",
-        "context_label":          "📎  مواد مرجعية",
+        "context_label":          "المرفقات",
         "context_hint":           "أرفق رابطاً أو ملفات اختيارياً — سيستخدمها الذكاء الاصطناعي كسياق.",
         "tab_text":               "✍️  نص",
         "tab_image":              "🖼️  صورة",
@@ -200,8 +200,8 @@ st.markdown(f"""
 html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif !important;
   font-size: 15px;
-  color: #111827;
-  background: #F0F2F5 !important;
+  color: #1A1A1A;
+  background: #F5F3F0 !important;
   -webkit-font-smoothing: antialiased;
   direction: {_dir};
 }}
@@ -212,7 +212,7 @@ html, body, .stApp {{
   max-width: 1060px !important;
   margin: 0 auto !important;
   padding: 0 1.5rem 3rem !important;
-  background: #F0F2F5 !important;
+  background: #F5F3F0 !important;
 }}
 
 /* ════════════════════════════════════════
@@ -222,15 +222,15 @@ html, body, .stApp {{
   /* Full-bleed by matching the container's own horizontal padding */
   margin: 0 -1.5rem;
   background:
-    radial-gradient(ellipse 55% 130% at 95% 50%,  rgba(27,131,84,.20) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 80%  at 80% 5%,   rgba(200,168,75,.12) 0%, transparent 55%),
-    linear-gradient(140deg, #040E07 0%, #06210E 40%, #0B3B1A 75%, #0E4820 100%);
+    radial-gradient(ellipse 55% 130% at 95% 50%,  rgba(245,130,31,.20) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 80%  at 80% 5%,   rgba(245,160,60,.12) 0%, transparent 55%),
+    linear-gradient(140deg, #0F0D0B 0%, #1A1512 40%, #2A1F18 75%, #352820 100%);
   /* Dot-grid pattern from RCJY logo motif */
   background-image:
     radial-gradient(circle, rgba(255,255,255,.06) 1.2px, transparent 1.2px),
-    radial-gradient(ellipse 55% 130% at 95% 50%,  rgba(27,131,84,.20) 0%, transparent 60%),
-    radial-gradient(ellipse 30% 80%  at 80% 5%,   rgba(200,168,75,.12) 0%, transparent 55%),
-    linear-gradient(140deg, #040E07 0%, #06210E 40%, #0B3B1A 75%, #0E4820 100%);
+    radial-gradient(ellipse 55% 130% at 95% 50%,  rgba(245,130,31,.20) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 80%  at 80% 5%,   rgba(245,160,60,.12) 0%, transparent 55%),
+    linear-gradient(140deg, #0F0D0B 0%, #1A1512 40%, #2A1F18 75%, #352820 100%);
   background-size: 22px 22px, auto, auto, auto;
   border-radius: 0 0 20px 20px;
   overflow: hidden;
@@ -280,12 +280,12 @@ html, body, .stApp {{
   opacity: .45;
   pointer-events: none;
 }}
-/* Gold stripe */
+/* Brand stripe — RCJY orange accent */
 .gold-stripe {{
   margin: 0 -1.5rem;
   height: 3px;
   background: linear-gradient(90deg,
-    #040E07 0%, #B8922A 20%, #E8C96A 50%, #C9A84B 75%, #040E07 100%);
+    #0F0D0B 0%, #D97B1F 20%, #F5821F 50%, #E88C20 75%, #0F0D0B 100%);
 }}
 
 /* ════════════════════════════════════════
@@ -312,7 +312,7 @@ html, body, .stApp {{
 /* The pill container */
 [data-testid="stSegmentedControl"] [role="radiogroup"],
 [data-testid="stSegmentedControl"] > div > div {{
-  background: #E8EAED !important;
+  background: #EBE8E5 !important;
   border-radius: 14px !important;
   padding: 4px !important;
   gap: 3px !important;
@@ -328,7 +328,7 @@ html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
   font-size: .88rem !important;
   font-weight: 600 !important;
-  color: #4B5563 !important;
+  color: #5C5652 !important;
   border-radius: 11px !important;
   padding: 10px 6px !important;
   cursor: pointer !important;
@@ -342,24 +342,30 @@ html, body, .stApp {{
 /* Active option */
 [data-testid="stSegmentedControl"] label:has(input:checked) {{
   background: #fff !important;
-  color: #1B8354 !important;
+  color: #E06B0A !important;
   font-weight: 700 !important;
-  box-shadow: 0 1px 6px rgba(0,0,0,.13), 0 0 0 1px rgba(0,0,0,.04) !important;
+  box-shadow: 0 1px 6px rgba(0,0,0,.13), 0 0 0 1px rgba(0,0,0,.04),
+              inset 0 -2px 0 #F5821F !important;
 }}
 [data-testid="stSegmentedControl"] label:hover:not(:has(input:checked)) {{
-  color: #1B8354 !important;
+  color: #F5821F !important;
 }}
 
 /* ════════════════════════════════════════
    BORDERED CONTAINER (content card)
    ════════════════════════════════════════ */
 [data-testid="stVerticalBlockBorderWrapper"] {{
-  border: 1.5px solid #E5E7EB !important;
+  border: 1.5px solid #E8E4E0 !important;
   border-radius: 18px !important;
   background: #fff !important;
   box-shadow: 0 2px 20px rgba(0,0,0,.055) !important;
   overflow: hidden !important;
   margin-top: .75rem !important;
+  transition: box-shadow .25s ease, border-color .25s ease !important;
+}}
+[data-testid="stVerticalBlockBorderWrapper"]:hover {{
+  box-shadow: 0 4px 28px rgba(245,130,31,.08), 0 2px 12px rgba(0,0,0,.06) !important;
+  border-color: #DDD8D3 !important;
 }}
 [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
   padding: 1.75rem 1.75rem 1.5rem !important;
@@ -377,12 +383,12 @@ html, body, .stApp {{
   font-weight: 700 !important;
   letter-spacing: .07em !important;
   text-transform: uppercase !important;
-  color: #6B7280 !important;
+  color: #72615E !important;
   margin-bottom: .3rem !important;
 }}
 .stCaption, [data-testid="stCaptionContainer"] p {{
   font-size: .8rem !important;
-  color: #9CA3AF !important;
+  color: #A59B99 !important;
   line-height: 1.5 !important;
 }}
 
@@ -394,18 +400,18 @@ html, body, .stApp {{
   font-size: 1rem !important;
   font-weight: 400 !important;
   line-height: 1.7 !important;
-  color: #111827 !important;
+  color: #1A1A1A !important;
   background: #FAFAFA !important;
-  border: 1.5px solid #E5E7EB !important;
+  border: 1.5px solid #E8E4E0 !important;
   border-radius: 12px !important;
   padding: .9rem 1rem !important;
   transition: border-color .2s, box-shadow .2s !important;
-  caret-color: #1B8354;
+  caret-color: #F5821F;
 }}
 .stTextArea textarea:focus {{
   background: #fff !important;
-  border-color: #1B8354 !important;
-  box-shadow: 0 0 0 4px rgba(27,131,84,.10) !important;
+  border-color: #F5821F !important;
+  box-shadow: 0 0 0 4px rgba(245,130,31,.10) !important;
   outline: none !important;
 }}
 .stTextArea textarea::placeholder {{
@@ -415,17 +421,17 @@ html, body, .stApp {{
 .stTextInput input {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
   font-size: .9rem !important;
-  color: #111827 !important;
+  color: #1A1A1A !important;
   background: #FAFAFA !important;
-  border: 1.5px solid #E5E7EB !important;
+  border: 1.5px solid #E8E4E0 !important;
   border-radius: 10px !important;
   padding: .6rem .9rem !important;
   transition: border-color .2s, box-shadow .2s !important;
 }}
 .stTextInput input:focus {{
   background: #fff !important;
-  border-color: #1B8354 !important;
-  box-shadow: 0 0 0 3px rgba(27,131,84,.10) !important;
+  border-color: #F5821F !important;
+  box-shadow: 0 0 0 3px rgba(245,130,31,.10) !important;
   outline: none !important;
 }}
 
@@ -436,15 +442,15 @@ html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
   font-size: .9rem !important;
   font-weight: 500 !important;
-  color: #111827 !important;
+  color: #1A1A1A !important;
   background: #FAFAFA !important;
-  border: 1.5px solid #E5E7EB !important;
+  border: 1.5px solid #E8E4E0 !important;
   border-radius: 10px !important;
   transition: border-color .2s !important;
 }}
 .stSelectbox [data-baseweb="select"]:focus-within > div {{
-  border-color: #1B8354 !important;
-  box-shadow: 0 0 0 3px rgba(27,131,84,.10) !important;
+  border-color: #F5821F !important;
+  box-shadow: 0 0 0 3px rgba(245,130,31,.10) !important;
 }}
 
 /* ════════════════════════════════════════
@@ -457,12 +463,17 @@ html, body, .stApp {{
   font-weight: 700;
   letter-spacing: .05em;
   text-transform: uppercase;
-  color: #14573A;
-  background: #ECFDF5;
-  border: 1px solid #A7F3D0;
+  color: #8B4F15;
+  background: #FFF4E6;
+  border: 1px solid #FFD4A8;
   border-radius: 5px;
   padding: .18rem .55rem;
   display: inline-block;
+  transition: background .15s, color .15s;
+}}
+.mtag:hover {{
+  background: #FFECD2;
+  color: #D96A0F;
 }}
 
 /* ════════════════════════════════════════
@@ -479,24 +490,26 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
   font-weight: 700 !important;
   letter-spacing: .025em !important;
   color: #fff !important;
-  background: linear-gradient(135deg, #1B8354 0%, #0D5234 100%) !important;
+  background: linear-gradient(135deg, #F5821F 0%, #D96A0F 100%) !important;
   border: none !important;
   border-radius: 12px !important;
   padding: .9rem 2.5rem !important;
   min-height: 54px !important;
   width: 100%;
-  box-shadow: 0 4px 18px rgba(27,131,84,.30), 0 1px 3px rgba(0,0,0,.15) !important;
-  transition: transform .15s ease, box-shadow .15s ease !important;
+  box-shadow: 0 4px 18px rgba(245,130,31,.30), 0 1px 3px rgba(0,0,0,.15) !important;
+  transition: transform .15s ease, box-shadow .15s ease, background .2s ease !important;
   cursor: pointer !important;
+  position: relative !important;
+  overflow: hidden !important;
 }}
 .stButton > button:hover {{
-  background: linear-gradient(135deg, #1E9460 0%, #115C3A 100%) !important;
-  box-shadow: 0 8px 28px rgba(27,131,84,.40), 0 2px 6px rgba(0,0,0,.18) !important;
+  background: linear-gradient(135deg, #F99340 0%, #E06B0A 100%) !important;
+  box-shadow: 0 8px 28px rgba(245,130,31,.40), 0 2px 6px rgba(0,0,0,.18) !important;
   transform: translateY(-2px) !important;
 }}
 .stButton > button:active  {{ transform: translateY(0) !important; }}
 .stButton > button:focus   {{
-  outline: 3px solid rgba(27,131,84,.40) !important;
+  outline: 3px solid rgba(245,130,31,.40) !important;
   outline-offset: 3px !important;
 }}
 
@@ -507,7 +520,7 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
   font-family: 'IBM Plex Sans', sans-serif !important;
   font-size: .875rem !important;
   font-weight: 600 !important;
-  background: #111827 !important;
+  background: #1A1A1A !important;
   color: #fff !important;
   border: none !important;
   border-radius: 10px !important;
@@ -516,7 +529,7 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
   transition: transform .15s, box-shadow .15s !important;
 }}
 .stDownloadButton > button:hover {{
-  background: #1F2937 !important;
+  background: #2D2D2D !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 14px rgba(0,0,0,.2) !important;
 }}
@@ -525,14 +538,14 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
    FILE UPLOADER
    ════════════════════════════════════════ */
 [data-testid="stFileUploader"] section {{
-  border: 2px dashed #D1D5DB !important;
+  border: 2px dashed #D5CFC9 !important;
   border-radius: 12px !important;
   background: #FAFAFA !important;
   transition: border-color .2s, background .2s !important;
 }}
 [data-testid="stFileUploader"] section:hover {{
-  border-color: #1B8354 !important;
-  background: #F0FDF4 !important;
+  border-color: #F5821F !important;
+  background: #FFF8F0 !important;
 }}
 [data-testid="stFileUploaderDropzoneInstructions"] div small,
 [data-testid="stFileUploaderDropzone"] small {{
@@ -543,7 +556,7 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
    EXPANDER (reference material)
    ════════════════════════════════════════ */
 [data-testid="stExpander"] {{
-  border: 1px solid #E5E7EB !important;
+  border: 1px solid #E8E4E0 !important;
   border-radius: 12px !important;
   overflow: hidden !important;
 }}
@@ -551,11 +564,11 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
   font-family: 'IBM Plex Sans', sans-serif !important;
   font-size: .88rem !important;
   font-weight: 600 !important;
-  color: #374151 !important;
+  color: #4B4845 !important;
   padding: .7rem 1rem !important;
   background: #FAFAFA !important;
 }}
-[data-testid="stExpander"] summary:hover {{ color: #1B8354 !important; }}
+[data-testid="stExpander"] summary:hover {{ color: #F5821F !important; }}
 [data-testid="stExpander"] > div > div {{
   padding: .9rem 1rem !important;
 }}
@@ -567,9 +580,9 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
   display: inline-flex;
   align-items: center;
   gap: .35rem;
-  background: #F0FDF4;
-  color: #15803D;
-  border: 1px solid #BBF7D0;
+  background: #FFF8F0;
+  color: #D96A0F;
+  border: 1px solid #FFE0B2;
   border-radius: 20px;
   padding: .25rem .8rem;
   font-size: .8rem;
@@ -582,24 +595,25 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
    ════════════════════════════════════════ */
 .result-wrap {{
   background: #fff;
-  border: 1.5px solid #E5E7EB;
+  border: 1.5px solid #E8E4E0;
   border-radius: 16px;
   padding: 1.5rem 1.75rem;
   margin-top: 1rem;
   box-shadow: 0 2px 16px rgba(0,0,0,.05);
+  border-top: 3px solid #F5821F;
 }}
-.result-wrap p   {{ font-size: .9375rem !important; line-height: 1.8 !important; color: #111827 !important; }}
-.result-wrap li  {{ font-size: .9375rem !important; line-height: 1.8 !important; color: #111827 !important; }}
+.result-wrap p   {{ font-size: .9375rem !important; line-height: 1.8 !important; color: #1A1A1A !important; }}
+.result-wrap li  {{ font-size: .9375rem !important; line-height: 1.8 !important; color: #1A1A1A !important; }}
 .result-wrap h1,
 .result-wrap h2,
-.result-wrap h3  {{ color: #111827 !important; font-weight: 700 !important; }}
+.result-wrap h3  {{ color: #1A1A1A !important; font-weight: 700 !important; }}
 
 /* ════════════════════════════════════════
    ALERTS & SPINNER
    ════════════════════════════════════════ */
 .stAlert {{ border-radius: 12px !important; }}
 .stAlert p {{ font-size: .9rem !important; }}
-.stSpinner > div {{ border-top-color: #1B8354 !important; }}
+.stSpinner > div {{ border-top-color: #F5821F !important; }}
 
 /* ════════════════════════════════════════
    FOOTER
@@ -608,13 +622,14 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
   text-align: center;
   padding: 2rem 1rem 1rem;
   margin-top: 2rem;
-  border-top: 1px solid #E5E7EB;
-  color: #9CA3AF;
+  border-top: 2px solid transparent;
+  border-image: linear-gradient(90deg, transparent 10%, #E8E4E0 30%, #F5821F 50%, #E8E4E0 70%, transparent 90%) 1;
+  color: #A59B99;
   font-size: .78rem;
   line-height: 2;
 }}
-.app-footer strong {{ color: #374151; }}
-.app-footer a {{ color: #1B8354; text-decoration: none; font-weight: 500; }}
+.app-footer strong {{ color: #4B4845; }}
+.app-footer a {{ color: #F5821F; text-decoration: none; font-weight: 500; }}
 .app-footer a:hover {{ text-decoration: underline; }}
 
 /* ════════════════════════════════════════
@@ -639,24 +654,26 @@ hr {{ border-color: #F3F4F6 !important; margin: .25rem 0 !important; }}
 
 # ── HEADER ────────────────────────────────────────────────────────────────────
 _deco_svg = """
-<svg class="hdr-deco" width="200" height="110"
-     viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="160" cy="55" r="95" stroke="rgba(255,255,255,.04)" stroke-width="1.5"/>
-  <circle cx="160" cy="55" r="74" stroke="rgba(255,255,255,.055)" stroke-width="1.5"/>
-  <circle cx="160" cy="55" r="54" stroke="rgba(200,168,75,.14)" stroke-width="1.5"/>
-  <circle cx="160" cy="55" r="36" stroke="rgba(255,255,255,.07)" stroke-width="1.5"/>
-  <circle cx="160" cy="55" r="20" stroke="rgba(200,168,75,.18)" stroke-width="1.5"/>
-  <circle cx="160" cy="55" r="7"  fill="rgba(200,168,75,.16)"/>
-  <rect x="28" y="42" width="16" height="16"
-        transform="rotate(45 36 50)" stroke="rgba(255,255,255,.09)" stroke-width="1.2"/>
-  <rect x="12" y="58" width="10" height="10"
-        transform="rotate(45 17 63)" stroke="rgba(200,168,75,.13)" stroke-width="1"/>
-  <circle cx="50" cy="20" r="3.5" fill="rgba(255,255,255,.08)"/>
-  <circle cx="68" cy="20" r="2.5" fill="rgba(200,168,75,.12)"/>
-  <circle cx="84" cy="20" r="3.5" fill="rgba(255,255,255,.07)"/>
-  <circle cx="50" cy="36" r="2.5" fill="rgba(200,168,75,.10)"/>
-  <circle cx="68" cy="36" r="3.5" fill="rgba(255,255,255,.08)"/>
-  <circle cx="84" cy="36" r="2.5" fill="rgba(200,168,75,.10)"/>
+<svg class="hdr-deco" width="220" height="120"
+     viewBox="0 0 220 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="170" cy="60" r="100" stroke="rgba(255,255,255,.04)" stroke-width="1.5"/>
+  <circle cx="170" cy="60" r="78" stroke="rgba(255,255,255,.05)" stroke-width="1.5"/>
+  <circle cx="170" cy="60" r="57" stroke="rgba(245,130,31,.12)" stroke-width="1.5"/>
+  <circle cx="170" cy="60" r="38" stroke="rgba(255,255,255,.06)" stroke-width="1.5"/>
+  <circle cx="170" cy="60" r="22" stroke="rgba(245,130,31,.16)" stroke-width="1.5"/>
+  <circle cx="170" cy="60" r="8"  fill="rgba(245,130,31,.18)"/>
+  <rect x="22" y="52" width="4" height="32" rx="1" fill="rgba(245,130,31,.07)"/>
+  <rect x="30" y="40" width="4" height="44" rx="1" fill="rgba(255,255,255,.06)"/>
+  <rect x="38" y="56" width="4" height="28" rx="1" fill="rgba(245,130,31,.05)"/>
+  <rect x="46" y="36" width="5" height="48" rx="1" fill="rgba(255,255,255,.07)"/>
+  <rect x="55" y="48" width="4" height="36" rx="1" fill="rgba(245,130,31,.06)"/>
+  <rect x="63" y="44" width="4" height="40" rx="1" fill="rgba(255,255,255,.05)"/>
+  <circle cx="80" cy="22" r="2.5" fill="rgba(245,130,31,.09)"/>
+  <circle cx="93" cy="22" r="2.5" fill="rgba(255,255,255,.07)"/>
+  <circle cx="80" cy="35" r="2.5" fill="rgba(255,255,255,.06)"/>
+  <circle cx="93" cy="35" r="2.5" fill="rgba(245,130,31,.07)"/>
+  <rect x="30" y="18" width="10" height="10"
+        transform="rotate(45 35 23)" stroke="rgba(245,130,31,.08)" stroke-width="1" fill="none"/>
 </svg>
 """
 
@@ -830,11 +847,11 @@ elif active_tab == "image":
                 L["model_label"],
                 ["imagen_fast", "imagen", "imagen_ultra", "nano_banana", "nano_banana_pro"],
                 format_func=lambda x: {
+                    "nano_banana_pro": "Nano Banana Pro — 4K",
                     "imagen_fast":     "Imagen 4 Fast",
                     "imagen":          "Imagen 4 Flagship",
                     "imagen_ultra":    "Imagen 4 Ultra",
                     "nano_banana":     "Nano Banana",
-                    "nano_banana_pro": "Nano Banana Pro — 4K",
                 }[x],
                 key="img_model",
             )
@@ -1035,7 +1052,7 @@ st.markdown(f"""
 <div class="app-footer">
   <strong>{L['footer_org']}</strong><br>
   {L['footer_dept']}<br>
-  <span style="font-size:.7rem;color:#D1D5DB;">
+  <span style="font-size:.7rem;color:#D5CFC9;">
     Gemini 3 Pro &nbsp;·&nbsp; Imagen 4 Ultra &nbsp;·&nbsp; Nano Banana
     &nbsp;·&nbsp; Veo 3.1 &nbsp;·&nbsp; Gemini TTS &nbsp;·&nbsp; Gemini 3 Flash
   </span><br>
