@@ -713,14 +713,12 @@ active_tab = st.segmented_control(
     options=_tab_keys,
     format_func=lambda x: _tab_labels[x],
     key="active_tab",
-    default=st.session_state.get("active_tab", "text"),
+    default="text",
     label_visibility="collapsed",
 )
-# Guard: segmented_control can return None briefly on rerun
+# Guard: segmented_control returns None when nothing is selected yet
 if active_tab is None:
-    active_tab = st.session_state.get("active_tab", "text")
-
-st.session_state.active_tab = active_tab
+    active_tab = "text"
 
 
 # ── SHARED HELPERS ────────────────────────────────────────────────────────────
