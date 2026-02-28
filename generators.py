@@ -6,7 +6,7 @@ import tempfile
 import time
 import wave
 
-from config import MODELS, require_api_key
+from rcjy_config import MODELS, require_api_key
 from content_extractor import get_content_from_input
 
 logger = logging.getLogger("rcjy.generators")

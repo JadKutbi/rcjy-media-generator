@@ -2,7 +2,7 @@ import logging
 
 import streamlit as st
 
-from config import RCJY_LOGO_URL, SUPPORTED_FILE_TYPES, get_api_key
+from rcjy_config import RCJY_LOGO_URL, SUPPORTED_FILE_TYPES, get_api_key
 from content_extractor import get_content_from_input
 from generators import (
     _sanitize_error,
