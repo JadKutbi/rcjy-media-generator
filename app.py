@@ -963,15 +963,17 @@ elif active_tab == "voice":
             L["prompt_label"], key="prompt_voice",
             placeholder=L["prompt_ph_voice"], height=200,
         )
+        input_url, input_files = _ctx_widget()
+        ctx_text, has_ctx = _load_ctx(input_url, input_files)
 
     if st.button(L["btn_voice"], use_container_width=True, key="btn_voice"):
-        if not voice_prompt.strip():
+        if not voice_prompt.strip() and not has_ctx:
             st.warning(L["warn_text"])
         else:
             with st.spinner(L["spin_voice"]):
                 try:
                     data, mime = generate_voice(
-                        text=voice_prompt.strip(), context_text="",
+                        text=voice_prompt.strip(), context_text=ctx_text if has_ctx else "",
                         voice_name=voice_name, style_hint=style_hint,
                         tts_model="pro" if tts_quality == "Pro" else "flash",
                         lang=lang,
@@ -1056,14 +1058,22 @@ elif active_tab == "podcast":
         )
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
+_ftr_lang = "ar" if is_ar else "en"
+_ftr_copy = (
+    "جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع" if is_ar
+    else "All rights reserved to the Royal Commission for Jubail and Yanbu"
+)
+_ftr_privacy = "سياسة الخصوصية" if is_ar else "Privacy Policy"
+_ftr_terms = "الشروط والأحكام" if is_ar else "Terms &amp; Conditions"
+_ftr_site = "الموقع الرسمي" if is_ar else "RCJY Official Website"
 _ftr_html = (
     '<div class="rcjy-footer"><div class="rcjy-ftr-main">'
     '<div class="rcjy-ftr-left">'
-    '<span class="rcjy-ftr-copy">All rights reserved to the Royal Commission for Jubail and Yanbu &copy; 2026</span>'
+    f'<span class="rcjy-ftr-copy">{_ftr_copy} &copy; 2026</span>'
     '<div class="rcjy-ftr-links">'
-    '<a href="https://www.rcjy.gov.sa/en/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>'
-    '<a href="https://www.rcjy.gov.sa/en/terms-and-conditions" target="_blank" rel="noopener">Terms &amp; Conditions</a>'
-    '<a href="https://www.rcjy.gov.sa/en/home" target="_blank" rel="noopener">RCJY Official Website</a>'
+    f'<a href="https://www.rcjy.gov.sa/{_ftr_lang}/privacy-policy" target="_blank" rel="noopener">{_ftr_privacy}</a>'
+    f'<a href="https://www.rcjy.gov.sa/{_ftr_lang}/terms-and-conditions" target="_blank" rel="noopener">{_ftr_terms}</a>'
+    f'<a href="https://www.rcjy.gov.sa/{_ftr_lang}/home" target="_blank" rel="noopener">{_ftr_site}</a>'
     '</div></div>'
     '<div class="rcjy-ftr-logos">'
     f'<img class="rcjy-ftr-rcjy" src="{RCJY_LOGO_URL}" alt="RCJY" onerror="this.style.display=\'none\'">'
