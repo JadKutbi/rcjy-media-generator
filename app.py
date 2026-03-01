@@ -592,121 +592,54 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stSidebar"] {{ background: #fff; }}
 
 /* ════════════════════════════════════════
-   FOOTER — 3-section RCJY style
+   FOOTER — clean green & white
    ════════════════════════════════════════ */
 .rcjy-footer {{
-  background: #0d121c;
+  background: #1B8354;
   margin: 3rem -1.5rem -3rem;
   font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
-  direction: rtl;
 }}
-/* ─ Top dark section: link columns ─ */
-.rcjy-ftr-top {{
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 3rem 2.5rem 2.5rem;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}}
-.rcjy-ftr-cols {{
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2.5rem;
-}}
-.rcjy-ftr-col h4 {{
-  color: #fff;
-  font-size: .8rem;
-  font-weight: 700;
-  letter-spacing: .04em;
-  margin: 0 0 1.25rem;
-  padding-bottom: .75rem;
-  border-bottom: 1px solid rgba(255,255,255,.1);
-}}
-.rcjy-ftr-col ul {{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: .65rem;
-}}
-.rcjy-ftr-col ul a {{
-  color: rgba(255,255,255,.5);
-  text-decoration: none;
-  font-size: .85rem;
-  line-height: 1.5;
-  transition: color .2s;
-}}
-.rcjy-ftr-col ul a:hover {{ color: #54C08A; }}
-/* Social icons */
-.rcjy-ftr-social {{
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem;
-  margin-top: .5rem;
-}}
-.rcjy-ftr-soc {{
-  width: 32px; height: 32px;
-  border: 1px solid rgba(255,255,255,.4);
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255,255,255,.7);
-  text-decoration: none;
-  font-size: .65rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  transition: background .2s, border-color .2s, color .2s;
-}}
-.rcjy-ftr-soc:hover {{
-  background: rgba(255,255,255,.2);
-  border-color: rgba(255,255,255,.6);
-  color: #fff;
-}}
-.rcjy-ftr-soc svg {{
-  width: 14px;
-  height: 14px;
-  fill: currentColor;
-}}
-/* ─ Middle white section: logos ─ */
-.rcjy-ftr-mid {{
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3rem;
-  padding: 1.75rem 2rem;
-}}
-.rcjy-ftr-rcjy {{ height: 48px; display: block; }}
-.rcjy-ftr-divv {{ width: 1px; height: 48px; background: #D2D6DB; }}
-.rcjy-ftr-vision {{ height: 48px; display: block; }}
-/* ─ Bottom dark bar: copyright ─ */
-.rcjy-ftr-bottom {{
-  max-width: 1280px;
-  margin: 0 auto;
+.rcjy-ftr-main {{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 2.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 2.5rem;
+  gap: 2rem;
   flex-wrap: wrap;
-  gap: .75rem;
-  border-top: 1px solid rgba(255,255,255,.08);
+}}
+.rcjy-ftr-left {{
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
 }}
 .rcjy-ftr-copy {{
-  color: rgba(255,255,255,.45);
-  font-size: .8rem;
+  color: rgba(255,255,255,.85);
+  font-size: .82rem;
+  font-weight: 500;
 }}
 .rcjy-ftr-links {{
   display: flex;
-  gap: 1.5rem;
+  gap: 1.25rem;
+  flex-wrap: wrap;
 }}
 .rcjy-ftr-links a {{
-  color: rgba(255,255,255,.45);
+  color: rgba(255,255,255,.65);
   text-decoration: none;
-  font-size: .8rem;
+  font-size: .78rem;
   transition: color .2s;
 }}
-.rcjy-ftr-links a:hover {{ color: #54C08A; }}
+.rcjy-ftr-links a:hover {{ color: #fff; }}
+.rcjy-ftr-logos {{
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-shrink: 0;
+}}
+.rcjy-ftr-rcjy {{ height: 44px; display: block; }}
+.rcjy-ftr-divv {{ width: 1px; height: 40px; background: rgba(255,255,255,.3); }}
+.rcjy-ftr-vision {{ height: 44px; display: block; }}
 
 /* ════════════════════════════════════════
    RESPONSIVE
@@ -718,15 +651,11 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   .rcjy-nav-item {{ font-size: .78rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
-  .rcjy-footer {{ margin: 3rem -.75rem -3rem; direction: rtl; }}
-  .rcjy-ftr-cols {{ grid-template-columns: 1fr 1fr; gap: 1.5rem; }}
-  .rcjy-ftr-top {{ padding: 1.5rem 1rem; }}
-  .rcjy-ftr-mid {{ gap: 1.5rem; padding: 1.25rem 1rem; }}
-  .rcjy-ftr-bottom {{ flex-direction: column; align-items: flex-start; padding: 1rem; }}
-  .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 40px; }}
+  .rcjy-footer {{ margin: 3rem -.75rem -3rem; }}
+  .rcjy-ftr-main {{ padding: 1.25rem 1rem; flex-direction: column; align-items: flex-start; }}
+  .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 36px; }}
 }}
 @media (max-width: 480px) {{
-  .rcjy-ftr-cols {{ grid-template-columns: 1fr; gap: 1.25rem; }}
   .rcjy-nav-links {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 }}
 </style>
@@ -1127,60 +1056,20 @@ elif active_tab == "podcast":
         )
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
-# Built as string concat (no f-string HTML comments) so Streamlit renders correctly
-_ftr_top = (
-    '<div class="rcjy-footer">'
-    '<div class="rcjy-ftr-top"><div class="rcjy-ftr-cols">'
-    '<div class="rcjy-ftr-col"><h4>الجهات ذات العلاقة</h4><ul>'
-    '<li><a href="https://www.mim.gov.sa" target="_blank" rel="noopener">وزارة الصناعة والثروة المعدنية</a></li>'
-    '<li><a href="https://www.seza.gov.sa" target="_blank" rel="noopener">هيئة المناطق الاقتصادية الخاصة</a></li>'
-    '<li><a href="https://www.sidf.gov.sa" target="_blank" rel="noopener">صندوق التنمية الصناعي</a></li>'
-    '</ul></div>'
-    '<div class="rcjy-ftr-col"><h4>الخدمات الإلكترونية</h4><ul>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/e-services" target="_blank" rel="noopener">منصة يسير خدمات</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/careers" target="_blank" rel="noopener">بوابة التوظيف</a></li>'
-    '</ul></div>'
-    '<div class="rcjy-ftr-col"><h4>اتصل بنا</h4><ul>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/contact-us" target="_blank" rel="noopener">تواصل معنا</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/e-participation" target="_blank" rel="noopener">المشاركة الإلكترونية</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/open-data" target="_blank" rel="noopener">البيانات المفتوحة</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/community-participation-policy" target="_blank" rel="noopener">سياسة المشاركة المجتمعية</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/service-level-agreement" target="_blank" rel="noopener">اتفاقية مستوى الخدمة</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/accessibility-policy" target="_blank" rel="noopener">سياسة إمكانية الوصول</a></li>'
-    '<li><a href="https://www.rcjy.gov.sa/ar/customer-charter" target="_blank" rel="noopener">ميثاق المتعاملين</a></li>'
-    '</ul></div>'
-    '<div class="rcjy-ftr-col"><h4>تابعنا على</h4>'
-    '<div class="rcjy-ftr-social">'
-    '<a class="rcjy-ftr-soc" href="https://www.facebook.com/RCJY.Saudi/" target="_blank" rel="noopener" title="Facebook">'
-    '<svg viewBox="0 0 24 24"><path d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 011-1h3v-4h-3a5 5 0 00-5 5v2.01h-2l-.396 3.98h2.396v8.01z"/></svg></a>'
-    '<a class="rcjy-ftr-soc" href="https://x.com/rcjy1" target="_blank" rel="noopener" title="X">'
-    '<svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>'
-    '<a class="rcjy-ftr-soc" href="https://www.linkedin.com/company/royal-commission-for-jubail-and-yanbu/" target="_blank" rel="noopener" title="LinkedIn">'
-    '<svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>'
-    '<a class="rcjy-ftr-soc" href="https://www.youtube.com/@RCJYSaudi" target="_blank" rel="noopener" title="YouTube">'
-    '<svg viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>'
-    '<a class="rcjy-ftr-soc" href="https://www.instagram.com/RCJYSaudi" target="_blank" rel="noopener" title="Instagram">'
-    '<svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>'
-    '<a class="rcjy-ftr-soc" href="https://www.snapchat.com/add/rcjy-1" target="_blank" rel="noopener" title="Snapchat">'
-    '<svg viewBox="0 0 24 24"><path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12 1.033-.301a.32.32 0 01.139-.03c.139 0 .314.085.455.2a.63.63 0 01.209.457c0 .27-.21.508-.442.633-.346.187-.734.327-.734.327s-.091.043-.12.074c-.094.1-.13.262-.09.399.315 1.013.862 1.903 1.52 2.601.254.27.574.539.93.75.076.048.164.12.227.211.074.108.098.226.074.346-.06.293-.36.469-.68.57a5.5 5.5 0 01-.614.14c-.078.013-.158.03-.229.043-.124.024-.209.045-.275.084a.4.4 0 00-.148.197 1.224 1.224 0 01-.046.158c-.113.263-.365.393-.593.393a1 1 0 01-.285-.043c-.394-.12-.816-.18-1.234-.18-.275 0-.548.03-.803.074a4.16 4.16 0 00-.82.336c-.576.312-1.089.658-2.036.674l-.08.001-.081-.001c-.947-.016-1.46-.362-2.036-.674a4.163 4.163 0 00-.82-.336 4.78 4.78 0 00-.803-.074c-.418 0-.84.06-1.234.18a1 1 0 01-.285.043c-.228 0-.48-.13-.593-.393a1.217 1.217 0 01-.046-.158.4.4 0 00-.148-.197c-.066-.04-.151-.06-.275-.084a4.7 4.7 0 00-.229-.043 5.5 5.5 0 01-.614-.14c-.32-.101-.62-.277-.68-.57-.024-.12 0-.238.074-.346a.65.65 0 01.227-.21c.356-.212.676-.48.93-.75.658-.7 1.205-1.59 1.52-2.602.04-.137.004-.299-.09-.399-.029-.031-.12-.074-.12-.074s-.388-.14-.734-.327c-.232-.125-.442-.362-.442-.633a.63.63 0 01.21-.457.56.56 0 01.453-.2.32.32 0 01.139.03c.375.181.733.317 1.034.3.198 0 .326-.044.4-.089-.007-.165-.018-.33-.03-.51l-.003-.06c-.104-1.628-.23-3.654.3-4.847C7.86 1.068 11.216.793 12.206.793z"/></svg></a>'
+_ftr_html = (
+    '<div class="rcjy-footer"><div class="rcjy-ftr-main">'
+    '<div class="rcjy-ftr-left">'
+    '<span class="rcjy-ftr-copy">All rights reserved to the Royal Commission for Jubail and Yanbu &copy; 2026</span>'
+    '<div class="rcjy-ftr-links">'
+    '<a href="https://www.rcjy.gov.sa/en/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a>'
+    '<a href="https://www.rcjy.gov.sa/en/terms-and-conditions" target="_blank" rel="noopener">Terms &amp; Conditions</a>'
+    '<a href="https://www.rcjy.gov.sa/en/home" target="_blank" rel="noopener">RCJY Official Website</a>'
     '</div></div>'
-    '</div></div>'
-)
-_ftr_mid = (
-    '<div class="rcjy-ftr-mid">'
+    '<div class="rcjy-ftr-logos">'
     f'<img class="rcjy-ftr-rcjy" src="{RCJY_LOGO_URL}" alt="RCJY" onerror="this.style.display=\'none\'">'
     '<div class="rcjy-ftr-divv"></div>'
     f'<img class="rcjy-ftr-vision" src="{_VISION_LOGO}" alt="Vision 2030" onerror="this.style.display=\'none\'">'
     '</div>'
+    '</div></div>'
 )
-_ftr_btm = (
-    '<div class="rcjy-ftr-bottom">'
-    '<span class="rcjy-ftr-copy">جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع &copy; 2026</span>'
-    '<div class="rcjy-ftr-links">'
-    '<a href="https://www.rcjy.gov.sa/ar/privacy-policy" target="_blank" rel="noopener">سياسة الخصوصية</a>'
-    '<a href="https://www.rcjy.gov.sa/ar/terms-and-conditions" target="_blank" rel="noopener">الشروط والأحكام</a>'
-    '<a href="https://www.rcjy.gov.sa/ar/sitemap" target="_blank" rel="noopener">خريطة الموقع</a>'
-    '</div></div>'       # close ftr-links, ftr-bottom
-    '</div>'             # close rcjy-footer
-)
-st.markdown(_ftr_top + _ftr_mid + _ftr_btm, unsafe_allow_html=True)
+st.markdown(_ftr_html, unsafe_allow_html=True)
