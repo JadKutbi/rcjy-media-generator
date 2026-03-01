@@ -274,62 +274,74 @@ html, body, .stApp {{
   color: #fff !important;
   font-weight: 600 !important;
 }}
-/* Right-side language toggles */
+/* Right-side language controls */
 .rcjy-nav-right {{
   display: flex;
   align-items: center;
-  gap: .625rem;
+  gap: 1rem;
   flex-shrink: 0;
 }}
-.rcjy-lang-pair {{
-  display: flex;
+/* Primary UI-language toggle — styled like the RCJY site link */
+.rcjy-lang-link {{
+  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  font-size: .9rem;
+  font-weight: 500;
+  color: #384250;
+  text-decoration: none;
+  padding: 7px 14px;
   border: 1px solid #D2D6DB;
   border-radius: 6px;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}}
+.rcjy-lang-link:hover {{ background: #EBF5EE; color: #1B8354; border-color: #1B8354; }}
+/* Output-language toggle */
+.rcjy-out-wrap {{
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+}}
+.rcjy-out-label {{
+  font-size: .68rem;
+  font-weight: 600;
+  color: #9DA4AE;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}}
+.rcjy-out-pair {{
+  display: flex;
+  border: 1px solid #D2D6DB;
+  border-radius: 5px;
   overflow: hidden;
 }}
-.rcjy-lang-pair > a {{
+.rcjy-out-pair > a {{
   display: block;
-  padding: 5px 11px;
-  font-size: .75rem;
+  padding: 4px 9px;
+  font-size: .72rem;
   font-weight: 600;
   color: #6C737F;
   text-decoration: none;
   transition: background .15s, color .15s;
-  letter-spacing: .03em;
 }}
-.rcjy-lang-pair > a + a {{ border-left: 1px solid #D2D6DB; }}
-.rcjy-lang-pair > a:hover:not(.rcjy-lang-on) {{ background: #F3F6F8; color: #384250; }}
-.rcjy-lang-on {{ background: #1B8354 !important; color: #fff !important; }}
-.rcjy-lang-label {{
-  font-size: .67rem;
-  font-weight: 600;
-  color: #9DA4AE;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  margin-right: 2px;
-}}
+.rcjy-out-pair > a + a {{ border-left: 1px solid #D2D6DB; }}
+.rcjy-out-pair > a:hover:not(.rcjy-out-on) {{ background: #F3F6F8; color: #384250; }}
+.rcjy-out-on {{ background: #1B8354 !important; color: #fff !important; }}
 
 /* ════════════════════════════════════════
-   CONTENT CARD
+   CONTENT CARD — borderless flat card
    ════════════════════════════════════════ */
 [data-testid="stVerticalBlockBorderWrapper"] {{
-  border: 1px solid #E5E7EB !important;
-  border-radius: 16px !important;
+  border: none !important;
+  border-radius: 12px !important;
   background: #fff !important;
-  box-shadow: 0px 2px 4px -2px rgba(16,24,40,.06),
-              0px 4px 8px -2px rgba(16,24,40,.10) !important;
+  box-shadow: 0 1px 3px rgba(16,24,40,.07), 0 1px 2px rgba(16,24,40,.05) !important;
   overflow: hidden !important;
-  margin-top: .75rem !important;
-  transition: box-shadow .2s ease, border-color .2s ease !important;
-}}
-[data-testid="stVerticalBlockBorderWrapper"]:hover {{
-  box-shadow: 0px 4px 8px -2px rgba(16,24,40,.08),
-              0px 8px 16px -4px rgba(16,24,40,.12) !important;
-  border-color: #C8D4CB !important;
+  margin-top: .5rem !important;
 }}
 [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
-  padding: 1.75rem 1.75rem 1.5rem !important;
-  gap: 1rem !important;
+  padding: 1.5rem !important;
+  gap: .875rem !important;
 }}
 
 /* ════════════════════════════════════════
@@ -570,21 +582,6 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .stAlert p {{ font-size: .9rem !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
-/* ════════════════════════════════════════
-   FOOTER
-   ════════════════════════════════════════ */
-.app-footer {{
-  text-align: center;
-  padding: 2rem 1rem 1rem;
-  margin-top: 2.5rem;
-  border-top: 1px solid #E5E7EB;
-  color: #9DA4AE;
-  font-size: .78rem;
-  line-height: 2;
-}}
-.app-footer strong {{ color: #384250; font-weight: 600; }}
-.app-footer a {{ color: #1B8354; text-decoration: none; font-weight: 500; }}
-.app-footer a:hover {{ color: #14573A; text-decoration: underline; }}
 
 /* ════════════════════════════════════════
    SIDEBAR
@@ -592,14 +589,61 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stSidebar"] {{ background: #fff; }}
 
 /* ════════════════════════════════════════
+   FOOTER  (dark — RCJY site style)
+   ════════════════════════════════════════ */
+.rcjy-footer {{
+  background: #0d121c;
+  margin: 3rem -1.5rem -3rem;
+  padding: 0;
+}}
+.rcjy-footer-bar {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  direction: ltr;
+  gap: 1rem;
+}}
+.rcjy-footer-logos {{
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+}}
+.rcjy-footer-logo {{
+  height: 44px;
+  background: rgba(255,255,255,.92);
+  padding: 5px 10px;
+  border-radius: 6px;
+  display: block;
+}}
+.rcjy-footer-sep {{ width: 1px; height: 40px; background: rgba(255,255,255,.18); }}
+.rcjy-footer-v2030 {{ height: 44px; display: block; }}
+.rcjy-footer-copy {{
+  color: rgba(255,255,255,.55);
+  font-size: .78rem;
+  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  text-align: right;
+  line-height: 1.7;
+}}
+.rcjy-footer-copy a {{
+  color: rgba(255,255,255,.55);
+  text-decoration: none;
+}}
+.rcjy-footer-copy a:hover {{ color: #54C08A; }}
+
+/* ════════════════════════════════════════
    RESPONSIVE
    ════════════════════════════════════════ */
 @media (max-width: 760px) {{
   [data-testid="stMainBlockContainer"] {{ padding: 0 .75rem 2rem !important; }}
   .rcjy-nav {{ margin: 0 -.75rem 1rem; }}
-  .rcjy-nav-inner {{ padding: 0 .75rem; gap: .5rem; min-height: 56px; }}
+  .rcjy-nav-inner {{ padding: 0 .75rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
   .rcjy-nav-item {{ font-size: .78rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
+  .rcjy-nav-right {{ gap: .5rem; }}
+  .rcjy-footer-bar {{ flex-direction: column; text-align: center; padding: 1rem; }}
+  .rcjy-footer-copy {{ text-align: center; }}
+  .rcjy-footer {{ margin: 3rem -.75rem -3rem; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -615,26 +659,28 @@ _nl = st.session_state.ui_lang  # current UI lang
 
 
 def _ni(key, label):
-    """Render one nav item <li>."""
+    """One nav item — target=_self keeps navigation in the same tab."""
     cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
-    return f'<li><a href="?tab={key}&lang={_nl}&outlang={lang}" class="{cls}">{label}</a></li>'
+    return (f'<li><a href="?tab={key}&lang={_nl}&outlang={lang}" '
+            f'class="{cls}" target="_self">{label}</a></li>')
 
 
-def _lb(lkey, display, param):
-    """Render one language toggle button."""
-    current = _nl if param == "lang" else lang
-    cls = "rcjy-lang-on" if current == lkey else ""
-    if param == "lang":
-        href = f"?tab={active_tab}&lang={lkey}&outlang={lang}"
-    else:
-        href = f"?tab={active_tab}&lang={_nl}&outlang={lkey}"
-    return f'<a href="{href}" class="{cls}">{display}</a>'
+# UI-language toggle — single link showing the OTHER language (like rcjy.gov.sa)
+_other_lang_text = "العربية" if _nl == "en" else "English"
+_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}&outlang={lang}"
 
+# Output-language toggle
+_out_en_cls = "rcjy-out-on" if lang == "en" else ""
+_out_ar_cls = "rcjy-out-on" if lang == "ar" else ""
+_out_en_href = f"?tab={active_tab}&lang={_nl}&outlang=en"
+_out_ar_href = f"?tab={active_tab}&lang={_nl}&outlang=ar"
+
+_VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/logo-white-h-cropped-avif"
 
 st.markdown(f"""
 <nav class="rcjy-nav">
   <div class="rcjy-nav-inner">
-    <a href="?tab={active_tab}&lang={_nl}&outlang={lang}" class="rcjy-nav-logo-link">
+    <a href="?tab={active_tab}&lang={_nl}&outlang={lang}" class="rcjy-nav-logo-link" target="_self">
       <img class="rcjy-nav-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
            onerror="this.style.display='none'">
     </a>
@@ -646,18 +692,12 @@ st.markdown(f"""
       {_ni("podcast", L["tab_podcast"])}
     </ul>
     <div class="rcjy-nav-right">
-      <div>
-        <span class="rcjy-lang-label">{L["lang_label"]}</span>
-        <span class="rcjy-lang-pair">
-          {_lb("en", "EN", "lang")}
-          {_lb("ar", "عر", "lang")}
-        </span>
-      </div>
-      <div>
-        <span class="rcjy-lang-label">{L["output_lang_label"]}</span>
-        <span class="rcjy-lang-pair">
-          {_lb("en", "EN", "outlang")}
-          {_lb("ar", "عر", "outlang")}
+      <a href="{_other_lang_href}" class="rcjy-lang-link" target="_self">{_other_lang_text}</a>
+      <div class="rcjy-out-wrap">
+        <span class="rcjy-out-label">{L["output_lang_label"]}</span>
+        <span class="rcjy-out-pair">
+          <a href="{_out_en_href}" class="{_out_en_cls}" target="_self">EN</a>
+          <a href="{_out_ar_href}" class="{_out_ar_cls}" target="_self">عر</a>
         </span>
       </div>
     </div>
@@ -1007,12 +1047,23 @@ elif active_tab == "podcast":
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(f"""
-<div class="app-footer">
-  <span style="font-size:.7rem;color:#9DA4AE;">
-    Gemini 3 Pro &nbsp;·&nbsp; Imagen 4 Ultra &nbsp;·&nbsp; Nano Banana
-    &nbsp;·&nbsp; Veo 3.1 &nbsp;·&nbsp; Gemini TTS &nbsp;·&nbsp; Gemini 3 Flash
-  </span><br>
-  <a href="https://www.rcjy.gov.sa/en/" target="_blank" rel="noopener">rcjy.gov.sa</a>
-  &nbsp;·&nbsp; © 2026 {L['footer_org']}
+<div class="rcjy-footer">
+  <div class="rcjy-footer-bar">
+    <div class="rcjy-footer-logos">
+      <img class="rcjy-footer-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
+           onerror="this.style.display='none'">
+      <div class="rcjy-footer-sep"></div>
+      <img class="rcjy-footer-v2030" src="{_VISION_LOGO}" alt="Vision 2030"
+           onerror="this.style.display='none'">
+    </div>
+    <div class="rcjy-footer-copy">
+      جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع © 2026<br>
+      <span style="font-size:.68rem;opacity:.5;">
+        Gemini 3 · Imagen 4 · Veo 3.1 · Gemini TTS
+        &nbsp;·&nbsp;
+        <a href="https://www.rcjy.gov.sa/en/" target="_blank" rel="noopener">rcjy.gov.sa</a>
+      </span>
+    </div>
+  </div>
 </div>
 """, unsafe_allow_html=True)
