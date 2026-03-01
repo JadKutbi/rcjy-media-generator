@@ -50,7 +50,10 @@ MODELS = {
         "nano_banana": "gemini-2.5-flash-image",
         "nano_banana_pro": "gemini-3-pro-image-preview",
     },
-    "video": "veo-3.1-generate-preview",
+    "video": {
+        "standard": "veo-3.1-generate-preview",
+        "fast": "veo-3.1-fast-generate-preview",
+    },
     "voice": {
         "flash": "gemini-2.5-flash-preview-tts",
         "pro": "gemini-2.5-pro-preview-tts",

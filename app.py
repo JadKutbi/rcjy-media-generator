@@ -49,6 +49,8 @@ T = {
         "model_label":            "Model",
         "aspect_label":           "Aspect Ratio",
         "duration_label":         "Duration (sec)",
+        "resolution_label":       "Resolution",
+        "video_model_label":      "Video Model",
         "voice_label":            "Voice",
         "quality_label":          "Quality",
         "style_label":            "Delivery Style",
@@ -119,6 +121,8 @@ T = {
         "model_label":            "النموذج",
         "aspect_label":           "نسبة الأبعاد",
         "duration_label":         "المدة (ثانية)",
+        "resolution_label":       "الدقة",
+        "video_model_label":      "نموذج الفيديو",
         "voice_label":            "الصوت",
         "quality_label":          "الجودة",
         "style_label":            "أسلوب الأداء",
@@ -215,74 +219,34 @@ html, body, .stApp {{
 }}
 
 /* ════════════════════════════════════════
-   HEADER
+   WHITE NAVBAR
    ════════════════════════════════════════ */
-.rcjy-hdr {{
-  margin: 0 -1.5rem;
-  background:
-    radial-gradient(ellipse 50% 140% at 92% 50%, rgba(84,192,138,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 28% 70%  at 75% 0%,  rgba(27,131,84,.14)  0%, transparent 50%),
-    linear-gradient(135deg, #0A2617 0%, #0F3320 45%, #163D27 80%, #1A4D31 100%);
-  border-radius: 0 0 0 0;
-  overflow: hidden;
-  position: relative;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+/* Full-bleed white strip for the columns wrapper */
+div:has(> [data-testid="stHorizontalBlock"]:has(#rcjy-topnav)) {{
+  background: #fff !important;
+  margin: 0 -1.5rem .75rem !important;
+  padding: .5rem 1.5rem !important;
+  border-bottom: 1px solid #E5E7EB !important;
+  box-shadow: 0 1px 4px rgba(16,24,40,.06) !important;
 }}
-.hdr-inner {{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 2rem 1.25rem;
-  position: relative;
-  z-index: 1;
-  gap: 1rem;
-  flex-direction: {"row-reverse" if is_ar else "row"};
+[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) {{
+  background: transparent !important;
+  align-items: center !important;
 }}
-.hdr-brand {{
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex-direction: {"row-reverse" if is_ar else "row"};
+[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) [data-testid="column"] {{
+  background: transparent !important;
 }}
-/* Logo — white background so it's legible on dark header */
-.hdr-logo {{
-  height: 50px;
-  background: rgba(255,255,255,.97);
-  padding: 5px 10px;
-  border-radius: 8px;
-  display: block;
+#rcjy-topnav {{ display: flex; align-items: center; }}
+.nav-logo {{ height: 48px; display: block; flex-shrink: 0; }}
+/* Language selectors in navbar — compact, no label */
+[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) [data-testid="column"]:last-child .stSelectbox > label {{
+  display: none !important;
 }}
-.hdr-brand-text h1 {{
-  color: #fff !important;
-  font-size: 1.25rem !important;
-  font-weight: 600 !important;
-  letter-spacing: -.01em;
-  margin: 0 !important;
-  line-height: 1.25;
-}}
-.hdr-brand-text p {{
-  color: rgba(255,255,255,.50);
-  font-size: .72rem;
-  margin: .12rem 0 0;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  font-weight: 400;
-}}
-/* Concentric-ring geometric motif */
-.hdr-deco {{
-  position: absolute;
-  {"left" if is_ar else "right"}: -24px;
-  top: 50%;
-  transform: translateY(-50%);
-  opacity: .40;
-  pointer-events: none;
-}}
-/* RCJY green accent stripe */
-.rcjy-stripe {{
-  margin: 0 -1.5rem;
-  height: 3px;
-  background: linear-gradient(90deg,
-    transparent 0%, #1B8354 20%, #54C08A 50%, #1B8354 80%, transparent 100%);
+[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) [data-testid="column"]:last-child [data-baseweb="select"] > div {{
+  font-size: .8rem !important;
+  min-height: 36px !important;
+  padding-top: .25rem !important;
+  padding-bottom: .25rem !important;
 }}
 
 /* ════════════════════════════════════════
@@ -322,10 +286,10 @@ html, body, .stApp {{
 }}
 [data-testid="stSegmentedControl"] label > div:first-child {{ display: none !important; }}
 [data-testid="stSegmentedControl"] label:has(input:checked) {{
-  background: #EBF5EE !important;
-  color: #1B8354 !important;
+  background: #1B8354 !important;
+  color: #fff !important;
   font-weight: 600 !important;
-  box-shadow: inset 0 -2px 0 #1B8354 !important;
+  box-shadow: none !important;
 }}
 [data-testid="stSegmentedControl"] label:hover:not(:has(input:checked)) {{
   background: #F3F6F8 !important;
@@ -618,9 +582,11 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    RESPONSIVE
    ════════════════════════════════════════ */
 @media (max-width: 760px) {{
-  .hdr-inner {{ padding: 1rem; flex-direction: column !important; }}
   [data-testid="stMainBlockContainer"] {{ padding: 0 .75rem 2rem !important; }}
-  .rcjy-stripe, .rcjy-hdr {{ margin: 0 -.75rem; }}
+  div:has(> [data-testid="stHorizontalBlock"]:has(#rcjy-topnav)) {{
+    margin: 0 -.75rem .75rem !important;
+    padding: .4rem .75rem !important;
+  }}
   [data-testid="stSegmentedControl"] label {{
     font-size: .78rem !important;
     padding: 8px 4px !important;
@@ -629,68 +595,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 </style>
 """, unsafe_allow_html=True)
 
-# ── HEADER ────────────────────────────────────────────────────────────────────
-_deco_svg = """
-<svg class="hdr-deco" width="220" height="130"
-     viewBox="0 0 220 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="165" cy="65" r="105" stroke="rgba(255,255,255,.03)" stroke-width="1"/>
-  <circle cx="165" cy="65" r="84"  stroke="rgba(84,192,138,.07)"  stroke-width="1.2"/>
-  <circle cx="165" cy="65" r="63"  stroke="rgba(255,255,255,.05)" stroke-width="1.2"/>
-  <circle cx="165" cy="65" r="44"  stroke="rgba(84,192,138,.10)"  stroke-width="1.2"/>
-  <circle cx="165" cy="65" r="27"  stroke="rgba(255,255,255,.07)" stroke-width="1.2"/>
-  <circle cx="165" cy="65" r="13"  stroke="rgba(84,192,138,.14)"  stroke-width="1.2"/>
-  <circle cx="165" cy="65" r="5"   fill="rgba(84,192,138,.20)"/>
-  <line x1="20" y1="65" x2="55" y2="65" stroke="rgba(255,255,255,.06)" stroke-width="1"/>
-  <line x1="65" y1="25" x2="65" y2="105" stroke="rgba(84,192,138,.06)" stroke-width="1"/>
-  <circle cx="20" cy="30" r="2" fill="rgba(255,255,255,.06)"/>
-  <circle cx="32" cy="30" r="2" fill="rgba(84,192,138,.09)"/>
-  <circle cx="44" cy="30" r="2" fill="rgba(255,255,255,.06)"/>
-  <circle cx="20" cy="42" r="2" fill="rgba(84,192,138,.08)"/>
-  <circle cx="32" cy="42" r="2" fill="rgba(255,255,255,.07)"/>
-  <circle cx="44" cy="42" r="2" fill="rgba(84,192,138,.06)"/>
-</svg>
-"""
-
-# ── LANGUAGE CONTROLS — utility bar above header ──────────────────────────────
-_util_gap, _lc1, _lc2 = st.columns([5, 1.4, 1.4])
-with _lc1:
-    _new_lang = st.selectbox(
-        L["lang_label"], ["English", "العربية"],
-        index=1 if is_ar else 0, key="lang_sel",
-    )
-    _tgt = "ar" if _new_lang == "العربية" else "en"
-    if _tgt != st.session_state.ui_lang:
-        st.session_state.ui_lang = _tgt
-        st.rerun()
-with _lc2:
-    _out = st.selectbox(
-        L["output_lang_label"], ["English", "العربية"],
-        index=0, key="output_lang_sel",
-    )
-lang = "ar" if _out == "العربية" else "en"
-
-# ── HEADER ────────────────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="rcjy-hdr">
-  {_deco_svg}
-  <div class="hdr-inner">
-    <div class="hdr-brand">
-      <img class="hdr-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
-           onerror="this.style.display='none'">
-      <div class="hdr-brand-text">
-        <h1>{L['app_name']}</h1>
-        <p>{L['dept']}</p>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="rcjy-stripe"></div>
-""", unsafe_allow_html=True)
-
-if not _api_ok:
-    st.warning(L["warn_api"])
-
-# ── CATEGORY NAVIGATION ───────────────────────────────────────────────────────
+# ── WHITE NAVBAR ──────────────────────────────────────────────────────────────
 _tab_keys   = ["text", "image", "video", "voice", "podcast"]
 _tab_labels = {
     "text":    L["tab_text"],
@@ -700,17 +605,43 @@ _tab_labels = {
     "podcast": L["tab_podcast"],
 }
 
-active_tab = st.segmented_control(
-    "Category",
-    options=_tab_keys,
-    format_func=lambda x: _tab_labels[x],
-    key="active_tab",
-    default="text",
-    label_visibility="collapsed",
-)
-# Guard: segmented_control returns None when nothing is selected yet
-if active_tab is None:
-    active_tab = "text"
+_nav_logo, _nav_cats, _nav_langs = st.columns([1.8, 6, 2.5])
+with _nav_logo:
+    st.markdown(
+        f'<img id="rcjy-topnav" class="nav-logo" src="{RCJY_LOGO_URL}" alt="RCJY"'
+        f' onerror="this.style.display=\'none\'">',
+        unsafe_allow_html=True,
+    )
+with _nav_cats:
+    active_tab = st.segmented_control(
+        "Category", options=_tab_keys,
+        format_func=lambda x: _tab_labels[x],
+        key="active_tab", default="text", label_visibility="collapsed",
+    )
+    if active_tab is None:
+        active_tab = "text"
+with _nav_langs:
+    _ll, _lr = st.columns(2)
+    with _ll:
+        _new_lang = st.selectbox(
+            L["lang_label"], ["English", "العربية"],
+            index=1 if is_ar else 0, key="lang_sel",
+            label_visibility="collapsed",
+        )
+        _tgt = "ar" if _new_lang == "العربية" else "en"
+        if _tgt != st.session_state.ui_lang:
+            st.session_state.ui_lang = _tgt
+            st.rerun()
+    with _lr:
+        _out = st.selectbox(
+            L["output_lang_label"], ["English", "العربية"],
+            index=0, key="output_lang_sel",
+            label_visibility="collapsed",
+        )
+lang = "ar" if _out == "العربية" else "en"
+
+if not _api_ok:
+    st.warning(L["warn_api"])
 
 
 # ── SHARED HELPERS ────────────────────────────────────────────────────────────
@@ -871,12 +802,21 @@ elif active_tab == "image":
 # ════════════════════════════════════════════════════════════════════════════
 elif active_tab == "video":
     with st.container(border=True):
-        _tags("Veo 3.1", "1080p HD", "Up to 8s")
-        _v1, _v2 = st.columns(2)
+        _tags("Veo 3.1 Standard", "Veo 3.1 Fast", "Up to 4K", "Up to 8s")
+        _v1, _v2, _v3, _v4 = st.columns(4)
         with _v1:
-            vid_aspect = st.selectbox(L["aspect_label"], ["16:9", "9:16"], key="vid_aspect")
+            _vm = st.selectbox(L["video_model_label"], ["Standard", "Fast"], key="vid_model")
+            vid_model = "standard" if _vm == "Standard" else "fast"
         with _v2:
-            vid_dur = st.selectbox(L["duration_label"], ["4", "6", "8"], index=2, key="vid_dur")
+            vid_aspect = st.selectbox(L["aspect_label"], ["16:9", "9:16"], key="vid_aspect")
+        with _v3:
+            vid_res = st.selectbox(L["resolution_label"], ["720p", "1080p", "4K"], index=1, key="vid_res")
+        with _v4:
+            # 1080p and 4K require 8s per Veo API docs
+            if vid_res in ("1080p", "4K"):
+                vid_dur = st.selectbox(L["duration_label"], ["8"], key="vid_dur_hi")
+            else:
+                vid_dur = st.selectbox(L["duration_label"], ["4", "6", "8"], index=2, key="vid_dur_lo")
 
         st.divider()
 
@@ -896,7 +836,8 @@ elif active_tab == "video":
                     data, mime = generate_video(
                         prompt=vid_prompt.strip(),
                         context_text=ctx_text if has_ctx else "",
-                        aspect_ratio=vid_aspect, duration=vid_dur, lang=lang,
+                        aspect_ratio=vid_aspect, duration=vid_dur,
+                        resolution=vid_res.lower(), model=vid_model, lang=lang,
                     )
                     st.session_state.result_video = (data, mime)
                 except Exception as e:

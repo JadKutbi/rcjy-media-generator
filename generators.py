@@ -248,13 +248,18 @@ def generate_video(
     context_text: str = "",
     aspect_ratio: str = "16:9",
     duration: str = "8",
+    resolution: str = "1080p",
+    model: str = "standard",
     lang: str = "en",
 ) -> tuple[bytes, str]:
     from google import genai
 
     prompt = _validate_prompt(prompt)
     context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
-    model_id = MODELS["video"]
+    model_id = (
+        MODELS["video"].get(model, MODELS["video"]["standard"])
+        if isinstance(MODELS["video"], dict) else MODELS["video"]
+    )
 
     # Video models can't render text correctly (especially Arabic), so we
     # explicitly tell it to avoid any on-screen text, titles, or captions.
@@ -276,7 +281,7 @@ def generate_video(
     full_prompt += prompt
 
     key = require_api_key()
-    logger.info("Generating video: model=%s, aspect=%s, duration=%s, lang=%s", model_id, aspect_ratio, duration, lang)
+    logger.info("Generating video: model=%s, aspect=%s, duration=%s, resolution=%s, lang=%s", model_id, aspect_ratio, duration, resolution, lang)
 
     _saved = os.environ.pop("GOOGLE_GENAI_USE_VERTEXAI", None)
     try:
@@ -284,7 +289,7 @@ def generate_video(
         operation = client.models.generate_videos(
             model=model_id,
             prompt=full_prompt,
-            config={"aspect_ratio": aspect_ratio, "duration_seconds": duration},
+            config={"aspect_ratio": aspect_ratio, "duration_seconds": duration, "resolution": resolution.lower()},
         )
         timeout = 900
         elapsed = 0
