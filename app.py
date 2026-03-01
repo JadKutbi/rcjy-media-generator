@@ -1135,12 +1135,12 @@ st.markdown(f"""
       <div class="rcjy-ftr-col">
         <h4>تابعنا على</h4>
         <div class="rcjy-ftr-social">
-          <a class="rcjy-ftr-soc" href="https://twitter.com/rcjy_SA" target="_blank" rel="noopener" title="X">𝕏</a>
-          <a class="rcjy-ftr-soc" href="https://www.linkedin.com/company/rcjy" target="_blank" rel="noopener" title="LinkedIn">in</a>
-          <a class="rcjy-ftr-soc" href="https://www.youtube.com/@rcjy" target="_blank" rel="noopener" title="YouTube">▶</a>
-          <a class="rcjy-ftr-soc" href="https://www.instagram.com/rcjy_sa" target="_blank" rel="noopener" title="Instagram">ig</a>
-          <a class="rcjy-ftr-soc" href="https://www.facebook.com/RCJY.KSA" target="_blank" rel="noopener" title="Facebook">f</a>
-          <a class="rcjy-ftr-soc" href="https://www.snapchat.com/add/rcjy_sa" target="_blank" rel="noopener" title="Snapchat">👻</a>
+          <a class="rcjy-ftr-soc" href="https://x.com/rcjy1" target="_blank" rel="noopener" title="X">𝕏</a>
+          <a class="rcjy-ftr-soc" href="https://www.linkedin.com/company/royal-commission-for-jubail-and-yanbu/" target="_blank" rel="noopener" title="LinkedIn">in</a>
+          <a class="rcjy-ftr-soc" href="https://www.youtube.com/@RCJYSaudi" target="_blank" rel="noopener" title="YouTube">▶</a>
+          <a class="rcjy-ftr-soc" href="https://www.instagram.com/RCJYSaudi" target="_blank" rel="noopener" title="Instagram">ig</a>
+          <a class="rcjy-ftr-soc" href="https://www.facebook.com/RCJY.Saudi/" target="_blank" rel="noopener" title="Facebook">f</a>
+          <a class="rcjy-ftr-soc" href="https://www.snapchat.com/add/rcjy-1" target="_blank" rel="noopener" title="Snapchat">👻</a>
         </div>
       </div>
 
