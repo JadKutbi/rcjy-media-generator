@@ -179,11 +179,16 @@ st.set_page_config(
 # ── Session state ─────────────────────────────────────────────────────────────
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "en"
-if "active_tab" not in st.session_state:
-    st.session_state.active_tab = "text"
 for _k in ("result_text", "result_image", "result_video", "result_voice", "result_podcast"):
     if _k not in st.session_state:
         st.session_state[_k] = None
+
+# Sync UI language from URL params so nav language toggles work without widgets
+_qp = st.query_params
+_qp_lang = _qp.get("lang", st.session_state.ui_lang)
+if _qp_lang not in ("en", "ar"):
+    _qp_lang = "en"
+st.session_state.ui_lang = _qp_lang
 
 is_ar   = st.session_state.ui_lang == "ar"
 L       = T[st.session_state.ui_lang]
@@ -219,81 +224,89 @@ html, body, .stApp {{
 }}
 
 /* ════════════════════════════════════════
-   WHITE NAVBAR
+   NAVBAR  (pure-HTML, full-bleed)
    ════════════════════════════════════════ */
-/* Full-bleed white strip for the columns wrapper */
-div:has(> [data-testid="stHorizontalBlock"]:has(#rcjy-topnav)) {{
-  background: #fff !important;
-  margin: 0 -1.5rem .75rem !important;
-  padding: .5rem 1.5rem !important;
-  border-bottom: 1px solid #E5E7EB !important;
-  box-shadow: 0 1px 4px rgba(16,24,40,.06) !important;
+.rcjy-nav {{
+  background: #fff;
+  border-bottom: 2px solid #1B8354;
+  margin: 0 -1.5rem 1.25rem;
+  box-shadow: 0 2px 8px rgba(16,24,40,.07);
 }}
-[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) {{
-  background: transparent !important;
-  align-items: center !important;
+.rcjy-nav-inner {{
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  min-height: 68px;
+  gap: 1.25rem;
+  direction: ltr;
 }}
-[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) [data-testid="column"] {{
-  background: transparent !important;
+.rcjy-nav-logo-link {{
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
 }}
-#rcjy-topnav {{ display: flex; align-items: center; }}
-.nav-logo {{ height: 48px; display: block; flex-shrink: 0; }}
-/* Language selectors in navbar — compact, no label */
-[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) [data-testid="column"]:last-child .stSelectbox > label {{
-  display: none !important;
+.rcjy-nav-logo {{ height: 46px; display: block; }}
+.rcjy-nav-links {{
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2px;
+  flex: 1 1 auto;
+  align-items: center;
 }}
-[data-testid="stHorizontalBlock"]:has(#rcjy-topnav) [data-testid="column"]:last-child [data-baseweb="select"] > div {{
-  font-size: .8rem !important;
-  min-height: 36px !important;
-  padding-top: .25rem !important;
-  padding-bottom: .25rem !important;
+.rcjy-nav-item {{
+  display: block;
+  padding: 9px 15px;
+  border-radius: 6px;
+  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  font-size: .9rem;
+  font-weight: 500;
+  color: #384250;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
 }}
-
-/* ════════════════════════════════════════
-   SEGMENTED CONTROL — category nav
-   ════════════════════════════════════════ */
-[data-testid="stSegmentedControl"] {{
-  width: 100%;
-  margin-bottom: .25rem;
-}}
-[data-testid="stSegmentedControl"] > div {{ width: 100%; }}
-[data-testid="stSegmentedControl"] [role="radiogroup"],
-[data-testid="stSegmentedControl"] > div > div {{
-  background: #FFFFFF !important;
-  border: 1px solid #E5E7EB !important;
-  border-radius: 8px !important;
-  padding: 4px !important;
-  gap: 2px !important;
-  width: 100% !important;
-  display: flex !important;
-  box-shadow: 0 1px 4px rgba(16,24,40,.06) !important;
-}}
-[data-testid="stSegmentedControl"] label {{
-  flex: 1 1 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
-  font-size: .875rem !important;
-  font-weight: 500 !important;
-  color: #384250 !important;
-  border-radius: 6px !important;
-  padding: 10px 8px !important;
-  cursor: pointer !important;
-  transition: color .15s, background .15s !important;
-  white-space: nowrap !important;
-  letter-spacing: .005em !important;
-}}
-[data-testid="stSegmentedControl"] label > div:first-child {{ display: none !important; }}
-[data-testid="stSegmentedControl"] label:has(input:checked) {{
+.rcjy-nav-item:hover {{ background: #EBF5EE; color: #1B8354; }}
+.rcjy-nav-active {{
   background: #1B8354 !important;
   color: #fff !important;
   font-weight: 600 !important;
-  box-shadow: none !important;
 }}
-[data-testid="stSegmentedControl"] label:hover:not(:has(input:checked)) {{
-  background: #F3F6F8 !important;
-  color: #14573A !important;
+/* Right-side language toggles */
+.rcjy-nav-right {{
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  flex-shrink: 0;
+}}
+.rcjy-lang-pair {{
+  display: flex;
+  border: 1px solid #D2D6DB;
+  border-radius: 6px;
+  overflow: hidden;
+}}
+.rcjy-lang-pair > a {{
+  display: block;
+  padding: 5px 11px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: #6C737F;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+  letter-spacing: .03em;
+}}
+.rcjy-lang-pair > a + a {{ border-left: 1px solid #D2D6DB; }}
+.rcjy-lang-pair > a:hover:not(.rcjy-lang-on) {{ background: #F3F6F8; color: #384250; }}
+.rcjy-lang-on {{ background: #1B8354 !important; color: #fff !important; }}
+.rcjy-lang-label {{
+  font-size: .67rem;
+  font-weight: 600;
+  color: #9DA4AE;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-right: 2px;
 }}
 
 /* ════════════════════════════════════════
@@ -583,62 +596,74 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    ════════════════════════════════════════ */
 @media (max-width: 760px) {{
   [data-testid="stMainBlockContainer"] {{ padding: 0 .75rem 2rem !important; }}
-  div:has(> [data-testid="stHorizontalBlock"]:has(#rcjy-topnav)) {{
-    margin: 0 -.75rem .75rem !important;
-    padding: .4rem .75rem !important;
-  }}
-  [data-testid="stSegmentedControl"] label {{
-    font-size: .78rem !important;
-    padding: 8px 4px !important;
-  }}
+  .rcjy-nav {{ margin: 0 -.75rem 1rem; }}
+  .rcjy-nav-inner {{ padding: 0 .75rem; gap: .5rem; min-height: 56px; }}
+  .rcjy-nav-item {{ font-size: .78rem !important; padding: 7px 9px !important; }}
+  .rcjy-nav-logo {{ height: 36px; }}
 }}
 </style>
 """, unsafe_allow_html=True)
 
-# ── WHITE NAVBAR ──────────────────────────────────────────────────────────────
-_tab_keys   = ["text", "image", "video", "voice", "podcast"]
-_tab_labels = {
-    "text":    L["tab_text"],
-    "image":   L["tab_image"],
-    "video":   L["tab_video"],
-    "voice":   L["tab_voice"],
-    "podcast": L["tab_podcast"],
-}
+# ── NAVBAR (pure HTML + URL params) ───────────────────────────────────────────
+active_tab = _qp.get("tab", "text")
+if active_tab not in ("text", "image", "video", "voice", "podcast"):
+    active_tab = "text"
+lang = _qp.get("outlang", "en")
+if lang not in ("en", "ar"):
+    lang = "en"
+_nl = st.session_state.ui_lang  # current UI lang
 
-_nav_logo, _nav_cats, _nav_langs = st.columns([1.8, 6, 2.5])
-with _nav_logo:
-    st.markdown(
-        f'<img id="rcjy-topnav" class="nav-logo" src="{RCJY_LOGO_URL}" alt="RCJY"'
-        f' onerror="this.style.display=\'none\'">',
-        unsafe_allow_html=True,
-    )
-with _nav_cats:
-    active_tab = st.segmented_control(
-        "Category", options=_tab_keys,
-        format_func=lambda x: _tab_labels[x],
-        key="active_tab", default="text", label_visibility="collapsed",
-    )
-    if active_tab is None:
-        active_tab = "text"
-with _nav_langs:
-    _ll, _lr = st.columns(2)
-    with _ll:
-        _new_lang = st.selectbox(
-            L["lang_label"], ["English", "العربية"],
-            index=1 if is_ar else 0, key="lang_sel",
-            label_visibility="collapsed",
-        )
-        _tgt = "ar" if _new_lang == "العربية" else "en"
-        if _tgt != st.session_state.ui_lang:
-            st.session_state.ui_lang = _tgt
-            st.rerun()
-    with _lr:
-        _out = st.selectbox(
-            L["output_lang_label"], ["English", "العربية"],
-            index=0, key="output_lang_sel",
-            label_visibility="collapsed",
-        )
-lang = "ar" if _out == "العربية" else "en"
+
+def _ni(key, label):
+    """Render one nav item <li>."""
+    cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
+    return f'<li><a href="?tab={key}&lang={_nl}&outlang={lang}" class="{cls}">{label}</a></li>'
+
+
+def _lb(lkey, display, param):
+    """Render one language toggle button."""
+    current = _nl if param == "lang" else lang
+    cls = "rcjy-lang-on" if current == lkey else ""
+    if param == "lang":
+        href = f"?tab={active_tab}&lang={lkey}&outlang={lang}"
+    else:
+        href = f"?tab={active_tab}&lang={_nl}&outlang={lkey}"
+    return f'<a href="{href}" class="{cls}">{display}</a>'
+
+
+st.markdown(f"""
+<nav class="rcjy-nav">
+  <div class="rcjy-nav-inner">
+    <a href="?tab={active_tab}&lang={_nl}&outlang={lang}" class="rcjy-nav-logo-link">
+      <img class="rcjy-nav-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
+           onerror="this.style.display='none'">
+    </a>
+    <ul class="rcjy-nav-links">
+      {_ni("text",    L["tab_text"])}
+      {_ni("image",   L["tab_image"])}
+      {_ni("video",   L["tab_video"])}
+      {_ni("voice",   L["tab_voice"])}
+      {_ni("podcast", L["tab_podcast"])}
+    </ul>
+    <div class="rcjy-nav-right">
+      <div>
+        <span class="rcjy-lang-label">{L["lang_label"]}</span>
+        <span class="rcjy-lang-pair">
+          {_lb("en", "EN", "lang")}
+          {_lb("ar", "عر", "lang")}
+        </span>
+      </div>
+      <div>
+        <span class="rcjy-lang-label">{L["output_lang_label"]}</span>
+        <span class="rcjy-lang-pair">
+          {_lb("en", "EN", "outlang")}
+          {_lb("ar", "عر", "outlang")}
+        </span>
+      </div>
+    </div>
+  </div>
+</nav>
+""", unsafe_allow_html=True)
 
 if not _api_ok:
     st.warning(L["warn_api"])
@@ -983,13 +1008,11 @@ elif active_tab == "podcast":
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="app-footer">
-  <strong>{L['footer_org']}</strong><br>
-  {L['footer_dept']}<br>
-  <span style="font-size:.7rem;color:#D5CFC9;">
+  <span style="font-size:.7rem;color:#9DA4AE;">
     Gemini 3 Pro &nbsp;·&nbsp; Imagen 4 Ultra &nbsp;·&nbsp; Nano Banana
     &nbsp;·&nbsp; Veo 3.1 &nbsp;·&nbsp; Gemini TTS &nbsp;·&nbsp; Gemini 3 Flash
   </span><br>
   <a href="https://www.rcjy.gov.sa/en/" target="_blank" rel="noopener">rcjy.gov.sa</a>
-  &nbsp;·&nbsp; © 2026
+  &nbsp;·&nbsp; © 2026 {L['footer_org']}
 </div>
 """, unsafe_allow_html=True)
