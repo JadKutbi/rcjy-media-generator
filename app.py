@@ -295,38 +295,27 @@ html, body, .stApp {{
   white-space: nowrap;
 }}
 .rcjy-lang-link:hover {{ background: #EBF5EE; color: #1B8354; border-color: #1B8354; }}
-/* Output-language toggle */
-.rcjy-out-wrap {{
-  display: flex;
-  align-items: center;
-  gap: .3rem;
-}}
-.rcjy-out-label {{
-  font-size: .68rem;
-  font-weight: 600;
-  color: #9DA4AE;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  white-space: nowrap;
-}}
-.rcjy-out-pair {{
-  display: flex;
-  border: 1px solid #D2D6DB;
-  border-radius: 5px;
-  overflow: hidden;
-}}
-.rcjy-out-pair > a {{
-  display: block;
-  padding: 4px 9px;
-  font-size: .72rem;
-  font-weight: 600;
+/* Output-language — same style as UI lang link, with a separator */
+.rcjy-nav-sep {{ color: #D2D6DB; padding: 0 .1rem; user-select: none; }}
+.rcjy-out-link {{
+  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  font-size: .82rem;
+  font-weight: 500;
   color: #6C737F;
   text-decoration: none;
-  transition: background .15s, color .15s;
+  padding: 6px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
 }}
-.rcjy-out-pair > a + a {{ border-left: 1px solid #D2D6DB; }}
-.rcjy-out-pair > a:hover:not(.rcjy-out-on) {{ background: #F3F6F8; color: #384250; }}
-.rcjy-out-on {{ background: #1B8354 !important; color: #fff !important; }}
+.rcjy-out-link:hover {{ background: #EBF5EE; color: #1B8354; border-color: #C3E0CC; }}
+.rcjy-out-active {{
+  background: #EBF5EE !important;
+  color: #1B8354 !important;
+  border-color: #1B8354 !important;
+  font-weight: 600 !important;
+}}
 
 /* ════════════════════════════════════════
    CONTENT CARD — borderless flat card
@@ -589,47 +578,112 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stSidebar"] {{ background: #fff; }}
 
 /* ════════════════════════════════════════
-   FOOTER  (dark — RCJY site style)
+   FOOTER — 3-section RCJY style
    ════════════════════════════════════════ */
 .rcjy-footer {{
   background: #0d121c;
   margin: 3rem -1.5rem -3rem;
-  padding: 0;
+  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  direction: rtl;
 }}
-.rcjy-footer-bar {{
+/* ─ Top dark section: link columns ─ */
+.rcjy-ftr-top {{
+  padding: 2.5rem 2rem 2rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}}
+.rcjy-ftr-cols {{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+}}
+.rcjy-ftr-col h4 {{
+  color: #fff;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin: 0 0 1rem;
+  padding-bottom: .6rem;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}}
+.rcjy-ftr-col ul {{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}}
+.rcjy-ftr-col ul a {{
+  color: rgba(255,255,255,.5);
+  text-decoration: none;
+  font-size: .82rem;
+  line-height: 1.4;
+  transition: color .15s;
+}}
+.rcjy-ftr-col ul a:hover {{ color: #54C08A; }}
+/* Social icons */
+.rcjy-ftr-social {{
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .25rem;
+}}
+.rcjy-ftr-soc {{
+  width: 34px; height: 34px;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,.65);
+  text-decoration: none;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  transition: background .15s, border-color .15s, color .15s;
+}}
+.rcjy-ftr-soc:hover {{
+  background: #1B8354;
+  border-color: #1B8354;
+  color: #fff;
+}}
+/* ─ Middle white section: logos ─ */
+.rcjy-ftr-mid {{
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  padding: 1.75rem 2rem;
+}}
+.rcjy-ftr-rcjy {{ height: 52px; display: block; }}
+.rcjy-ftr-divv {{ width: 1px; height: 50px; background: #E5E7EB; }}
+.rcjy-ftr-vision {{ height: 52px; display: block; }}
+/* ─ Bottom dark bar: copyright ─ */
+.rcjy-ftr-bottom {{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 2rem;
-  direction: ltr;
-  gap: 1rem;
+  padding: 1rem 2rem;
+  flex-wrap: wrap;
+  gap: .75rem;
 }}
-.rcjy-footer-logos {{
-  display: flex;
-  align-items: center;
-  gap: 1.75rem;
-}}
-.rcjy-footer-logo {{
-  height: 44px;
-  background: rgba(255,255,255,.92);
-  padding: 5px 10px;
-  border-radius: 6px;
-  display: block;
-}}
-.rcjy-footer-sep {{ width: 1px; height: 40px; background: rgba(255,255,255,.18); }}
-.rcjy-footer-v2030 {{ height: 44px; display: block; }}
-.rcjy-footer-copy {{
-  color: rgba(255,255,255,.55);
+.rcjy-ftr-copy {{
+  color: rgba(255,255,255,.45);
   font-size: .78rem;
-  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
-  text-align: right;
-  line-height: 1.7;
 }}
-.rcjy-footer-copy a {{
-  color: rgba(255,255,255,.55);
+.rcjy-ftr-links {{
+  display: flex;
+  gap: 1.25rem;
+}}
+.rcjy-ftr-links a {{
+  color: rgba(255,255,255,.4);
   text-decoration: none;
+  font-size: .75rem;
+  transition: color .15s;
 }}
-.rcjy-footer-copy a:hover {{ color: #54C08A; }}
+.rcjy-ftr-links a:hover {{ color: #54C08A; }}
 
 /* ════════════════════════════════════════
    RESPONSIVE
@@ -641,9 +695,12 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   .rcjy-nav-item {{ font-size: .78rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
-  .rcjy-footer-bar {{ flex-direction: column; text-align: center; padding: 1rem; }}
-  .rcjy-footer-copy {{ text-align: center; }}
-  .rcjy-footer {{ margin: 3rem -.75rem -3rem; }}
+  .rcjy-footer {{ margin: 3rem -.75rem -3rem; direction: rtl; }}
+  .rcjy-ftr-cols {{ grid-template-columns: 1fr 1fr; gap: 1.5rem; }}
+  .rcjy-ftr-top {{ padding: 1.5rem 1rem; }}
+  .rcjy-ftr-mid {{ gap: 1.5rem; padding: 1.25rem 1rem; }}
+  .rcjy-ftr-bottom {{ flex-direction: column; align-items: flex-start; padding: 1rem; }}
+  .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 40px; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -665,17 +722,17 @@ def _ni(key, label):
             f'class="{cls}" target="_self">{label}</a></li>')
 
 
-# UI-language toggle — single link showing the OTHER language (like rcjy.gov.sa)
+# UI language — single link showing the OTHER language (RCJY site style)
 _other_lang_text = "العربية" if _nl == "en" else "English"
 _other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}&outlang={lang}"
 
-# Output-language toggle
-_out_en_cls = "rcjy-out-on" if lang == "en" else ""
-_out_ar_cls = "rcjy-out-on" if lang == "ar" else ""
+# Output language — two clean links, active one highlighted
+_out_en_cls = "rcjy-out-link rcjy-out-active" if lang == "en" else "rcjy-out-link"
+_out_ar_cls = "rcjy-out-link rcjy-out-active" if lang == "ar" else "rcjy-out-link"
 _out_en_href = f"?tab={active_tab}&lang={_nl}&outlang=en"
 _out_ar_href = f"?tab={active_tab}&lang={_nl}&outlang=ar"
 
-_VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/logo-white-h-cropped-avif"
+_VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/vision_logo"
 
 st.markdown(f"""
 <nav class="rcjy-nav">
@@ -693,13 +750,9 @@ st.markdown(f"""
     </ul>
     <div class="rcjy-nav-right">
       <a href="{_other_lang_href}" class="rcjy-lang-link" target="_self">{_other_lang_text}</a>
-      <div class="rcjy-out-wrap">
-        <span class="rcjy-out-label">{L["output_lang_label"]}</span>
-        <span class="rcjy-out-pair">
-          <a href="{_out_en_href}" class="{_out_en_cls}" target="_self">EN</a>
-          <a href="{_out_ar_href}" class="{_out_ar_cls}" target="_self">عر</a>
-        </span>
-      </div>
+      <span class="rcjy-nav-sep">|</span>
+      <a href="{_out_en_href}" class="{_out_en_cls}" target="_self">EN</a>
+      <a href="{_out_ar_href}" class="{_out_ar_cls}" target="_self">عر</a>
     </div>
   </div>
 </nav>
@@ -1048,22 +1101,70 @@ elif active_tab == "podcast":
 # ── FOOTER ────────────────────────────────────────────────────────────────────
 st.markdown(f"""
 <div class="rcjy-footer">
-  <div class="rcjy-footer-bar">
-    <div class="rcjy-footer-logos">
-      <img class="rcjy-footer-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
-           onerror="this.style.display='none'">
-      <div class="rcjy-footer-sep"></div>
-      <img class="rcjy-footer-v2030" src="{_VISION_LOGO}" alt="Vision 2030"
-           onerror="this.style.display='none'">
-    </div>
-    <div class="rcjy-footer-copy">
-      جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع © 2026<br>
-      <span style="font-size:.68rem;opacity:.5;">
-        Gemini 3 · Imagen 4 · Veo 3.1 · Gemini TTS
-        &nbsp;·&nbsp;
-        <a href="https://www.rcjy.gov.sa/en/" target="_blank" rel="noopener">rcjy.gov.sa</a>
-      </span>
+
+  <!-- ① Top dark section — link columns -->
+  <div class="rcjy-ftr-top">
+    <div class="rcjy-ftr-cols">
+
+      <div class="rcjy-ftr-col">
+        <h4>الجهات ذات العلاقة</h4>
+        <ul>
+          <li><a href="https://www.mim.gov.sa" target="_blank" rel="noopener">وزارة الصناعة والثروة المعدنية</a></li>
+          <li><a href="https://www.seza.gov.sa" target="_blank" rel="noopener">هيئة المناطق الاقتصادية الخاصة</a></li>
+          <li><a href="https://www.sidf.gov.sa" target="_blank" rel="noopener">صندوق التنمية الصناعي</a></li>
+        </ul>
+      </div>
+
+      <div class="rcjy-ftr-col">
+        <h4>الخدمات الإلكترونية</h4>
+        <ul>
+          <li><a href="https://www.rcjy.gov.sa/ar/e-services" target="_blank" rel="noopener">منصة يسير خدمات</a></li>
+          <li><a href="https://www.rcjy.gov.sa/ar/careers" target="_blank" rel="noopener">بوابة التوظيف</a></li>
+        </ul>
+      </div>
+
+      <div class="rcjy-ftr-col">
+        <h4>اتصل بنا</h4>
+        <ul>
+          <li><a href="https://www.rcjy.gov.sa/ar/contact-us" target="_blank" rel="noopener">التواصل معنا</a></li>
+          <li><a href="https://www.rcjy.gov.sa/ar/e-participation" target="_blank" rel="noopener">المشاركة الإلكترونية</a></li>
+          <li><a href="https://www.rcjy.gov.sa/ar/open-data" target="_blank" rel="noopener">البيانات المفتوحة</a></li>
+        </ul>
+      </div>
+
+      <div class="rcjy-ftr-col">
+        <h4>تابعنا على</h4>
+        <div class="rcjy-ftr-social">
+          <a class="rcjy-ftr-soc" href="https://twitter.com/rcjy_SA" target="_blank" rel="noopener" title="X">𝕏</a>
+          <a class="rcjy-ftr-soc" href="https://www.linkedin.com/company/rcjy" target="_blank" rel="noopener" title="LinkedIn">in</a>
+          <a class="rcjy-ftr-soc" href="https://www.youtube.com/@rcjy" target="_blank" rel="noopener" title="YouTube">▶</a>
+          <a class="rcjy-ftr-soc" href="https://www.instagram.com/rcjy_sa" target="_blank" rel="noopener" title="Instagram">ig</a>
+          <a class="rcjy-ftr-soc" href="https://www.facebook.com/RCJY.KSA" target="_blank" rel="noopener" title="Facebook">f</a>
+          <a class="rcjy-ftr-soc" href="https://www.snapchat.com/add/rcjy_sa" target="_blank" rel="noopener" title="Snapchat">👻</a>
+        </div>
+      </div>
+
     </div>
   </div>
+
+  <!-- ② Middle white section — RCJY + Vision 2030 logos -->
+  <div class="rcjy-ftr-mid">
+    <img class="rcjy-ftr-rcjy" src="{RCJY_LOGO_URL}" alt="الهيئة الملكية للجبيل وينبع"
+         onerror="this.style.display='none'">
+    <div class="rcjy-ftr-divv"></div>
+    <img class="rcjy-ftr-vision" src="{_VISION_LOGO}" alt="رؤية 2030"
+         onerror="this.style.display='none'">
+  </div>
+
+  <!-- ③ Bottom dark bar — copyright + links -->
+  <div class="rcjy-ftr-bottom">
+    <span class="rcjy-ftr-copy">جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع © 2026</span>
+    <div class="rcjy-ftr-links">
+      <a href="https://www.rcjy.gov.sa/ar/privacy-policy" target="_blank" rel="noopener">سياسة الخصوصية</a>
+      <a href="https://www.rcjy.gov.sa/ar/terms-and-conditions" target="_blank" rel="noopener">الشروط والأحكام</a>
+      <a href="https://www.rcjy.gov.sa/ar/sitemap" target="_blank" rel="noopener">خريطة الموقع</a>
+    </div>
+  </div>
+
 </div>
 """, unsafe_allow_html=True)
