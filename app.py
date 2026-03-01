@@ -210,7 +210,7 @@ html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif !important;
   font-size: 15px;
   color: #161616;
-  background: #F3F6F8 !important;
+  background: #fff !important;
   -webkit-font-smoothing: antialiased;
   direction: {_dir};
 }}
@@ -220,7 +220,7 @@ html, body, .stApp {{
   max-width: 1080px !important;
   margin: 0 auto !important;
   padding: 0 1.5rem 3rem !important;
-  background: #F3F6F8 !important;
+  background: #fff !important;
 }}
 
 /* ════════════════════════════════════════
@@ -295,25 +295,29 @@ html, body, .stApp {{
   white-space: nowrap;
 }}
 .rcjy-lang-link:hover {{ background: #EBF5EE; color: #1B8354; border-color: #1B8354; }}
-/* Output-language — same style as UI lang link, with a separator */
-.rcjy-nav-sep {{ color: #D2D6DB; padding: 0 .1rem; user-select: none; }}
-.rcjy-out-link {{
+/* Output-language — unified segmented toggle */
+.rcjy-outlang {{
+  display: flex;
+  border: 1px solid #D2D6DB;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}}
+.rcjy-out-opt {{
   font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
   font-size: .82rem;
   font-weight: 500;
   color: #6C737F;
   text-decoration: none;
-  padding: 6px 12px;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  transition: background .15s, color .15s, border-color .15s;
+  padding: 6px 11px;
+  transition: background .15s, color .15s;
   white-space: nowrap;
 }}
-.rcjy-out-link:hover {{ background: #EBF5EE; color: #1B8354; border-color: #C3E0CC; }}
+.rcjy-out-opt + .rcjy-out-opt {{ border-left: 1px solid #D2D6DB; }}
+.rcjy-out-opt:hover {{ background: #EBF5EE; color: #1B8354; }}
 .rcjy-out-active {{
-  background: #EBF5EE !important;
-  color: #1B8354 !important;
-  border-color: #1B8354 !important;
+  background: #1B8354 !important;
+  color: #fff !important;
   font-weight: 600 !important;
 }}
 
@@ -573,6 +577,50 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 
 /* ════════════════════════════════════════
+   TOOL CARDS — category grid below nav
+   ════════════════════════════════════════ */
+.rcjy-tools-grid {{
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: .75rem;
+  margin-bottom: 1.5rem;
+}}
+.rcjy-tool-card {{
+  background: #fff;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 1rem .875rem;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  cursor: pointer;
+}}
+.rcjy-tool-card:hover {{
+  border-color: #1B8354;
+  box-shadow: 0 2px 8px rgba(27,131,84,.12);
+}}
+.rcjy-tool-active {{
+  background: #1B8354 !important;
+  border-color: #1B8354 !important;
+}}
+.rcjy-tool-icon {{ font-size: 1.375rem; line-height: 1; }}
+.rcjy-tool-title {{
+  font-size: .875rem;
+  font-weight: 600;
+  color: #161616;
+  margin-top: .1rem;
+}}
+.rcjy-tool-desc {{
+  font-size: .73rem;
+  color: #6C737F;
+  line-height: 1.4;
+}}
+.rcjy-tool-active .rcjy-tool-title,
+.rcjy-tool-active .rcjy-tool-desc {{ color: #fff !important; }}
+
+/* ════════════════════════════════════════
    SIDEBAR
    ════════════════════════════════════════ */
 [data-testid="stSidebar"] {{ background: #fff; }}
@@ -701,6 +749,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   .rcjy-ftr-mid {{ gap: 1.5rem; padding: 1.25rem 1rem; }}
   .rcjy-ftr-bottom {{ flex-direction: column; align-items: flex-start; padding: 1rem; }}
   .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 40px; }}
+  .rcjy-tools-grid {{ grid-template-columns: repeat(3, 1fr); gap: .5rem; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -726,9 +775,9 @@ def _ni(key, label):
 _other_lang_text = "العربية" if _nl == "en" else "English"
 _other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}&outlang={lang}"
 
-# Output language — two clean links, active one highlighted
-_out_en_cls = "rcjy-out-link rcjy-out-active" if lang == "en" else "rcjy-out-link"
-_out_ar_cls = "rcjy-out-link rcjy-out-active" if lang == "ar" else "rcjy-out-link"
+# Output language — segmented toggle, active one highlighted
+_out_en_cls = "rcjy-out-opt rcjy-out-active" if lang == "en" else "rcjy-out-opt"
+_out_ar_cls = "rcjy-out-opt rcjy-out-active" if lang == "ar" else "rcjy-out-opt"
 _out_en_href = f"?tab={active_tab}&lang={_nl}&outlang=en"
 _out_ar_href = f"?tab={active_tab}&lang={_nl}&outlang=ar"
 
@@ -750,13 +799,35 @@ st.markdown(f"""
     </ul>
     <div class="rcjy-nav-right">
       <a href="{_other_lang_href}" class="rcjy-lang-link" target="_self">{_other_lang_text}</a>
-      <span class="rcjy-nav-sep">|</span>
-      <a href="{_out_en_href}" class="{_out_en_cls}" target="_self">EN</a>
-      <a href="{_out_ar_href}" class="{_out_ar_cls}" target="_self">عر</a>
+      <div class="rcjy-outlang">
+        <a href="{_out_en_href}" class="{_out_en_cls}" target="_self">EN</a>
+        <a href="{_out_ar_href}" class="{_out_ar_cls}" target="_self">عر</a>
+      </div>
     </div>
   </div>
 </nav>
 """, unsafe_allow_html=True)
+
+# ── TOOL CARDS (visual category grid like RCJY home) ──────────────────────────
+_tool_cards = {
+    "text":    ("✍️",  {"en": "Text",    "ar": "نص"},          {"en": "Articles & press releases", "ar": "مقالات وبيانات صحفية"}),
+    "image":   ("🖼️",  {"en": "Image",   "ar": "صورة"},        {"en": "AI-generated imagery",      "ar": "صور بالذكاء الاصطناعي"}),
+    "video":   ("🎬",  {"en": "Video",   "ar": "فيديو"},        {"en": "Cinematic video production","ar": "إنتاج فيديو سينمائي"}),
+    "voice":   ("🎙️",  {"en": "Voice",   "ar": "صوت"},          {"en": "Natural text-to-speech",    "ar": "تحويل النص إلى صوت"}),
+    "podcast": ("🎧",  {"en": "Podcast", "ar": "بودكاست"},      {"en": "Full podcast episodes",     "ar": "حلقات بودكاست كاملة"}),
+}
+_cards_html = []
+for _tk, (_icon, _titles, _descs) in _tool_cards.items():
+    _cls = "rcjy-tool-card rcjy-tool-active" if _tk == active_tab else "rcjy-tool-card"
+    _href = f"?tab={_tk}&lang={_nl}&outlang={lang}"
+    _cards_html.append(
+        f'<a href="{_href}" class="{_cls}" target="_self">'
+        f'<span class="rcjy-tool-icon">{_icon}</span>'
+        f'<span class="rcjy-tool-title">{_titles[_nl]}</span>'
+        f'<span class="rcjy-tool-desc">{_descs[_nl]}</span>'
+        f'</a>'
+    )
+st.markdown(f'<div class="rcjy-tools-grid">{"".join(_cards_html)}</div>', unsafe_allow_html=True)
 
 if not _api_ok:
     st.warning(L["warn_api"])
@@ -1099,72 +1170,50 @@ elif active_tab == "podcast":
         )
 
 # ── FOOTER ────────────────────────────────────────────────────────────────────
-st.markdown(f"""
-<div class="rcjy-footer">
-
-  <!-- ① Top dark section — link columns -->
-  <div class="rcjy-ftr-top">
-    <div class="rcjy-ftr-cols">
-
-      <div class="rcjy-ftr-col">
-        <h4>الجهات ذات العلاقة</h4>
-        <ul>
-          <li><a href="https://www.mim.gov.sa" target="_blank" rel="noopener">وزارة الصناعة والثروة المعدنية</a></li>
-          <li><a href="https://www.seza.gov.sa" target="_blank" rel="noopener">هيئة المناطق الاقتصادية الخاصة</a></li>
-          <li><a href="https://www.sidf.gov.sa" target="_blank" rel="noopener">صندوق التنمية الصناعي</a></li>
-        </ul>
-      </div>
-
-      <div class="rcjy-ftr-col">
-        <h4>الخدمات الإلكترونية</h4>
-        <ul>
-          <li><a href="https://www.rcjy.gov.sa/ar/e-services" target="_blank" rel="noopener">منصة يسير خدمات</a></li>
-          <li><a href="https://www.rcjy.gov.sa/ar/careers" target="_blank" rel="noopener">بوابة التوظيف</a></li>
-        </ul>
-      </div>
-
-      <div class="rcjy-ftr-col">
-        <h4>اتصل بنا</h4>
-        <ul>
-          <li><a href="https://www.rcjy.gov.sa/ar/contact-us" target="_blank" rel="noopener">التواصل معنا</a></li>
-          <li><a href="https://www.rcjy.gov.sa/ar/e-participation" target="_blank" rel="noopener">المشاركة الإلكترونية</a></li>
-          <li><a href="https://www.rcjy.gov.sa/ar/open-data" target="_blank" rel="noopener">البيانات المفتوحة</a></li>
-        </ul>
-      </div>
-
-      <div class="rcjy-ftr-col">
-        <h4>تابعنا على</h4>
-        <div class="rcjy-ftr-social">
-          <a class="rcjy-ftr-soc" href="https://x.com/rcjy1" target="_blank" rel="noopener" title="X">𝕏</a>
-          <a class="rcjy-ftr-soc" href="https://www.linkedin.com/company/royal-commission-for-jubail-and-yanbu/" target="_blank" rel="noopener" title="LinkedIn">in</a>
-          <a class="rcjy-ftr-soc" href="https://www.youtube.com/@RCJYSaudi" target="_blank" rel="noopener" title="YouTube">▶</a>
-          <a class="rcjy-ftr-soc" href="https://www.instagram.com/RCJYSaudi" target="_blank" rel="noopener" title="Instagram">ig</a>
-          <a class="rcjy-ftr-soc" href="https://www.facebook.com/RCJY.Saudi/" target="_blank" rel="noopener" title="Facebook">f</a>
-          <a class="rcjy-ftr-soc" href="https://www.snapchat.com/add/rcjy-1" target="_blank" rel="noopener" title="Snapchat">👻</a>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- ② Middle white section — RCJY + Vision 2030 logos -->
-  <div class="rcjy-ftr-mid">
-    <img class="rcjy-ftr-rcjy" src="{RCJY_LOGO_URL}" alt="الهيئة الملكية للجبيل وينبع"
-         onerror="this.style.display='none'">
-    <div class="rcjy-ftr-divv"></div>
-    <img class="rcjy-ftr-vision" src="{_VISION_LOGO}" alt="رؤية 2030"
-         onerror="this.style.display='none'">
-  </div>
-
-  <!-- ③ Bottom dark bar — copyright + links -->
-  <div class="rcjy-ftr-bottom">
-    <span class="rcjy-ftr-copy">جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع © 2026</span>
-    <div class="rcjy-ftr-links">
-      <a href="https://www.rcjy.gov.sa/ar/privacy-policy" target="_blank" rel="noopener">سياسة الخصوصية</a>
-      <a href="https://www.rcjy.gov.sa/ar/terms-and-conditions" target="_blank" rel="noopener">الشروط والأحكام</a>
-      <a href="https://www.rcjy.gov.sa/ar/sitemap" target="_blank" rel="noopener">خريطة الموقع</a>
-    </div>
-  </div>
-
-</div>
-""", unsafe_allow_html=True)
+# Built as string concat (no f-string HTML comments) so Streamlit renders correctly
+_ftr_top = (
+    '<div class="rcjy-footer">'
+    '<div class="rcjy-ftr-top"><div class="rcjy-ftr-cols">'
+    '<div class="rcjy-ftr-col"><h4>الجهات ذات العلاقة</h4><ul>'
+    '<li><a href="https://www.mim.gov.sa" target="_blank" rel="noopener">وزارة الصناعة والثروة المعدنية</a></li>'
+    '<li><a href="https://www.seza.gov.sa" target="_blank" rel="noopener">هيئة المناطق الاقتصادية الخاصة</a></li>'
+    '<li><a href="https://www.sidf.gov.sa" target="_blank" rel="noopener">صندوق التنمية الصناعي</a></li>'
+    '</ul></div>'
+    '<div class="rcjy-ftr-col"><h4>الخدمات الإلكترونية</h4><ul>'
+    '<li><a href="https://www.rcjy.gov.sa/ar/e-services" target="_blank" rel="noopener">منصة يسير خدمات</a></li>'
+    '<li><a href="https://www.rcjy.gov.sa/ar/careers" target="_blank" rel="noopener">بوابة التوظيف</a></li>'
+    '</ul></div>'
+    '<div class="rcjy-ftr-col"><h4>اتصل بنا</h4><ul>'
+    '<li><a href="https://www.rcjy.gov.sa/ar/contact-us" target="_blank" rel="noopener">التواصل معنا</a></li>'
+    '<li><a href="https://www.rcjy.gov.sa/ar/e-participation" target="_blank" rel="noopener">المشاركة الإلكترونية</a></li>'
+    '<li><a href="https://www.rcjy.gov.sa/ar/open-data" target="_blank" rel="noopener">البيانات المفتوحة</a></li>'
+    '</ul></div>'
+    '<div class="rcjy-ftr-col"><h4>تابعنا على</h4>'
+    '<div class="rcjy-ftr-social">'
+    '<a class="rcjy-ftr-soc" href="https://x.com/rcjy1" target="_blank" rel="noopener" title="X">X</a>'
+    '<a class="rcjy-ftr-soc" href="https://www.linkedin.com/company/royal-commission-for-jubail-and-yanbu/" target="_blank" rel="noopener" title="LinkedIn">in</a>'
+    '<a class="rcjy-ftr-soc" href="https://www.youtube.com/@RCJYSaudi" target="_blank" rel="noopener" title="YouTube">YT</a>'
+    '<a class="rcjy-ftr-soc" href="https://www.instagram.com/RCJYSaudi" target="_blank" rel="noopener" title="Instagram">ig</a>'
+    '<a class="rcjy-ftr-soc" href="https://www.facebook.com/RCJY.Saudi/" target="_blank" rel="noopener" title="Facebook">f</a>'
+    '<a class="rcjy-ftr-soc" href="https://www.snapchat.com/add/rcjy-1" target="_blank" rel="noopener" title="Snapchat">Sc</a>'
+    '</div></div>'       # close ftr-social, ftr-col4
+    '</div></div>'       # close ftr-cols, ftr-top  (rcjy-footer stays open)
+)
+_ftr_mid = (
+    '<div class="rcjy-ftr-mid">'
+    f'<img class="rcjy-ftr-rcjy" src="{RCJY_LOGO_URL}" alt="RCJY" onerror="this.style.display=\'none\'">'
+    '<div class="rcjy-ftr-divv"></div>'
+    f'<img class="rcjy-ftr-vision" src="{_VISION_LOGO}" alt="Vision 2030" onerror="this.style.display=\'none\'">'
+    '</div>'
+)
+_ftr_btm = (
+    '<div class="rcjy-ftr-bottom">'
+    '<span class="rcjy-ftr-copy">جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع &copy; 2026</span>'
+    '<div class="rcjy-ftr-links">'
+    '<a href="https://www.rcjy.gov.sa/ar/privacy-policy" target="_blank" rel="noopener">سياسة الخصوصية</a>'
+    '<a href="https://www.rcjy.gov.sa/ar/terms-and-conditions" target="_blank" rel="noopener">الشروط والأحكام</a>'
+    '<a href="https://www.rcjy.gov.sa/ar/sitemap" target="_blank" rel="noopener">خريطة الموقع</a>'
+    '</div></div>'       # close ftr-links, ftr-bottom
+    '</div>'             # close rcjy-footer
+)
+st.markdown(_ftr_top + _ftr_mid + _ftr_btm, unsafe_allow_html=True)
