@@ -244,9 +244,13 @@ html, body, .stApp {{
   gap: 1rem;
   flex-direction: {"row-reverse" if is_ar else "row"};
 }}
-.hdr-brand img {{
-  height: 52px;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.30));
+/* Logo — white background so it's legible on dark header */
+.hdr-logo {{
+  height: 50px;
+  background: rgba(255,255,255,.97);
+  padding: 5px 10px;
+  border-radius: 8px;
+  display: block;
 }}
 .hdr-brand-text h1 {{
   color: #fff !important;
@@ -647,25 +651,8 @@ _deco_svg = """
 </svg>
 """
 
-st.markdown(f"""
-<div class="rcjy-hdr">
-  {_deco_svg}
-  <div class="hdr-inner">
-    <div class="hdr-brand">
-      <img src="{RCJY_LOGO_URL}" alt="RCJY"
-           onerror="this.style.display='none'">
-      <div class="hdr-brand-text">
-        <h1>{L['app_name']}</h1>
-        <p>{L['dept']}</p>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="rcjy-stripe"></div>
-""", unsafe_allow_html=True)
-
-# ── LANGUAGE CONTROLS ─────────────────────────────────────────────────────────
-_lc1, _lc2, _lc_gap = st.columns([1, 1, 5])
+# ── LANGUAGE CONTROLS — utility bar above header ──────────────────────────────
+_util_gap, _lc1, _lc2 = st.columns([5, 1.4, 1.4])
 with _lc1:
     _new_lang = st.selectbox(
         L["lang_label"], ["English", "العربية"],
@@ -681,6 +668,24 @@ with _lc2:
         index=0, key="output_lang_sel",
     )
 lang = "ar" if _out == "العربية" else "en"
+
+# ── HEADER ────────────────────────────────────────────────────────────────────
+st.markdown(f"""
+<div class="rcjy-hdr">
+  {_deco_svg}
+  <div class="hdr-inner">
+    <div class="hdr-brand">
+      <img class="hdr-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
+           onerror="this.style.display='none'">
+      <div class="hdr-brand-text">
+        <h1>{L['app_name']}</h1>
+        <p>{L['dept']}</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="rcjy-stripe"></div>
+""", unsafe_allow_html=True)
 
 if not _api_ok:
     st.warning(L["warn_api"])
@@ -866,7 +871,7 @@ elif active_tab == "image":
 # ════════════════════════════════════════════════════════════════════════════
 elif active_tab == "video":
     with st.container(border=True):
-        _tags("Veo 3.1")
+        _tags("Veo 3.1", "1080p HD", "Up to 8s")
         _v1, _v2 = st.columns(2)
         with _v1:
             vid_aspect = st.selectbox(L["aspect_label"], ["16:9", "9:16"], key="vid_aspect")
@@ -909,16 +914,26 @@ elif active_tab == "video":
 #  VOICE  — single prompt, no duplicate textarea
 # ════════════════════════════════════════════════════════════════════════════
 elif active_tab == "voice":
+    _voice_opts_v = {
+        "Kore ♀":    "Kore",
+        "Aoede ♀":   "Aoede",
+        "Leda ♀":    "Leda",
+        "Zephyr ♀":  "Zephyr",
+        "Schedar ♀": "Schedar",
+        "Puck ♂":    "Puck",
+        "Charon ♂":  "Charon",
+        "Fenrir ♂":  "Fenrir",
+        "Orus ♂":    "Orus",
+        "Perseus ♂": "Perseus",
+    }
     with st.container(border=True):
-        _tags("Gemini TTS Flash", "Gemini TTS Pro", "Chirp 3")
+        _tags("Gemini TTS Flash", "Gemini TTS Pro")
         _o1, _o2, _o3 = st.columns(3)
         with _o1:
-            voice_name = st.selectbox(
-                L["voice_label"],
-                ["Kore", "Puck", "Zephyr", "Charon", "Fenrir",
-                 "Aoede", "Leda", "Orus", "Perseus", "Schedar"],
-                key="voice_name",
+            _vsel = st.selectbox(
+                L["voice_label"], list(_voice_opts_v), key="voice_name_sel",
             )
+            voice_name = _voice_opts_v[_vsel]
         with _o2:
             tts_quality = st.selectbox(L["quality_label"], ["Flash", "Pro"], key="tts_q")
         with _o3:
@@ -963,9 +978,16 @@ elif active_tab == "voice":
 elif active_tab == "podcast":
     _pod_len_opts = [L["length_short"], L["length_standard"]]
     _voice_opts   = {
-        "Kore ♀":   "Kore",  "Aoede ♀":  "Aoede",  "Leda ♀":  "Leda",
-        "Puck ♂":   "Puck",  "Charon ♂": "Charon", "Fenrir ♂":"Fenrir",
-        "Orus ♂":   "Orus",
+        "Kore ♀":    "Kore",
+        "Aoede ♀":   "Aoede",
+        "Leda ♀":    "Leda",
+        "Zephyr ♀":  "Zephyr",
+        "Schedar ♀": "Schedar",
+        "Puck ♂":    "Puck",
+        "Charon ♂":  "Charon",
+        "Fenrir ♂":  "Fenrir",
+        "Orus ♂":    "Orus",
+        "Perseus ♂": "Perseus",
     }
 
     with st.container(border=True):
