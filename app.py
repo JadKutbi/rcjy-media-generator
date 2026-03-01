@@ -41,11 +41,11 @@ T = {
         "tab_voice":              "Voice",
         "tab_podcast":            "Podcast",
         "prompt_label":           "Prompt",
-        "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about Jubail Industrial City's new green hydrogen facility.",
+        "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about Jubail Industrial City's new green hydrogen facility.\n\nTip: Output follows your interface language. To override, specify in your prompt (e.g. 'write in Arabic').",
         "prompt_ph_image":        "Describe the image…\ne.g. Aerial golden-hour view of Jubail Industrial City, petrochemical towers, calm sea.",
         "prompt_ph_video":        "Describe the video scene…\ne.g. Cinematic drone flight over Yanbu Industrial Port at sunrise, dramatic sky.",
-        "prompt_ph_voice":        "Enter the text to be spoken…",
-        "prompt_ph_podcast":      "Describe the podcast topic…\ne.g. The economic transformation of Jubail and Yanbu and their role in Vision 2030.",
+        "prompt_ph_voice":        "Enter the text to be spoken…\n\nTip: Output follows your interface language. To override, specify in your prompt.",
+        "prompt_ph_podcast":      "Describe the podcast topic…\ne.g. The economic transformation of Jubail and Yanbu and their role in Vision 2030.\n\nTip: Output follows your interface language. To override, specify in your prompt.",
         "model_label":            "Model",
         "aspect_label":           "Aspect Ratio",
         "duration_label":         "Duration (sec)",
@@ -113,11 +113,11 @@ T = {
         "tab_voice":              "صوت",
         "tab_podcast":            "بودكاست",
         "prompt_label":           "الوصف",
-        "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن منشأة الهيدروجين الأخضر الجديدة في الجبيل.",
+        "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن منشأة الهيدروجين الأخضر الجديدة في الجبيل.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف (مثلاً: 'اكتب بالإنجليزية').",
         "prompt_ph_image":        "اكتب وصفاً للصورة…\nمثال: منظر جوي لمدينة الجبيل الصناعية عند الغسق.",
         "prompt_ph_video":        "اكتب وصفاً لمشهد الفيديو…\nمثال: تحليق سينمائي فوق ميناء ينبع عند الفجر.",
-        "prompt_ph_voice":        "أدخل النص الذي تريد تحويله إلى صوت…",
-        "prompt_ph_podcast":      "اكتب موضوع البودكاست…\nمثال: التحول الاقتصادي لمدينتي الجبيل وينبع ودورهما في رؤية 2030.",
+        "prompt_ph_voice":        "أدخل النص الذي تريد تحويله إلى صوت…\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
+        "prompt_ph_podcast":      "اكتب موضوع البودكاست…\nمثال: التحول الاقتصادي لمدينتي الجبيل وينبع ودورهما في رؤية 2030.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
         "model_label":            "النموذج",
         "aspect_label":           "نسبة الأبعاد",
         "duration_label":         "المدة (ثانية)",
@@ -301,31 +301,6 @@ html, body, .stApp {{
   white-space: nowrap;
 }}
 .rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
-/* Output-language segmented toggle */
-.rcjy-outlang {{
-  display: flex;
-  border: 1px solid #D2D6DB;
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
-}}
-.rcjy-out-opt {{
-  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
-  font-size: .82rem;
-  font-weight: 500;
-  color: #6C737F;
-  text-decoration: none;
-  padding: 7px 12px;
-  transition: background .2s, color .2s;
-  white-space: nowrap;
-}}
-.rcjy-out-opt + .rcjy-out-opt {{ border-left: 1px solid #D2D6DB; }}
-.rcjy-out-opt:hover {{ background: #F3F4F6; color: #1B8354; }}
-.rcjy-out-active {{
-  background: #1B8354 !important;
-  color: #fff !important;
-  font-weight: 600 !important;
-}}
 
 /* ════════════════════════════════════════
    CONTENT CARD — RCJY card style
@@ -665,35 +640,28 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 active_tab = _qp.get("tab", "text")
 if active_tab not in ("text", "image", "video", "voice", "podcast"):
     active_tab = "text"
-lang = _qp.get("outlang", "en")
-if lang not in ("en", "ar"):
-    lang = "en"
-_nl = st.session_state.ui_lang  # current UI lang
+# Output language = UI language (user can override via prompt instructions)
+lang = st.session_state.ui_lang
+_nl = lang
 
 
 def _ni(key, label):
     """One nav item — target=_self keeps navigation in the same tab."""
     cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
-    return (f'<li><a href="?tab={key}&lang={_nl}&outlang={lang}" '
+    return (f'<li><a href="?tab={key}&lang={_nl}" '
             f'class="{cls}" target="_self">{label}</a></li>')
 
 
 # UI language — single link showing the OTHER language (RCJY site style)
 _other_lang_text = "العربية" if _nl == "en" else "English"
-_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}&outlang={lang}"
-
-# Output language — segmented toggle, active one highlighted
-_out_en_cls = "rcjy-out-opt rcjy-out-active" if lang == "en" else "rcjy-out-opt"
-_out_ar_cls = "rcjy-out-opt rcjy-out-active" if lang == "ar" else "rcjy-out-opt"
-_out_en_href = f"?tab={active_tab}&lang={_nl}&outlang=en"
-_out_ar_href = f"?tab={active_tab}&lang={_nl}&outlang=ar"
+_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}"
 
 _VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/vision_logo"
 
 st.markdown(f"""
 <nav class="rcjy-nav">
   <div class="rcjy-nav-inner">
-    <a href="?tab={active_tab}&lang={_nl}&outlang={lang}" class="rcjy-nav-logo-link" target="_self">
+    <a href="?tab={active_tab}&lang={_nl}" class="rcjy-nav-logo-link" target="_self">
       <img class="rcjy-nav-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
            onerror="this.style.display='none'">
     </a>
@@ -706,10 +674,6 @@ st.markdown(f"""
     </ul>
     <div class="rcjy-nav-right">
       <a href="{_other_lang_href}" class="rcjy-lang-link" target="_self">{_other_lang_text}</a>
-      <div class="rcjy-outlang">
-        <a href="{_out_en_href}" class="{_out_en_cls}" target="_self">EN</a>
-        <a href="{_out_ar_href}" class="{_out_ar_cls}" target="_self">عر</a>
-      </div>
     </div>
   </div>
 </nav>
