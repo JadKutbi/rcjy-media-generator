@@ -35,11 +35,11 @@ T = {
         "chars":                  "chars",
         "context_label":          "Attachments",
         "context_hint":           "Optionally attach a URL or files — the AI will use them as context.",
-        "tab_text":               "✍️  Text",
-        "tab_image":              "🖼️  Image",
-        "tab_video":              "🎬  Video",
-        "tab_voice":              "🎙️  Voice",
-        "tab_podcast":            "🎧  Podcast",
+        "tab_text":               "Text",
+        "tab_image":              "Image",
+        "tab_video":              "Video",
+        "tab_voice":              "Voice",
+        "tab_podcast":            "Podcast",
         "prompt_label":           "Prompt",
         "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about Jubail Industrial City's new green hydrogen facility.",
         "prompt_ph_image":        "Describe the image…\ne.g. Aerial golden-hour view of Jubail Industrial City, petrochemical towers, calm sea.",
@@ -107,11 +107,11 @@ T = {
         "chars":                  "حرف",
         "context_label":          "المرفقات",
         "context_hint":           "أرفق رابطاً أو ملفات اختيارياً — سيستخدمها الذكاء الاصطناعي كسياق.",
-        "tab_text":               "✍️  نص",
-        "tab_image":              "🖼️  صورة",
-        "tab_video":              "🎬  فيديو",
-        "tab_voice":              "🎙️  صوت",
-        "tab_podcast":            "🎧  بودكاست",
+        "tab_text":               "نص",
+        "tab_image":              "صورة",
+        "tab_video":              "فيديو",
+        "tab_voice":              "صوت",
+        "tab_podcast":            "بودكاست",
         "prompt_label":           "الوصف",
         "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن منشأة الهيدروجين الأخضر الجديدة في الجبيل.",
         "prompt_ph_image":        "اكتب وصفاً للصورة…\nمثال: منظر جوي لمدينة الجبيل الصناعية عند الغسق.",
@@ -210,7 +210,7 @@ html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif !important;
   font-size: 15px;
   color: #161616;
-  background: #fff !important;
+  background: #F3F6F8 !important;
   -webkit-font-smoothing: antialiased;
   direction: {_dir};
 }}
@@ -220,7 +220,7 @@ html, body, .stApp {{
   max-width: 1080px !important;
   margin: 0 auto !important;
   padding: 0 1.5rem 3rem !important;
-  background: #fff !important;
+  background: #F3F6F8 !important;
 }}
 
 /* ════════════════════════════════════════
@@ -577,50 +577,6 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 
 /* ════════════════════════════════════════
-   TOOL CARDS — category grid below nav
-   ════════════════════════════════════════ */
-.rcjy-tools-grid {{
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: .75rem;
-  margin-bottom: 1.5rem;
-}}
-.rcjy-tool-card {{
-  background: #fff;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 10px;
-  padding: 1rem .875rem;
-  text-decoration: none;
-  display: flex;
-  flex-direction: column;
-  gap: .35rem;
-  transition: border-color .15s, box-shadow .15s, background .15s;
-  cursor: pointer;
-}}
-.rcjy-tool-card:hover {{
-  border-color: #1B8354;
-  box-shadow: 0 2px 8px rgba(27,131,84,.12);
-}}
-.rcjy-tool-active {{
-  background: #1B8354 !important;
-  border-color: #1B8354 !important;
-}}
-.rcjy-tool-icon {{ font-size: 1.375rem; line-height: 1; }}
-.rcjy-tool-title {{
-  font-size: .875rem;
-  font-weight: 600;
-  color: #161616;
-  margin-top: .1rem;
-}}
-.rcjy-tool-desc {{
-  font-size: .73rem;
-  color: #6C737F;
-  line-height: 1.4;
-}}
-.rcjy-tool-active .rcjy-tool-title,
-.rcjy-tool-active .rcjy-tool-desc {{ color: #fff !important; }}
-
-/* ════════════════════════════════════════
    SIDEBAR
    ════════════════════════════════════════ */
 [data-testid="stSidebar"] {{ background: #fff; }}
@@ -749,7 +705,6 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   .rcjy-ftr-mid {{ gap: 1.5rem; padding: 1.25rem 1rem; }}
   .rcjy-ftr-bottom {{ flex-direction: column; align-items: flex-start; padding: 1rem; }}
   .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 40px; }}
-  .rcjy-tools-grid {{ grid-template-columns: repeat(3, 1fr); gap: .5rem; }}
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -807,27 +762,6 @@ st.markdown(f"""
   </div>
 </nav>
 """, unsafe_allow_html=True)
-
-# ── TOOL CARDS (visual category grid like RCJY home) ──────────────────────────
-_tool_cards = {
-    "text":    ("✍️",  {"en": "Text",    "ar": "نص"},          {"en": "Articles & press releases", "ar": "مقالات وبيانات صحفية"}),
-    "image":   ("🖼️",  {"en": "Image",   "ar": "صورة"},        {"en": "AI-generated imagery",      "ar": "صور بالذكاء الاصطناعي"}),
-    "video":   ("🎬",  {"en": "Video",   "ar": "فيديو"},        {"en": "Cinematic video production","ar": "إنتاج فيديو سينمائي"}),
-    "voice":   ("🎙️",  {"en": "Voice",   "ar": "صوت"},          {"en": "Natural text-to-speech",    "ar": "تحويل النص إلى صوت"}),
-    "podcast": ("🎧",  {"en": "Podcast", "ar": "بودكاست"},      {"en": "Full podcast episodes",     "ar": "حلقات بودكاست كاملة"}),
-}
-_cards_html = []
-for _tk, (_icon, _titles, _descs) in _tool_cards.items():
-    _cls = "rcjy-tool-card rcjy-tool-active" if _tk == active_tab else "rcjy-tool-card"
-    _href = f"?tab={_tk}&lang={_nl}&outlang={lang}"
-    _cards_html.append(
-        f'<a href="{_href}" class="{_cls}" target="_self">'
-        f'<span class="rcjy-tool-icon">{_icon}</span>'
-        f'<span class="rcjy-tool-title">{_titles[_nl]}</span>'
-        f'<span class="rcjy-tool-desc">{_descs[_nl]}</span>'
-        f'</a>'
-    )
-st.markdown(f'<div class="rcjy-tools-grid">{"".join(_cards_html)}</div>', unsafe_allow_html=True)
 
 if not _api_ok:
     st.warning(L["warn_api"])
