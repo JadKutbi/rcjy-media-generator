@@ -217,9 +217,9 @@ html, body, .stApp {{
 #MainMenu, footer, header {{ visibility: hidden; }}
 
 [data-testid="stMainBlockContainer"] {{
-  max-width: 1080px !important;
+  max-width: 100% !important;
   margin: 0 auto !important;
-  padding: 0 1.5rem 3rem !important;
+  padding: 0 3rem 3rem !important;
   background: transparent !important;
 }}
 
@@ -229,7 +229,7 @@ html, body, .stApp {{
 .rcjy-nav {{
   background: #fff;
   border-bottom: 3px solid #1B8354;
-  margin: 0 -1.5rem 1.5rem;
+  margin: 0 -3rem 1.5rem;
   box-shadow: 0 1px 4px rgba(13,18,28,.08);
   position: sticky;
   top: 0;
@@ -238,11 +238,9 @@ html, body, .stApp {{
 .rcjy-nav-inner {{
   display: flex;
   align-items: center;
-  padding: 0 2rem;
+  padding: 0 3rem;
   min-height: 72px;
   gap: 1.25rem;
-  max-width: 1280px;
-  margin: 0 auto;
   direction: ltr;
 }}
 .rcjy-nav-logo-link {{
@@ -306,16 +304,12 @@ html, body, .stApp {{
    CONTENT CARD — RCJY card style
    ════════════════════════════════════════ */
 [data-testid="stVerticalBlockBorderWrapper"] {{
-  border: 1px solid #D2D6DB !important;
+  border: none !important;
   border-radius: 16px !important;
   background: #fff !important;
-  box-shadow: 0px 2px 4px -2px rgba(16,24,40,.06), 0px 4px 8px -2px rgba(16,24,40,.1) !important;
+  box-shadow: none !important;
   overflow: hidden !important;
   margin-top: .5rem !important;
-  transition: box-shadow .3s ease !important;
-}}
-[data-testid="stVerticalBlockBorderWrapper"]:hover {{
-  box-shadow: 0px 4px 8px -2px rgba(16,24,40,.1), 0px 8px 16px -4px rgba(16,24,40,.12) !important;
 }}
 [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
   padding: 1.5rem !important;
@@ -571,7 +565,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    ════════════════════════════════════════ */
 .rcjy-footer {{
   background: #1B8354;
-  margin: 3rem -1.5rem -3rem;
+  margin: 3rem -3rem -3rem;
   font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
 }}
 .rcjy-ftr-main {{
@@ -620,13 +614,13 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    RESPONSIVE
    ════════════════════════════════════════ */
 @media (max-width: 760px) {{
-  [data-testid="stMainBlockContainer"] {{ padding: 0 .75rem 2rem !important; }}
-  .rcjy-nav {{ margin: 0 -.75rem 1rem; }}
-  .rcjy-nav-inner {{ padding: 0 .75rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
+  [data-testid="stMainBlockContainer"] {{ padding: 0 1rem 2rem !important; }}
+  .rcjy-nav {{ margin: 0 -1rem 1rem; }}
+  .rcjy-nav-inner {{ padding: 0 1rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
   .rcjy-nav-item {{ font-size: .78rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
-  .rcjy-footer {{ margin: 3rem -.75rem -3rem; }}
+  .rcjy-footer {{ margin: 3rem -1rem -3rem; }}
   .rcjy-ftr-main {{ padding: 1.25rem 1rem; flex-direction: column; align-items: flex-start; }}
   .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 36px; }}
 }}
