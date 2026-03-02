@@ -342,6 +342,7 @@ def generate_voice(
     text: str,
     context_text: str = "",
     voice_name: str = "Kore",
+    display_name: str = "",
     style_hint: str = "",
     tts_model: str = "flash",
     lang: str = "en",
@@ -352,7 +353,8 @@ def generate_voice(
         if isinstance(MODELS["voice"], dict) else MODELS["voice"]
     )
     if lang == "ar":
-        full_text = f"تحدث باللهجة السعودية الخليجية بوضوح: {text}" if not style_hint else f"تحدث باللهجة السعودية الخليجية {style_hint}: {text}"
+        _name_hint = f"اسمك {display_name}. " if display_name else ""
+        full_text = f"{_name_hint}تحدث باللهجة السعودية الخليجية بوضوح: {text}" if not style_hint else f"{_name_hint}تحدث باللهجة السعودية الخليجية {style_hint}: {text}"
     elif lang == "both":
         full_text = f"Speak bilingually (Arabic and English): {text}" if not style_hint else f"Say {style_hint}, bilingually: {text}"
     else:
@@ -435,6 +437,8 @@ def generate_podcast(
     length: str = "short",
     voice_host: str = "Kore",
     voice_guest: str = "Puck",
+    host_display_name: str = "",
+    guest_display_name: str = "",
     lang: str = "en",
 ) -> tuple[bytes, str]:
     prompt = _validate_prompt(prompt)
@@ -446,13 +450,16 @@ def generate_podcast(
     logger.info("Generating podcast: length=%s, voices=%s/%s, lang=%s", length, voice_host, voice_guest, lang)
 
     if lang == "ar":
+        _host_n = host_display_name or "المقدّم"
+        _guest_n = guest_display_name or "الضيف"
         script_prompt = f"""أنت كاتب سيناريو بودكاست محترف. أنشئ سيناريو بودكاست جذاب وطبيعي باللهجة السعودية الخليجية.
 
 المتطلبات:
 - الطول المستهدف: {target_words} كلمة فقط (مهم جداً: لا تتجاوز هذا الحد)
-- متحدثان: Host و Guest
+- متحدثان: Host (اسمه {_host_n}) و Guest (اسمه {_guest_n})
 - صيغة كل سطر: Host: [الحوار بالعربية] أو Guest: [الحوار بالعربية]
-- اكتب الحوار بالعربية لكن استخدم Host و Guest كأسماء المتحدثين
+- اكتب الحوار بالعربية لكن استخدم Host و Guest كأسماء المتحدثين في بداية كل سطر
+- المقدّم {_host_n} يعرّف نفسه باسمه والضيف {_guest_n} كذلك
 - اكتب الحوار باللهجة السعودية الخليجية وليس بالإنجليزية
 - اجعله حوارياً وممتعاً وغنياً بالمعلومات
 - ابدأ بمقدمة واختم بملخص

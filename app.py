@@ -892,6 +892,17 @@ elif active_tab == "video":
 # ════════════════════════════════════════════════════════════════════════════
 elif active_tab == "voice":
     _voice_opts_v = {
+        "نورة ♀":   "Kore",
+        "أميرة ♀":  "Aoede",
+        "ليلى ♀":   "Leda",
+        "زينب ♀":   "Zephyr",
+        "شهد ♀":    "Schedar",
+        "فهد ♂":    "Puck",
+        "خالد ♂":   "Charon",
+        "ناصر ♂":   "Fenrir",
+        "عمر ♂":    "Orus",
+        "سلطان ♂":  "Perseus",
+    } if is_ar else {
         "Kore ♀":    "Kore",
         "Aoede ♀":   "Aoede",
         "Leda ♀":    "Leda",
@@ -911,6 +922,7 @@ elif active_tab == "voice":
                 L["voice_label"], list(_voice_opts_v), key="voice_name_sel",
             )
             voice_name = _voice_opts_v[_vsel]
+            _voice_display = _vsel.split(" ♀")[0].split(" ♂")[0].strip()
         with _o2:
             tts_quality = st.selectbox(L["quality_label"], ["Flash", "Pro"], key="tts_q")
         with _o3:
@@ -935,7 +947,8 @@ elif active_tab == "voice":
                 try:
                     data, mime = generate_voice(
                         text=voice_prompt.strip(), context_text=ctx_text if has_ctx else "",
-                        voice_name=voice_name, style_hint=style_hint,
+                        voice_name=voice_name, display_name=_voice_display if is_ar else "",
+                        style_hint=style_hint,
                         tts_model="pro" if tts_quality == "Pro" else "flash",
                         lang=lang,
                     )
@@ -957,6 +970,17 @@ elif active_tab == "voice":
 elif active_tab == "podcast":
     _pod_len_opts = [L["length_short"], L["length_standard"]]
     _voice_opts   = {
+        "نورة ♀":   "Kore",
+        "أميرة ♀":  "Aoede",
+        "ليلى ♀":   "Leda",
+        "زينب ♀":   "Zephyr",
+        "شهد ♀":    "Schedar",
+        "فهد ♂":    "Puck",
+        "خالد ♂":   "Charon",
+        "ناصر ♂":   "Fenrir",
+        "عمر ♂":    "Orus",
+        "سلطان ♂":  "Perseus",
+    } if is_ar else {
         "Kore ♀":    "Kore",
         "Aoede ♀":   "Aoede",
         "Leda ♀":    "Leda",
@@ -978,9 +1002,13 @@ elif active_tab == "podcast":
                 format_func=lambda i: _pod_len_opts[i], key="pod_len",
             )
         with _p2:
-            pod_host = _voice_opts[st.selectbox(L["host_label"],  list(_voice_opts), index=0, key="pod_host")]
+            _hsel = st.selectbox(L["host_label"],  list(_voice_opts), index=0, key="pod_host")  # default: first female
+            pod_host = _voice_opts[_hsel]
+            _host_disp = _hsel.split(" ♀")[0].split(" ♂")[0].strip()
         with _p3:
-            pod_guest= _voice_opts[st.selectbox(L["guest_label"], list(_voice_opts), index=3, key="pod_guest")]
+            _gsel = st.selectbox(L["guest_label"], list(_voice_opts), index=5, key="pod_guest")  # default: first male
+            pod_guest = _voice_opts[_gsel]
+            _guest_disp = _gsel.split(" ♀")[0].split(" ♂")[0].strip()
 
         st.divider()
 
@@ -1004,7 +1032,10 @@ elif active_tab == "podcast":
                         context_text=ctx_text if has_ctx else "",
                         url=input_url or "", files=input_files,
                         length="short" if pod_len_idx == 0 else "standard",
-                        voice_host=pod_host, voice_guest=pod_guest, lang=lang,
+                        voice_host=pod_host, voice_guest=pod_guest,
+                        host_display_name=_host_disp if is_ar else "",
+                        guest_display_name=_guest_disp if is_ar else "",
+                        lang=lang,
                     )
                     st.session_state.result_podcast = (data, mime)
                 except Exception as e:
