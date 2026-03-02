@@ -733,7 +733,7 @@ if active_tab == "text":
     }
 
     with st.container(border=True):
-        _tags("Gemini 3 Pro", "Gemini 3 Flash")
+        _tags("Gemini 3.1 Pro", "Gemini 3 Flash")
         _c1, _c2, _c3 = st.columns(3)
         with _c1:
             text_type = _type_map[st.selectbox(L["text_type_label"], list(_type_map), key="text_type")]
@@ -782,18 +782,19 @@ if active_tab == "text":
 # ════════════════════════════════════════════════════════════════════════════
 elif active_tab == "image":
     with st.container(border=True):
-        _tags("Imagen 4 Fast", "Imagen 4", "Imagen 4 Ultra", "Nano Banana")
+        _tags("Imagen 4", "Nano Banana 2", "Nano Banana Pro", "Up to 4K")
         _i1, _i2 = st.columns(2)
         with _i1:
             img_model = st.selectbox(
                 L["model_label"],
-                ["imagen_fast", "imagen", "imagen_ultra", "nano_banana", "nano_banana_pro"],
+                ["imagen_fast", "imagen", "imagen_ultra", "nano_banana", "nano_banana_2", "nano_banana_pro"],
                 format_func=lambda x: {
-                    "nano_banana_pro": "Nano Banana Pro — 4K",
-                    "imagen_fast":     "Imagen 4 Fast",
-                    "imagen":          "Imagen 4 Flagship",
-                    "imagen_ultra":    "Imagen 4 Ultra",
-                    "nano_banana":     "Nano Banana",
+                    "imagen_fast":      "Imagen 4 Fast",
+                    "imagen":           "Imagen 4 Flagship",
+                    "imagen_ultra":     "Imagen 4 Ultra",
+                    "nano_banana":      "Nano Banana",
+                    "nano_banana_2":    "Nano Banana 2",
+                    "nano_banana_pro":  "Nano Banana Pro",
                 }[x],
                 key="img_model",
             )

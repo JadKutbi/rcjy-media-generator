@@ -48,6 +48,7 @@ MODELS = {
         "imagen": "imagen-4.0-generate-001",
         "imagen_ultra": "imagen-4.0-ultra-generate-001",
         "nano_banana": "gemini-2.5-flash-image",
+        "nano_banana_2": "gemini-3.1-flash-image-preview",
         "nano_banana_pro": "gemini-3-pro-image-preview",
     },
     "video": {
@@ -60,7 +61,7 @@ MODELS = {
     },
     "podcast": "gemini-3-flash-preview",
     "text": {
-        "pro": "gemini-3-pro-preview",
+        "pro": "gemini-3.1-pro-preview",
         "flash": "gemini-3-flash-preview",
     },
 }
