@@ -264,14 +264,16 @@ html, body, .stApp {{
   padding: 10px 18px;
   border-radius: 8px;
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: 1.0625rem;
+  font-size: .9375rem;
   font-weight: 500;
   color: #0d121c;
   text-decoration: none;
   white-space: nowrap;
   transition: background .2s, color .2s;
 }}
-.rcjy-nav-item:hover {{ background: #F3F4F6; color: #1B8354; }}
+.rcjy-nav-item:hover {{ background: #F3F4F6; color: #1B8354; text-decoration: none; }}
+.rcjy-nav-item:focus, .rcjy-nav-item:visited {{ text-decoration: none; }}
+.rcjy-nav-links a {{ text-decoration: none !important; }}
 .rcjy-nav-active {{
   background: #1B8354 !important;
   color: #fff !important;
@@ -618,7 +620,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   [data-testid="stMainBlockContainer"] {{ padding: 0 1rem 2rem !important; }}
   .rcjy-nav {{ margin: 0 -1rem 1rem; }}
   .rcjy-nav-inner {{ padding: 0 1rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
-  .rcjy-nav-item {{ font-size: .875rem !important; padding: 8px 10px !important; }}
+  .rcjy-nav-item {{ font-size: .8125rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
   .rcjy-footer {{ margin: 3rem -1rem -3rem; }}
