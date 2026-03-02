@@ -208,7 +208,7 @@ st.markdown(f"""
 /* ── Reset & base ── */
 html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif !important;
-  font-size: 15px;
+  font-size: 16px;
   color: #161616;
   background: #F3F4F6 !important;
   -webkit-font-smoothing: antialiased;
@@ -264,7 +264,7 @@ html, body, .stApp {{
   padding: 10px 16px;
   border-radius: 8px;
   font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
-  font-size: .9rem;
+  font-size: 1rem;
   font-weight: 500;
   color: #0d121c;
   text-decoration: none;
@@ -323,15 +323,15 @@ html, body, .stApp {{
 .stTextArea  > label,
 .stTextInput > label {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
-  font-size: .7rem !important;
+  font-size: .75rem !important;
   font-weight: 600 !important;
-  letter-spacing: .07em !important;
+  letter-spacing: .06em !important;
   text-transform: uppercase !important;
   color: #6C737F !important;
   margin-bottom: .3rem !important;
 }}
 .stCaption, [data-testid="stCaptionContainer"] p {{
-  font-size: .8rem !important;
+  font-size: .75rem !important;
   color: #9DA4AE !important;
   line-height: 1.55 !important;
 }}
@@ -341,7 +341,7 @@ html, body, .stApp {{
    ════════════════════════════════════════ */
 .stTextArea textarea {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
-  font-size: .9625rem !important;
+  font-size: 1rem !important;
   font-weight: 400 !important;
   line-height: 1.7 !important;
   color: #161616 !important;
@@ -360,7 +360,7 @@ html, body, .stApp {{
 }}
 .stTextArea textarea::placeholder {{
   color: #B8BEC8 !important;
-  font-size: .9rem !important;
+  font-size: .9375rem !important;
 }}
 
 /* ════════════════════════════════════════
@@ -368,7 +368,7 @@ html, body, .stApp {{
    ════════════════════════════════════════ */
 .stTextInput input {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
-  font-size: .9rem !important;
+  font-size: 1rem !important;
   color: #161616 !important;
   background: #F9FAFB !important;
   border: 1px solid #9DA4AE !important;
@@ -388,7 +388,7 @@ html, body, .stApp {{
    ════════════════════════════════════════ */
 .stSelectbox [data-baseweb="select"] > div {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
-  font-size: .9rem !important;
+  font-size: 1rem !important;
   font-weight: 500 !important;
   color: #161616 !important;
   background: #F9FAFB !important;
@@ -407,7 +407,7 @@ html, body, .stApp {{
 .mtags {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .5rem; }}
 .mtag {{
   font-family: 'IBM Plex Sans', sans-serif;
-  font-size: .67rem;
+  font-size: .6875rem;
   font-weight: 600;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -431,7 +431,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    ════════════════════════════════════════ */
 .stButton > button {{
   font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
-  font-size: .9375rem !important;
+  font-size: 1rem !important;
   font-weight: 600 !important;
   letter-spacing: .01em !important;
   color: #fff !important;
@@ -524,7 +524,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   border: 1px solid #C3E0CC;
   border-radius: 4px;
   padding: .25rem .8rem;
-  font-size: .8rem;
+  font-size: .75rem;
   font-weight: 600;
   margin-top: .35rem;
 }}
@@ -541,8 +541,8 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   box-shadow: 0px 2px 4px -2px rgba(16,24,40,.06), 0px 4px 8px -2px rgba(16,24,40,.1);
   border-top: 3px solid #1B8354;
 }}
-.result-wrap p  {{ font-size: .9375rem !important; line-height: 1.8 !important; color: #161616 !important; }}
-.result-wrap li {{ font-size: .9375rem !important; line-height: 1.8 !important; color: #161616 !important; }}
+.result-wrap p  {{ font-size: 1rem !important; line-height: 1.8 !important; color: #161616 !important; }}
+.result-wrap li {{ font-size: 1rem !important; line-height: 1.8 !important; color: #161616 !important; }}
 .result-wrap h1,
 .result-wrap h2,
 .result-wrap h3 {{ color: #161616 !important; font-weight: 600 !important; }}
@@ -551,7 +551,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    ALERTS & SPINNER
    ════════════════════════════════════════ */
 .stAlert {{ border-radius: 8px !important; }}
-.stAlert p {{ font-size: .9rem !important; }}
+.stAlert p {{ font-size: .9375rem !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
@@ -585,7 +585,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 }}
 .rcjy-ftr-copy {{
   color: rgba(255,255,255,.85);
-  font-size: .82rem;
+  font-size: .8125rem;
   font-weight: 500;
 }}
 .rcjy-ftr-links {{
@@ -596,7 +596,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .rcjy-ftr-links a {{
   color: rgba(255,255,255,.65);
   text-decoration: none;
-  font-size: .78rem;
+  font-size: .75rem;
   transition: color .2s;
 }}
 .rcjy-ftr-links a:hover {{ color: #fff; }}
@@ -617,7 +617,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   [data-testid="stMainBlockContainer"] {{ padding: 0 1rem 2rem !important; }}
   .rcjy-nav {{ margin: 0 -1rem 1rem; }}
   .rcjy-nav-inner {{ padding: 0 1rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
-  .rcjy-nav-item {{ font-size: .78rem !important; padding: 7px 9px !important; }}
+  .rcjy-nav-item {{ font-size: .8125rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
   .rcjy-footer {{ margin: 3rem -1rem -3rem; }}
