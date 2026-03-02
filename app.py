@@ -197,7 +197,7 @@ _api_ok = bool(get_api_key())
 # ── CSS ───────────────────────────────────────────────────────────────────────
 _fonts = (
     "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700"
-    "&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
+    "&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap"
 )
 _dir = "rtl" if is_ar else "ltr"
 
@@ -207,7 +207,7 @@ st.markdown(f"""
 
 /* ── Reset & base ── */
 html, body, .stApp {{
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif !important;
+  font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', system-ui, sans-serif !important;
   font-size: 16px;
   color: #161616;
   background: #F3F4F6 !important;
@@ -241,7 +241,7 @@ html, body, .stApp {{
   padding: 0 3rem;
   min-height: 72px;
   gap: 1.25rem;
-  direction: ltr;
+  direction: {_dir};
 }}
 .rcjy-nav-logo-link {{
   display: flex;
@@ -261,10 +261,10 @@ html, body, .stApp {{
 }}
 .rcjy-nav-item {{
   display: block;
-  padding: 10px 16px;
+  padding: 10px 18px;
   border-radius: 8px;
-  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
-  font-size: 1rem;
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: 1.0625rem;
   font-weight: 500;
   color: #0d121c;
   text-decoration: none;
@@ -287,7 +287,7 @@ html, body, .stApp {{
 }}
 /* Primary UI-language toggle */
 .rcjy-lang-link {{
-  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   font-size: .875rem;
   font-weight: 500;
   color: #0d121c;
@@ -322,7 +322,7 @@ html, body, .stApp {{
 .stSelectbox > label,
 .stTextArea  > label,
 .stTextInput > label {{
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
+  font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: .75rem !important;
   font-weight: 600 !important;
   letter-spacing: .06em !important;
@@ -340,7 +340,7 @@ html, body, .stApp {{
    TEXTAREA
    ════════════════════════════════════════ */
 .stTextArea textarea {{
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
+  font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
   font-weight: 400 !important;
   line-height: 1.7 !important;
@@ -367,7 +367,7 @@ html, body, .stApp {{
    TEXT INPUT
    ════════════════════════════════════════ */
 .stTextInput input {{
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
+  font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
   color: #161616 !important;
   background: #F9FAFB !important;
@@ -387,7 +387,7 @@ html, body, .stApp {{
    SELECTBOX
    ════════════════════════════════════════ */
 .stSelectbox [data-baseweb="select"] > div {{
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
+  font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
   font-weight: 500 !important;
   color: #161616 !important;
@@ -430,7 +430,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
    PRIMARY BUTTON
    ════════════════════════════════════════ */
 .stButton > button {{
-  font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif !important;
+  font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
   font-weight: 600 !important;
   letter-spacing: .01em !important;
@@ -566,7 +566,8 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .rcjy-footer {{
   background: #1B8354;
   margin: 3rem -3rem -3rem;
-  font-family: 'IBM Plex Sans','IBM Plex Sans Arabic',sans-serif;
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  direction: {_dir};
 }}
 .rcjy-ftr-main {{
   display: flex;
@@ -617,7 +618,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   [data-testid="stMainBlockContainer"] {{ padding: 0 1rem 2rem !important; }}
   .rcjy-nav {{ margin: 0 -1rem 1rem; }}
   .rcjy-nav-inner {{ padding: 0 1rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
-  .rcjy-nav-item {{ font-size: .8125rem !important; padding: 7px 9px !important; }}
+  .rcjy-nav-item {{ font-size: .875rem !important; padding: 8px 10px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
   .rcjy-footer {{ margin: 3rem -1rem -3rem; }}
