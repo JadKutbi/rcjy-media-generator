@@ -78,7 +78,7 @@ def _concat_wavs(wav_list: list[bytes]) -> bytes:
     return buf.getvalue()
 
 
-def _api_post(url: str, payload: dict, timeout=_TIMEOUT_SLOW, retries: int = 2):
+def _api_post(url: str, payload: dict, timeout=_TIMEOUT_SLOW, retries: int = 3):
     import requests
     last_err = None
     for attempt in range(retries + 1):
@@ -96,8 +96,16 @@ def _api_post(url: str, payload: dict, timeout=_TIMEOUT_SLOW, retries: int = 2):
                 time.sleep(5 * (attempt + 1))
             continue
         except requests.exceptions.HTTPError as e:
-            if e.response is not None and 400 <= e.response.status_code < 500:
-                logger.error("API client error %d", e.response.status_code)
+            status = e.response.status_code if e.response is not None else 0
+            if status == 429:
+                wait = min(30 * (attempt + 1), 120)
+                logger.warning("Rate limited (429), waiting %ds (attempt %d/%d)", wait, attempt + 1, retries + 1)
+                last_err = e
+                if attempt < retries:
+                    time.sleep(wait)
+                continue
+            if 400 <= status < 500:
+                logger.error("API client error %d", status)
                 raise
             last_err = e
             logger.warning("API server error (attempt %d/%d)", attempt + 1, retries + 1)
@@ -377,6 +385,12 @@ def generate_video(
 
         while current_dur < target_dur and ext_count < max_extensions:
             ext_count += 1
+
+            # Pause between extensions to avoid rate limits
+            if ext_count > 1:
+                logger.info("Waiting 10s before next extension to avoid rate limits...")
+                time.sleep(10)
+
             msg = f"Extending video ({current_dur}s -> {current_dur + 7}s) [step {ext_count}]..."
             logger.info(msg)
             if progress_callback:
@@ -386,15 +400,30 @@ def generate_video(
             ext_prompt = (
                 f"Continue the scene seamlessly. {full_prompt}"
             )
-            operation = client.models.generate_videos(
-                model=model_id,
-                prompt=ext_prompt,
-                video=video_obj.video,
-                config={
-                    "number_of_videos": 1,
-                    "resolution": "720p",
-                },
-            )
+
+            # Retry extension on rate limit errors
+            for attempt in range(3):
+                try:
+                    operation = client.models.generate_videos(
+                        model=model_id,
+                        prompt=ext_prompt,
+                        video=video_obj.video,
+                        config={
+                            "number_of_videos": 1,
+                            "resolution": "720p",
+                        },
+                    )
+                    break
+                except Exception as e:
+                    if ("429" in str(e) or "rate" in str(e).lower() or "quota" in str(e).lower()) and attempt < 2:
+                        wait = 30 * (attempt + 1)
+                        logger.warning("Rate limited on extension, waiting %ds (attempt %d/3)", wait, attempt + 1)
+                        if progress_callback:
+                            progress_callback(f"Rate limited, retrying in {wait}s...")
+                        time.sleep(wait)
+                    else:
+                        raise
+
             operation = _poll_video_operation(client, operation)
             video_obj = operation.response.generated_videos[0]
             current_dur += 7
