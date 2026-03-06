@@ -243,24 +243,8 @@ def generate_image(
     raise RuntimeError("No image in API response. Try a different prompt.")
 
 
-def generate_video(
-    prompt: str,
-    context_text: str = "",
-    aspect_ratio: str = "16:9",
-    duration: str = "8",
-    resolution: str = "1080p",
-    model: str = "standard",
-    lang: str = "en",
-) -> tuple[bytes, str]:
-    from google import genai
-
-    prompt = _validate_prompt(prompt)
-    context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
-    model_id = (
-        MODELS["video"].get(model, MODELS["video"]["standard"])
-        if isinstance(MODELS["video"], dict) else MODELS["video"]
-    )
-
+def _build_video_prompt(prompt: str, context_text: str, lang: str) -> str:
+    """Build the full prompt for video generation with standard rules."""
     # Video models can't render text correctly (especially Arabic), so we
     # explicitly tell it to avoid any on-screen text, titles, or captions.
     no_text_rule = (
@@ -279,42 +263,151 @@ def generate_video(
     if context_text:
         full_prompt += f"{context_text}\n\n"
     full_prompt += prompt
+    return full_prompt
+
+
+def _poll_video_operation(client, operation, timeout: int = 900):
+    """Poll a video generation operation until done or timeout."""
+    elapsed = 0
+    while not operation.done:
+        time.sleep(15)
+        elapsed += 15
+        operation = client.operations.get(operation)
+        if elapsed % 60 == 0:
+            logger.info("Video in progress... (%ds)", elapsed)
+        if elapsed >= timeout:
+            raise TimeoutError(f"Video generation timed out after {timeout // 60} minutes.")
+    return operation
+
+
+def _save_video_to_bytes(client, video) -> bytes:
+    """Download a generated video and return its bytes."""
+    client.files.download(file=video.video)
+    fd, tmp_path = tempfile.mkstemp(suffix=".mp4")
+    try:
+        os.close(fd)
+        video.video.save(tmp_path)
+        with open(tmp_path, "rb") as f:
+            return f.read()
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+
+def generate_video(
+    prompt: str,
+    context_text: str = "",
+    aspect_ratio: str = "16:9",
+    duration: str = "8",
+    resolution: str = "1080p",
+    model: str = "standard",
+    lang: str = "en",
+    extend_seconds: int = 0,
+    progress_callback=None,
+) -> tuple[bytes, str]:
+    """Generate a video, optionally extended beyond the initial clip.
+
+    Args:
+        extend_seconds: Total desired duration beyond the initial clip using
+            Veo 3.1 video extension.  Each extension adds ~7 s.  Set to 0
+            (default) for a single clip.  Extension forces 720p resolution.
+            Maximum total duration is ~148 s.
+        progress_callback: Optional callable(message: str) invoked with
+            progress updates during multi-step extension.
+    """
+    from google import genai
+
+    prompt = _validate_prompt(prompt)
+    context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
+    model_id = (
+        MODELS["video"].get(model, MODELS["video"]["standard"])
+        if isinstance(MODELS["video"], dict) else MODELS["video"]
+    )
+
+    full_prompt = _build_video_prompt(prompt, context_text, lang)
 
     key = require_api_key()
-    logger.info("Generating video: model=%s, aspect=%s, duration=%s, resolution=%s, lang=%s", model_id, aspect_ratio, duration, resolution, lang)
+
+    # If extending, force 720p — Veo 3.1 extension only supports 720p.
+    if extend_seconds > 0:
+        resolution = "720p"
+
+    logger.info(
+        "Generating video: model=%s, aspect=%s, duration=%s, resolution=%s, "
+        "extend_seconds=%d, lang=%s",
+        model_id, aspect_ratio, duration, resolution, extend_seconds, lang,
+    )
 
     _saved = os.environ.pop("GOOGLE_GENAI_USE_VERTEXAI", None)
     try:
         client = genai.Client(api_key=key, vertexai=False)
+
+        # ── Step 1: Generate initial clip ──────────────────────────────
+        if progress_callback:
+            progress_callback("Generating initial clip...")
         operation = client.models.generate_videos(
             model=model_id,
             prompt=full_prompt,
-            config={"aspect_ratio": aspect_ratio, "duration_seconds": duration, "resolution": resolution.lower()},
+            config={
+                "aspect_ratio": aspect_ratio,
+                "duration_seconds": duration,
+                "resolution": resolution.lower(),
+            },
         )
-        timeout = 900
-        elapsed = 0
-        while not operation.done:
-            time.sleep(15)
-            elapsed += 15
-            operation = client.operations.get(operation)
-            if elapsed % 60 == 0:
-                logger.info("Video in progress... (%ds)", elapsed)
-            if elapsed >= timeout:
-                raise TimeoutError("Video generation timed out after 15 minutes.")
+        operation = _poll_video_operation(client, operation)
+        video_obj = operation.response.generated_videos[0]
 
-        video = operation.response.generated_videos[0]
-        client.files.download(file=video.video)
-        fd, tmp_path = tempfile.mkstemp(suffix=".mp4")
-        try:
-            os.close(fd)
-            video.video.save(tmp_path)
-            with open(tmp_path, "rb") as f:
-                result = f.read()
+        if extend_seconds <= 0:
+            # Single clip — download and return
+            result = _save_video_to_bytes(client, video_obj)
             logger.info("Video generated (%d bytes)", len(result))
             return result, "video/mp4"
-        finally:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
+
+        # ── Step 2: Extension loop ─────────────────────────────────────
+        initial_dur = int(duration)
+        current_dur = initial_dur
+        # Each extension adds 7 seconds; max 20 extensions (148 s total).
+        target_dur = min(initial_dur + extend_seconds, 148)
+        max_extensions = 20
+        ext_count = 0
+
+        logger.info(
+            "Starting extension loop: current=%ds, target=%ds", current_dur, target_dur,
+        )
+
+        while current_dur < target_dur and ext_count < max_extensions:
+            ext_count += 1
+            msg = f"Extending video ({current_dur}s -> {current_dur + 7}s) [step {ext_count}]..."
+            logger.info(msg)
+            if progress_callback:
+                progress_callback(msg)
+
+            # Use a continuation prompt that maintains scene coherence
+            ext_prompt = (
+                f"Continue the scene seamlessly. {full_prompt}"
+            )
+            operation = client.models.generate_videos(
+                model=model_id,
+                prompt=ext_prompt,
+                video=video_obj.video,
+                config={
+                    "number_of_videos": 1,
+                    "resolution": "720p",
+                },
+            )
+            operation = _poll_video_operation(client, operation)
+            video_obj = operation.response.generated_videos[0]
+            current_dur += 7
+
+        # ── Step 3: Download final extended video ──────────────────────
+        if progress_callback:
+            progress_callback("Downloading final video...")
+        result = _save_video_to_bytes(client, video_obj)
+        logger.info(
+            "Extended video generated (%d bytes, ~%ds, %d extensions)",
+            len(result), current_dur, ext_count,
+        )
+        return result, "video/mp4"
     finally:
         if _saved is not None:
             os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = _saved

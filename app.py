@@ -49,6 +49,16 @@ T = {
         "model_label":            "Model",
         "aspect_label":           "Aspect Ratio",
         "duration_label":         "Duration (sec)",
+        "total_duration_label":   "Total Duration",
+        "total_dur_8":            "8s (single clip)",
+        "total_dur_15":           "~15s (1 extension)",
+        "total_dur_22":           "~22s (2 extensions)",
+        "total_dur_29":           "~29s (3 extensions)",
+        "total_dur_43":           "~43s (5 extensions)",
+        "total_dur_57":           "~57s (7 extensions)",
+        "total_dur_78":           "~78s (10 extensions)",
+        "total_dur_148":          "~148s (20 extensions, max)",
+        "extend_note":            "Extension forces 720p resolution. Each step adds ~7s and takes 2-5 min.",
         "resolution_label":       "Resolution",
         "video_model_label":      "Video Model",
         "voice_label":            "Voice",
@@ -88,7 +98,8 @@ T = {
         "warn_api":               "GEMINI_API_KEY is not set. Add it as an environment variable.",
         "spin_text":              "Generating text…",
         "spin_image":             "Generating image…",
-        "spin_video":             "Generating video… (2–5 min)",
+        "spin_video":             "Generating video…",
+        "spin_video_extend":      "Generating extended video…",
         "spin_voice":             "Generating speech…",
         "spin_podcast":           "Creating podcast… (2–3 min)",
         "footer_org":             "Royal Commission for Jubail and Yanbu",
@@ -121,6 +132,16 @@ T = {
         "model_label":            "النموذج",
         "aspect_label":           "نسبة الأبعاد",
         "duration_label":         "المدة (ثانية)",
+        "total_duration_label":   "المدة الإجمالية",
+        "total_dur_8":            "٨ث (مقطع واحد)",
+        "total_dur_15":           "~١٥ث (تمديد ١)",
+        "total_dur_22":           "~٢٢ث (تمديدان ٢)",
+        "total_dur_29":           "~٢٩ث (٣ تمديدات)",
+        "total_dur_43":           "~٤٣ث (٥ تمديدات)",
+        "total_dur_57":           "~٥٧ث (٧ تمديدات)",
+        "total_dur_78":           "~٧٨ث (١٠ تمديدات)",
+        "total_dur_148":          "~١٤٨ث (٢٠ تمديد، الحد الأقصى)",
+        "extend_note":            "التمديد يفرض دقة 720p. كل خطوة تضيف ~٧ث وتستغرق ٢-٥ دقائق.",
         "resolution_label":       "الدقة",
         "video_model_label":      "نموذج الفيديو",
         "voice_label":            "الصوت",
@@ -160,7 +181,8 @@ T = {
         "warn_api":               "مفتاح GEMINI_API_KEY غير مضبوط.",
         "spin_text":              "جارٍ إنشاء النص…",
         "spin_image":             "جارٍ إنشاء الصورة…",
-        "spin_video":             "جارٍ إنشاء الفيديو… (٢–٥ دقائق)",
+        "spin_video":             "جارٍ إنشاء الفيديو…",
+        "spin_video_extend":      "جارٍ إنشاء فيديو ممتد…",
         "spin_voice":             "جارٍ إنشاء الصوت…",
         "spin_podcast":           "جارٍ إنشاء البودكاست… (٢–٣ دقائق)",
         "footer_org":             "الهيئة الملكية للجبيل وينبع",
@@ -838,8 +860,20 @@ elif active_tab == "image":
 #  VIDEO
 # ════════════════════════════════════════════════════════════════════════════
 elif active_tab == "video":
+    # Total-duration options: value = extend_seconds beyond the initial 8s clip
+    _dur_options = {
+        L["total_dur_8"]:   0,
+        L["total_dur_15"]:  7,
+        L["total_dur_22"]:  14,
+        L["total_dur_29"]:  21,
+        L["total_dur_43"]:  35,
+        L["total_dur_57"]:  49,
+        L["total_dur_78"]:  70,
+        L["total_dur_148"]: 140,
+    }
+
     with st.container(border=True):
-        _tags("Veo 3.1 Standard", "Veo 3.1 Fast", "Up to 4K", "Up to 8s")
+        _tags("Veo 3.1 Standard", "Veo 3.1 Fast", "Up to 4K", "Up to ~148s")
         _v1, _v2, _v3, _v4 = st.columns(4)
         with _v1:
             _vm = st.selectbox(L["video_model_label"], ["Standard", "Fast"], key="vid_model")
@@ -847,13 +881,27 @@ elif active_tab == "video":
         with _v2:
             vid_aspect = st.selectbox(L["aspect_label"], ["16:9", "9:16"], key="vid_aspect")
         with _v3:
-            vid_res = st.selectbox(L["resolution_label"], ["720p", "1080p", "4K"], index=1, key="vid_res")
+            _dur_label = st.selectbox(
+                L["total_duration_label"],
+                list(_dur_options.keys()),
+                index=0,
+                key="vid_total_dur",
+            )
+            vid_extend = _dur_options[_dur_label]
         with _v4:
-            # 1080p and 4K require 8s per Veo API docs
-            if vid_res in ("1080p", "4K"):
-                vid_dur = st.selectbox(L["duration_label"], ["8"], key="vid_dur_hi")
+            # Extension forces 720p; only allow higher res for single clips
+            if vid_extend > 0:
+                vid_res = st.selectbox(
+                    L["resolution_label"], ["720p"], key="vid_res_ext",
+                )
             else:
-                vid_dur = st.selectbox(L["duration_label"], ["4", "6", "8"], index=2, key="vid_dur_lo")
+                vid_res = st.selectbox(
+                    L["resolution_label"], ["720p", "1080p", "4K"],
+                    index=1, key="vid_res",
+                )
+
+        if vid_extend > 0:
+            st.caption(L["extend_note"])
 
         st.divider()
 
@@ -868,17 +916,28 @@ elif active_tab == "video":
         if not vid_prompt.strip():
             st.warning(L["warn_prompt"])
         else:
-            with st.spinner(L["spin_video"]):
+            _spin_msg = L["spin_video_extend"] if vid_extend > 0 else L["spin_video"]
+            # For extended videos use a placeholder so we can show progress
+            _progress_placeholder = st.empty()
+
+            def _vid_progress(msg: str):
+                _progress_placeholder.info(msg)
+
+            with st.spinner(_spin_msg):
                 try:
                     data, mime = generate_video(
                         prompt=vid_prompt.strip(),
                         context_text=ctx_text if has_ctx else "",
-                        aspect_ratio=vid_aspect, duration=vid_dur,
+                        aspect_ratio=vid_aspect, duration="8",
                         resolution=vid_res.lower(), model=vid_model, lang=lang,
+                        extend_seconds=vid_extend,
+                        progress_callback=_vid_progress if vid_extend > 0 else None,
                     )
                     st.session_state.result_video = (data, mime)
+                    _progress_placeholder.empty()
                 except Exception as e:
                     logger.exception("Video generation failed")
+                    _progress_placeholder.empty()
                     st.error(_sanitize_error(e))
 
     if st.session_state.result_video:
