@@ -8,4 +8,6 @@ font = "sans serif"
 [server]
 headless = true
 enableXsrfProtection = true
-maxUploadSize = 500
+enableCORS = false
+maxUploadSize = 50
+maxMessageSize = 50

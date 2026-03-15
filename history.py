@@ -1,15 +1,10 @@
-"""History for generated content — local file storage with Datastore fallback.
-
-Primary  : Local filesystem (history_data/ directory) — always works
-Fallback : Cloud Datastore — used when GCP credentials are available
-
-Local storage resets on Streamlit Cloud reboot but persists across
-user sessions while the app is running.
-"""
+# Local file-based history for generated content.
+# Resets on Streamlit Cloud reboot, persists while app is running.
 
 import json
 import logging
 import os
+import re
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +17,34 @@ HISTORY_DIR = BASE_DIR / "history_data"
 HISTORY_FILES_DIR = HISTORY_DIR / "files"
 INDEX_FILE = HISTORY_DIR / "index.json"
 MAX_ENTRIES = 200
+
+# ID and filename validation
+_SAFE_ID_RE = re.compile(r"^[a-f0-9]{16}$")
+_SAFE_FILENAME_RE = re.compile(r"^[a-f0-9]{16}\.[a-z0-9]{2,4}$")
+
+
+def _validate_entry_id(entry_id: str) -> str:
+    """Validate that an entry ID is a safe hex string. Prevents path traversal."""
+    if not isinstance(entry_id, str) or not _SAFE_ID_RE.match(entry_id):
+        raise ValueError(f"Invalid entry ID format: {entry_id!r}")
+    return entry_id
+
+
+def _validate_filename(filename: str) -> str:
+    """Validate that a filename matches expected format. Prevents path traversal."""
+    if not isinstance(filename, str) or not _SAFE_FILENAME_RE.match(filename):
+        raise ValueError(f"Invalid history filename format: {filename!r}")
+    return filename
+
+
+def _safe_filepath(filename: str) -> Path:
+    """Resolve a filename to a safe path within HISTORY_FILES_DIR."""
+    filename = _validate_filename(filename)
+    filepath = (HISTORY_FILES_DIR / filename).resolve()
+    # Double-check the resolved path is within the expected directory
+    if not str(filepath).startswith(str(HISTORY_FILES_DIR.resolve())):
+        raise ValueError(f"Path traversal detected: {filename}")
+    return filepath
 
 _EXT_MAP = {
     "image/png": ".png",
@@ -65,7 +88,6 @@ def is_available() -> bool:
         return False
 
 
-# ── public API ───────────────────────────────────────────────────────────────
 
 def save_entry(
     content_type: str,
@@ -81,7 +103,7 @@ def save_entry(
         entry_id = uuid.uuid4().hex[:16]
         ext = _EXT_MAP.get(mime, ".bin")
         filename = f"{entry_id}{ext}"
-        filepath = HISTORY_FILES_DIR / filename
+        filepath = _safe_filepath(filename)
 
         # Write file
         if isinstance(data, str):
@@ -90,6 +112,12 @@ def save_entry(
         else:
             filepath.write_bytes(data)
             file_size = len(data)
+
+        # Sanitize content_type and lang to prevent index pollution
+        _allowed_types = {"text", "image", "video", "voice", "podcast"}
+        _allowed_langs = {"en", "ar", "both"}
+        content_type = content_type if content_type in _allowed_types else "unknown"
+        lang = lang if lang in _allowed_langs else "en"
 
         # Build metadata
         now = datetime.now(timezone.utc)
@@ -113,9 +141,12 @@ def save_entry(
         # Auto-prune
         if len(entries) > MAX_ENTRIES:
             for old in entries[MAX_ENTRIES:]:
-                old_path = HISTORY_FILES_DIR / old.get("filename", "")
-                if old_path.exists():
-                    old_path.unlink()
+                try:
+                    old_path = _safe_filepath(old.get("filename", ""))
+                    if old_path.exists():
+                        old_path.unlink()
+                except (ValueError, OSError):
+                    logger.warning("Could not prune old entry: %s", old.get("id", "?"))
             entries = entries[:MAX_ENTRIES]
 
         _save_index(entries)
@@ -141,12 +172,13 @@ def get_entries(content_type: Optional[str] = None, limit: int = 50) -> list[dic
 def load_file(entry_id: str) -> tuple:
     """Load a generated file. Returns (bytes, mime, filename) or (None, None, None)."""
     try:
+        entry_id = _validate_entry_id(entry_id)
         entries = _load_index()
         meta = next((e for e in entries if e["id"] == entry_id), None)
         if meta is None:
             return None, None, None
 
-        filepath = HISTORY_FILES_DIR / meta["filename"]
+        filepath = _safe_filepath(meta["filename"])
         if not filepath.exists():
             return None, None, None
 
@@ -160,6 +192,9 @@ def load_file(entry_id: str) -> tuple:
             data = filepath.read_bytes()
 
         return data, mime, dl_name
+    except ValueError as ve:
+        logger.warning("Invalid entry_id in load_file: %s", ve)
+        return None, None, None
     except Exception:
         logger.exception("History load_file failed: %s", entry_id)
         return None, None, None
@@ -168,16 +203,23 @@ def load_file(entry_id: str) -> tuple:
 def delete_entry(entry_id: str) -> bool:
     """Delete a single history entry."""
     try:
+        entry_id = _validate_entry_id(entry_id)
         entries = _load_index()
         meta = next((e for e in entries if e["id"] == entry_id), None)
         if meta:
-            filepath = HISTORY_FILES_DIR / meta["filename"]
-            if filepath.exists():
-                filepath.unlink()
+            try:
+                filepath = _safe_filepath(meta["filename"])
+                if filepath.exists():
+                    filepath.unlink()
+            except (ValueError, OSError):
+                logger.warning("Could not delete file for entry: %s", entry_id)
             entries = [e for e in entries if e["id"] != entry_id]
             _save_index(entries)
             logger.info("History deleted: %s", entry_id)
             return True
+        return False
+    except ValueError as ve:
+        logger.warning("Invalid entry_id in delete_entry: %s", ve)
         return False
     except Exception:
         logger.exception("History delete failed: %s", entry_id)
@@ -190,9 +232,12 @@ def clear_all() -> int:
         entries = _load_index()
         count = len(entries)
         for e in entries:
-            filepath = HISTORY_FILES_DIR / e.get("filename", "")
-            if filepath.exists():
-                filepath.unlink()
+            try:
+                filepath = _safe_filepath(e.get("filename", ""))
+                if filepath.exists():
+                    filepath.unlink()
+            except (ValueError, OSError):
+                logger.warning("Could not delete file during clear: %s", e.get("id", "?"))
         _save_index([])
         logger.info("History cleared: %d entries", count)
         return count
@@ -217,7 +262,7 @@ def get_stats() -> dict:
         return {"total": 0, "total_size": 0, "by_type": {}}
 
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+# helpers
 
 def format_file_size(size_bytes: int) -> str:
     if size_bytes < 1024:

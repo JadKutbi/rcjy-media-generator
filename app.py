@@ -28,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rcjy.app")
 
-# ── Translations ──────────────────────────────────────────────────────────────
+# translations
 T = {
     "en": {
         "app_name":               "Media Generator",
@@ -220,7 +220,7 @@ T = {
     },
 }
 
-# ── Page config ───────────────────────────────────────────────────────────────
+# page config
 st.set_page_config(
     page_title="RCJY Media Generator",
     page_icon="https://www.rcjy.gov.sa/o/rcjy-theme/images/favicon.ico",
@@ -228,7 +228,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# ── Session state ─────────────────────────────────────────────────────────────
+# session state
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "en"
 for _k in ("result_text", "result_image", "result_video", "result_voice", "result_podcast"):
@@ -246,7 +246,7 @@ is_ar   = st.session_state.ui_lang == "ar"
 L       = T[st.session_state.ui_lang]
 _api_ok = bool(get_api_key())
 
-# ── SIDEBAR: History Panel ────────────────────────────────────────────────────
+# sidebar history panel
 if _history_ok:
     with st.sidebar:
         st.markdown(f"### {L['hist_title']}")
@@ -340,7 +340,7 @@ if _history_ok:
                         st.session_state["_hist_confirm_clear"] = False
                         st.rerun()
 
-# ── CSS ───────────────────────────────────────────────────────────────────────
+# css
 _fonts = (
     "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700"
     "&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap"
@@ -351,7 +351,7 @@ st.markdown(f"""
 <style>
 @import url('{_fonts}');
 
-/* ── Reset & base ── */
+/* reset & base */
 html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', system-ui, sans-serif !important;
   font-size: 16px;
@@ -369,9 +369,7 @@ html, body, .stApp {{
   background: transparent !important;
 }}
 
-/* ════════════════════════════════════════
-   NAVBAR  (pure-HTML, full-bleed, sticky)
-   ════════════════════════════════════════ */
+/* navbar */
 .rcjy-nav {{
   background: #fff;
   border-bottom: 3px solid #1B8354;
@@ -426,14 +424,14 @@ html, body, .stApp {{
   font-weight: 600 !important;
   box-shadow: 0 1px 3px rgba(27,131,84,.25);
 }}
-/* Right-side language controls */
+/* lang controls */
 .rcjy-nav-right {{
   display: flex;
   align-items: center;
   gap: .75rem;
   flex-shrink: 0;
 }}
-/* Primary UI-language toggle */
+/* lang toggle */
 .rcjy-lang-link {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   font-size: .875rem;
@@ -448,9 +446,7 @@ html, body, .stApp {{
 }}
 .rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
 
-/* ════════════════════════════════════════
-   CONTENT CARD — RCJY card style
-   ════════════════════════════════════════ */
+/* content card — rcjy card style */
 [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
   border-radius: 16px !important;
@@ -464,9 +460,7 @@ html, body, .stApp {{
   gap: .875rem !important;
 }}
 
-/* ════════════════════════════════════════
-   LABELS
-   ════════════════════════════════════════ */
+/* labels */
 .stSelectbox > label,
 .stTextArea  > label,
 .stTextInput > label {{
@@ -484,9 +478,7 @@ html, body, .stApp {{
   line-height: 1.55 !important;
 }}
 
-/* ════════════════════════════════════════
-   TEXTAREA
-   ════════════════════════════════════════ */
+/* textarea */
 .stTextArea textarea {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
@@ -511,9 +503,7 @@ html, body, .stApp {{
   font-size: .9375rem !important;
 }}
 
-/* ════════════════════════════════════════
-   TEXT INPUT
-   ════════════════════════════════════════ */
+/* text input */
 .stTextInput input {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
@@ -531,9 +521,7 @@ html, body, .stApp {{
   outline: none !important;
 }}
 
-/* ════════════════════════════════════════
-   SELECTBOX
-   ════════════════════════════════════════ */
+/* selectbox */
 .stSelectbox [data-baseweb="select"] > div {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
@@ -549,9 +537,7 @@ html, body, .stApp {{
   box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
 }}
 
-/* ════════════════════════════════════════
-   MODEL TAGS
-   ════════════════════════════════════════ */
+/* model tags */
 .mtags {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .5rem; }}
 .mtag {{
   font-family: 'IBM Plex Sans', sans-serif;
@@ -569,14 +555,10 @@ html, body, .stApp {{
 }}
 .mtag:hover {{ background: #D4EDDB; color: #104631; }}
 
-/* ════════════════════════════════════════
-   DIVIDER
-   ════════════════════════════════════════ */
+/* divider */
 hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
-/* ════════════════════════════════════════
-   PRIMARY BUTTON
-   ════════════════════════════════════════ */
+/* primary button */
 .stButton > button {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
@@ -604,9 +586,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   outline-offset: 2px !important;
 }}
 
-/* ════════════════════════════════════════
-   DOWNLOAD BUTTON
-   ════════════════════════════════════════ */
+/* download button */
 .stDownloadButton > button {{
   font-family: 'IBM Plex Sans', sans-serif !important;
   font-size: .875rem !important;
@@ -625,9 +605,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   transform: translateY(-1px) !important;
 }}
 
-/* ════════════════════════════════════════
-   FILE UPLOADER
-   ════════════════════════════════════════ */
+/* file uploader */
 [data-testid="stFileUploader"] section {{
   border: 2px dashed #D2D6DB !important;
   border-radius: 8px !important;
@@ -641,9 +619,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stFileUploaderDropzoneInstructions"] div small,
 [data-testid="stFileUploaderDropzone"] small {{ display: none !important; }}
 
-/* ════════════════════════════════════════
-   EXPANDER
-   ════════════════════════════════════════ */
+/* expander */
 [data-testid="stExpander"] {{
   border: 1px solid #D2D6DB !important;
   border-radius: 12px !important;
@@ -660,9 +636,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stExpander"] summary:hover {{ color: #1B8354 !important; }}
 [data-testid="stExpander"] > div > div {{ padding: .9rem 1rem !important; }}
 
-/* ════════════════════════════════════════
-   CONTEXT BADGE
-   ════════════════════════════════════════ */
+/* context badge */
 .ctx-badge {{
   display: inline-flex;
   align-items: center;
@@ -677,9 +651,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   margin-top: .35rem;
 }}
 
-/* ════════════════════════════════════════
-   RESULT AREA
-   ════════════════════════════════════════ */
+/* result area */
 .result-wrap {{
   background: #fff;
   border: 1px solid #D2D6DB;
@@ -695,22 +667,16 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .result-wrap h2,
 .result-wrap h3 {{ color: #161616 !important; font-weight: 600 !important; }}
 
-/* ════════════════════════════════════════
-   ALERTS & SPINNER
-   ════════════════════════════════════════ */
+/* alerts & spinner */
 .stAlert {{ border-radius: 8px !important; }}
 .stAlert p {{ font-size: .9375rem !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* ════════════════════════════════════════
-   SIDEBAR
-   ════════════════════════════════════════ */
+/* sidebar */
 [data-testid="stSidebar"] {{ background: #fff; }}
 
-/* ════════════════════════════════════════
-   FOOTER — clean green & white
-   ════════════════════════════════════════ */
+/* footer — clean green & white */
 .rcjy-footer {{
   background: #1B8354;
   margin: 3rem -3rem -3rem;
@@ -759,9 +725,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .rcjy-ftr-divv {{ width: 1px; height: 40px; background: rgba(255,255,255,.3); }}
 .rcjy-ftr-vision {{ height: 44px; display: block; }}
 
-/* ════════════════════════════════════════
-   RESPONSIVE
-   ════════════════════════════════════════ */
+/* responsive */
 @media (max-width: 760px) {{
   [data-testid="stMainBlockContainer"] {{ padding: 0 1rem 2rem !important; }}
   .rcjy-nav {{ margin: 0 -1rem 1rem; }}
@@ -777,9 +741,13 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   .rcjy-nav-links {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 }}
 </style>
+<!-- Security headers via meta tags (defense-in-depth for client-side) -->
+<meta http-equiv="X-Content-Type-Options" content="nosniff">
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 """, unsafe_allow_html=True)
 
-# ── NAVBAR (pure HTML + URL params) ───────────────────────────────────────────
+# navbar
 active_tab = _qp.get("tab", "text")
 if active_tab not in ("text", "image", "video", "voice", "podcast"):
     active_tab = "text"
@@ -826,7 +794,7 @@ if not _api_ok:
     st.warning(L["warn_api"])
 
 
-# ── SHARED HELPERS ────────────────────────────────────────────────────────────
+# shared helpers
 def _tags(*names):
     html = "".join(f'<span class="mtag">{n}</span>' for n in names)
     st.markdown(f'<div class="mtags">{html}</div>', unsafe_allow_html=True)
@@ -845,7 +813,9 @@ def _ctx_widget():
                 accept_multiple_files=True, key="input_files",
             )
         if files:
-            st.caption(f"{L['attached']}: {', '.join(f.name for f in files)}")
+            # Sanitize filenames before display (escape HTML entities)
+            safe_names = ", ".join(html_mod.escape(f.name) for f in files)
+            st.caption(f"{L['attached']}: {safe_names}")
         return url, files
 
 
@@ -860,9 +830,7 @@ def _load_ctx(url, files):
     return ctx, has_ctx
 
 
-# ════════════════════════════════════════════════════════════════════════════
-#  TEXT
-# ════════════════════════════════════════════════════════════════════════════
+# text tab
 if active_tab == "text":
     _type_map = {
         L["text_type_article"]: "article", L["text_type_social"]:  "social",
@@ -926,9 +894,7 @@ if active_tab == "text":
             file_name="rcjy_content.txt", mime="text/plain", key="dl_text",
         )
 
-# ════════════════════════════════════════════════════════════════════════════
-#  IMAGE
-# ════════════════════════════════════════════════════════════════════════════
+# image tab
 elif active_tab == "image":
     with st.container(border=True):
         _tags("Imagen 4", "Nano Banana 2", "Nano Banana Pro", "Up to 4K")
@@ -986,9 +952,7 @@ elif active_tab == "image":
             file_name="rcjy_image.png", mime="image/png", key="dl_img",
         )
 
-# ════════════════════════════════════════════════════════════════════════════
-#  VIDEO
-# ════════════════════════════════════════════════════════════════════════════
+# video tab
 elif active_tab == "video":
     # Total-duration options: value = extend_seconds beyond the initial 8s clip
     _dur_options = {
@@ -1080,9 +1044,7 @@ elif active_tab == "video":
             file_name="rcjy_video.mp4", mime="video/mp4", key="dl_vid",
         )
 
-# ════════════════════════════════════════════════════════════════════════════
-#  VOICE  — single prompt, no duplicate textarea
-# ════════════════════════════════════════════════════════════════════════════
+# voice tab
 elif active_tab == "voice":
     _voice_opts_v = {
         "نورة ♀":   "Kore",
@@ -1160,9 +1122,7 @@ elif active_tab == "voice":
             file_name="rcjy_voice.wav", mime="audio/wav", key="dl_voice",
         )
 
-# ════════════════════════════════════════════════════════════════════════════
-#  PODCAST
-# ════════════════════════════════════════════════════════════════════════════
+# podcast tab
 elif active_tab == "podcast":
     _pod_len_opts = [L["length_short"], L["length_standard"]]
     _voice_opts   = {
@@ -1248,7 +1208,7 @@ elif active_tab == "podcast":
             file_name="rcjy_podcast.wav", mime="audio/wav", key="dl_pod",
         )
 
-# ── FOOTER ────────────────────────────────────────────────────────────────────
+# footer
 _ftr_lang = "ar" if is_ar else "en"
 _ftr_copy = (
     "جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع" if is_ar

@@ -20,10 +20,19 @@ MAX_CONTEXT_LENGTH = 50_000
 MAX_TTS_TEXT_LENGTH = 5_000
 
 
+def _scrub_api_key(text: str) -> str:
+    """Remove any API key patterns from text to prevent accidental leakage."""
+    import re
+    # Scrub Google API keys (AIza pattern) and generic key= params
+    text = re.sub(r'(?i)key=[\w\-]{10,}', 'key=***REDACTED***', text)
+    text = re.sub(r'AIza[A-Za-z0-9_\-]{30,}', '***REDACTED***', text)
+    # Scrub any Bearer tokens
+    text = re.sub(r'(?i)bearer\s+[\w\-\.]{10,}', 'Bearer ***REDACTED***', text)
+    return text
+
+
 def _sanitize_error(e: Exception) -> str:
-    msg = str(e)
-    if "key=" in msg.lower():
-        msg = msg.split("key=")[0] + "key=***"
+    msg = _scrub_api_key(str(e))
     if "timed out" in msg.lower() or "timeout" in msg.lower():
         return "Request timed out. Please try again with simpler content or a shorter prompt."
     if "quota" in msg.lower() or "rate" in msg.lower() or "429" in msg:
@@ -49,6 +58,16 @@ def _validate_prompt(prompt: str, max_len: int = MAX_PROMPT_LENGTH) -> str:
         logger.warning("Prompt truncated from %d to %d chars", len(prompt), max_len)
         prompt = prompt[:max_len]
     return prompt
+
+
+# Allowlists for parameter validation (prevents injection of arbitrary model IDs)
+_ALLOWED_TEXT_TYPES = {"article", "social", "press", "ad", "email", "script", "summary", "creative"}
+_ALLOWED_TONES = {"professional", "friendly", "formal", "persuasive", "informative"}
+_ALLOWED_LANGS = {"en", "ar", "both"}
+_ALLOWED_ASPECT_RATIOS = {"16:9", "9:16", "1:1", "4:3", "3:4"}
+_ALLOWED_RESOLUTIONS = {"720p", "1080p", "4k"}
+_ALLOWED_DURATIONS = {"5", "6", "7", "8"}
+_ALLOWED_PODCAST_LENGTHS = {"short", "standard"}
 
 
 def _pcm_to_wav(pcm_data: bytes, sample_rate: int = 24000, channels: int = 1) -> bytes:
@@ -81,13 +100,15 @@ def _concat_wavs(wav_list: list[bytes]) -> bytes:
 def _api_post(url: str, payload: dict, timeout=_TIMEOUT_SLOW, retries: int = 3):
     import requests
     last_err = None
+    # Extract a safe URL for logging (strip API key query param)
+    _safe_url = url.split("?")[0] if "?" in url else url
     for attempt in range(retries + 1):
         try:
             t0 = time.monotonic()
             resp = requests.post(url, json=payload, timeout=timeout)
             elapsed = time.monotonic() - t0
             resp.raise_for_status()
-            logger.info("API call OK (%.1fs)", elapsed)
+            logger.info("API call OK (%.1fs) %s", elapsed, _safe_url)
             return resp.json()
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             last_err = e
@@ -105,14 +126,14 @@ def _api_post(url: str, payload: dict, timeout=_TIMEOUT_SLOW, retries: int = 3):
                     time.sleep(wait)
                 continue
             if 400 <= status < 500:
-                logger.error("API client error %d", status)
+                logger.error("API client error %d on %s", status, _safe_url)
                 raise
             last_err = e
-            logger.warning("API server error (attempt %d/%d)", attempt + 1, retries + 1)
+            logger.warning("API server error %d (attempt %d/%d)", status, attempt + 1, retries + 1)
             if attempt < retries:
                 time.sleep(5)
             continue
-    raise RuntimeError(f"API call failed after {retries + 1} attempts: {last_err}")
+    raise RuntimeError(f"API call failed after {retries + 1} attempts: {_scrub_api_key(str(last_err))}")
 
 
 def _lang_instruction(lang: str) -> str:
@@ -134,6 +155,11 @@ def generate_text(
     lang: str = "en",
 ) -> str:
     prompt = _validate_prompt(prompt)
+    text_type = text_type if text_type in _ALLOWED_TEXT_TYPES else "article"
+    tone = tone if tone in _ALLOWED_TONES else "professional"
+    lang = lang if lang in _ALLOWED_LANGS else "en"
+    if model not in MODELS.get("text", {}):
+        model = "pro"
     combined_text, _ = get_content_from_input(text=prompt, url=url, files=files)
     if context_text and context_text != "No content provided.":
         combined_text = f"{context_text}\n\n---\n\n{combined_text}"
@@ -198,6 +224,10 @@ def generate_image(
     lang: str = "en",
 ) -> tuple[bytes, str]:
     prompt = _validate_prompt(prompt)
+    lang = lang if lang in _ALLOWED_LANGS else "en"
+    aspect_ratio = aspect_ratio if aspect_ratio in _ALLOWED_ASPECT_RATIOS else "16:9"
+    if model not in MODELS.get("image", {}):
+        model = "imagen_fast"
     context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
     model_id = MODELS["image"].get(model, MODELS["image"]["imagen_fast"])
     lang_prefix = _lang_instruction(lang)
@@ -326,6 +356,13 @@ def generate_video(
     from google import genai
 
     prompt = _validate_prompt(prompt)
+    lang = lang if lang in _ALLOWED_LANGS else "en"
+    aspect_ratio = aspect_ratio if aspect_ratio in {"16:9", "9:16"} else "16:9"
+    duration = duration if duration in _ALLOWED_DURATIONS else "8"
+    resolution = resolution.lower() if resolution.lower() in _ALLOWED_RESOLUTIONS else "1080p"
+    extend_seconds = max(0, min(int(extend_seconds), 140))  # cap at 140s
+    if model not in MODELS.get("video", {}):
+        model = "standard"
     context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
     model_id = (
         MODELS["video"].get(model, MODELS["video"]["standard"])
@@ -350,7 +387,7 @@ def generate_video(
     try:
         client = genai.Client(api_key=key, vertexai=False)
 
-        # ── Step 1: Generate initial clip ──────────────────────────────
+        # generate initial clip
         if progress_callback:
             progress_callback("Generating initial clip...")
         operation = client.models.generate_videos(
@@ -371,7 +408,7 @@ def generate_video(
             logger.info("Video generated (%d bytes)", len(result))
             return result, "video/mp4"
 
-        # ── Step 2: Extension loop ─────────────────────────────────────
+        # extension loop
         initial_dur = int(duration)
         current_dur = initial_dur
         # Each extension adds 7 seconds; max 20 extensions (148 s total).
@@ -428,7 +465,7 @@ def generate_video(
             video_obj = operation.response.generated_videos[0]
             current_dur += 7
 
-        # ── Step 3: Download final extended video ──────────────────────
+        # download final extended video
         if progress_callback:
             progress_callback("Downloading final video...")
         result = _save_video_to_bytes(client, video_obj)
@@ -460,6 +497,12 @@ def _tts_single(text: str, voice_name: str, model_id: str, key: str) -> bytes:
     raise RuntimeError("No audio in TTS response.")
 
 
+_ALLOWED_VOICES = {
+    "Kore", "Aoede", "Leda", "Zephyr", "Schedar",
+    "Puck", "Charon", "Fenrir", "Orus", "Perseus",
+}
+
+
 def generate_voice(
     text: str,
     context_text: str = "",
@@ -470,6 +513,12 @@ def generate_voice(
     lang: str = "en",
 ) -> tuple[bytes, str]:
     text = _validate_prompt(text, max_len=MAX_TTS_TEXT_LENGTH)
+    lang = lang if lang in _ALLOWED_LANGS else "en"
+    voice_name = voice_name if voice_name in _ALLOWED_VOICES else "Kore"
+    style_hint = style_hint[:100].strip()  # limit style hint length
+    display_name = display_name[:50].strip()  # limit display name length
+    if tts_model not in MODELS.get("voice", {}):
+        tts_model = "flash"
     model_id = (
         MODELS["voice"].get(tts_model, MODELS["voice"]["flash"])
         if isinstance(MODELS["voice"], dict) else MODELS["voice"]
@@ -564,6 +613,12 @@ def generate_podcast(
     lang: str = "en",
 ) -> tuple[bytes, str]:
     prompt = _validate_prompt(prompt)
+    lang = lang if lang in _ALLOWED_LANGS else "en"
+    length = length if length in _ALLOWED_PODCAST_LENGTHS else "short"
+    voice_host = voice_host if voice_host in _ALLOWED_VOICES else "Kore"
+    voice_guest = voice_guest if voice_guest in _ALLOWED_VOICES else "Puck"
+    host_display_name = host_display_name[:50].strip()
+    guest_display_name = guest_display_name[:50].strip()
     combined_text, _ = get_content_from_input(text=prompt, url=url, files=files)
     if context_text and context_text != "No content provided.":
         combined_text = f"{context_text}\n\n---\n\n{combined_text}"
