@@ -254,20 +254,24 @@ _api_ok = bool(get_api_key())
 
 # sidebar history panel
 with st.sidebar:
-    # Title with icon
+    # Title — clean text with green accent bar
     st.markdown(
         f'<div class="hist-title">'
-        f'<span class="hist-title-icon">H</span>'
+        f'<span class="hist-title-accent"></span>'
         f'{html_mod.escape(L["hist_title"])}'
         f'</div>',
         unsafe_allow_html=True,
     )
 
     if not _history_ok:
-        # Empty state — styled placeholder
+        # Empty state — clean, uses existing design language
         st.markdown(
             f'<div class="hist-empty">'
-            f'<div class="hist-empty-icon">&#9783;</div>'
+            f'<div class="hist-empty-icon">'
+            f'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9DA4AE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+            f'<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>'
+            f'</svg>'
+            f'</div>'
             f'<div class="hist-empty-text">{html_mod.escape(L["hist_empty"])}</div>'
             f'<div class="hist-empty-hint">{html_mod.escape(L["hist_empty_hint"])}</div>'
             f'</div>',
@@ -332,7 +336,11 @@ with st.sidebar:
         if not _entries:
             st.markdown(
                 f'<div class="hist-empty">'
-                f'<div class="hist-empty-icon">&#9783;</div>'
+                f'<div class="hist-empty-icon">'
+                f'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9DA4AE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
+                f'<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>'
+                f'</svg>'
+                f'</div>'
                 f'<div class="hist-empty-text">{html_mod.escape(L["hist_empty"])}</div>'
                 f'<div class="hist-empty-hint">{html_mod.escape(L["hist_empty_hint"])}</div>'
                 f'</div>',
@@ -349,7 +357,6 @@ with st.sidebar:
             for _e in _entries:
                 _eid = _e["id"]
                 _etype = _e.get("type", "text")
-                _badge_cls = f"hist-badge-{_etype}"
                 _badge_text = html_mod.escape(_badge_labels.get(_etype, _etype.title()))
                 _prompt_safe = html_mod.escape(_e.get("prompt", "")[:80])
                 _time = history.format_timestamp(_e.get("created_at", ""), st.session_state.ui_lang)
@@ -359,7 +366,7 @@ with st.sidebar:
                     # Header row: type badge + size
                     st.markdown(
                         f'<div class="hist-entry-header">'
-                        f'<span class="hist-type-badge {_badge_cls}">{_badge_text}</span>'
+                        f'<span class="hist-type-badge">{_badge_text}</span>'
                         f'<span class="hist-entry-size">{html_mod.escape(_size)}</span>'
                         f'</div>',
                         unsafe_allow_html=True,
@@ -740,7 +747,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 /* ──────────────── sidebar ──────────────── */
 [data-testid="stSidebar"] {{
-  background: #FAFBFC;
+  background: #F3F4F6;
   border-right: 1px solid #E5E7EB;
   direction: {_dir};
 }}
@@ -753,29 +760,29 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   top: 0.5rem !important;
 }}
 
-/* sidebar title */
+/* sidebar title — clean text with green accent bar */
 .hist-title {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .8125rem;
-  font-weight: 700;
-  letter-spacing: .08em;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .06em;
   text-transform: uppercase;
   color: #6C737F;
-  margin: 0 0 .75rem 0;
-  padding: 0 .25rem;
+  margin: 0 0 1rem 0;
+  padding: 0;
   display: flex;
   align-items: center;
   gap: .5rem;
 }}
-.hist-title-icon {{
-  width: 18px; height: 18px;
-  display: inline-flex; align-items: center; justify-content: center;
-  background: #EBF5EE; border-radius: 4px;
-  font-size: .625rem; color: #1B8354; font-weight: 700;
+.hist-title-accent {{
+  width: 3px;
+  height: 14px;
+  background: #1B8354;
+  border-radius: 2px;
   flex-shrink: 0;
 }}
 
-/* sidebar stats bar */
+/* sidebar stats bar — green accent top border matching result cards */
 .hist-stats {{
   display: flex;
   gap: .5rem;
@@ -784,9 +791,10 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .hist-stat {{
   flex: 1;
   background: #fff;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-  padding: .5rem .625rem;
+  border: none;
+  border-radius: 16px;
+  border-top: 3px solid #1B8354;
+  padding: .75rem .625rem .625rem;
   text-align: center;
 }}
 .hist-stat-value {{
@@ -803,7 +811,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   letter-spacing: .04em;
   text-transform: uppercase;
   color: #9DA4AE;
-  margin-top: .125rem;
+  margin-top: .2rem;
 }}
 
 /* sidebar filter — compact override */
@@ -814,11 +822,16 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div {{
   font-size: .8125rem !important;
   font-weight: 500 !important;
-  min-height: 34px !important;
-  padding: .25rem .5rem !important;
+  min-height: 36px !important;
+  padding: .3rem .6rem !important;
   border-radius: 6px !important;
-  background: #fff !important;
-  border-color: #E5E7EB !important;
+  background: #F9FAFB !important;
+  border: 1px solid #9DA4AE !important;
+  transition: border-color .2s, box-shadow .2s !important;
+}}
+[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"]:focus-within > div {{
+  border-color: #1B8354 !important;
+  box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
 }}
 
 /* sidebar divider */
@@ -827,23 +840,23 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   margin: .5rem 0 !important;
 }}
 
-/* sidebar cards — override global card bloat */
+/* sidebar cards — match main page card style (16px radius, white, no border) */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {{
-  border: 1px solid #E5E7EB !important;
-  border-radius: 10px !important;
+  border: none !important;
+  border-radius: 16px !important;
   background: #fff !important;
   box-shadow: none !important;
   margin-top: 0 !important;
-  margin-bottom: .375rem !important;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  margin-bottom: .5rem !important;
+  transition: box-shadow .15s ease, transform .1s ease;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-  border-color: #C3E0CC !important;
-  box-shadow: 0 1px 4px rgba(27,131,84,.08) !important;
+  box-shadow: 0 2px 8px rgba(27,131,84,.1) !important;
+  transform: translateY(-1px);
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
-  padding: .625rem .75rem !important;
-  gap: .25rem !important;
+  padding: .875rem 1rem !important;
+  gap: .375rem !important;
 }}
 
 /* sidebar entry card inner elements */
@@ -853,23 +866,24 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   gap: .5rem;
   margin-bottom: .125rem;
 }}
+/* unified green tag style — matches .mtag from main page */
 .hist-type-badge {{
   font-family: 'IBM Plex Sans',sans-serif;
   font-size: .5625rem;
-  font-weight: 700;
-  letter-spacing: .06em;
+  font-weight: 600;
+  letter-spacing: .05em;
   text-transform: uppercase;
-  padding: .15rem .4rem;
+  padding: .18rem .55rem;
   border-radius: 4px;
   display: inline-block;
   flex-shrink: 0;
   line-height: 1.4;
+  background: #EBF5EE;
+  color: #14573A;
+  border: 1px solid #C3E0CC;
+  transition: background .15s, color .15s;
 }}
-.hist-badge-text    {{ background: #EBF5EE; color: #14573A; }}
-.hist-badge-image   {{ background: #EDE9FE; color: #5B21B6; }}
-.hist-badge-video   {{ background: #FEF3C7; color: #92400E; }}
-.hist-badge-voice   {{ background: #DBEAFE; color: #1E40AF; }}
-.hist-badge-podcast {{ background: #FCE7F3; color: #9D174D; }}
+.hist-type-badge:hover {{ background: #D4EDDB; color: #104631; }}
 .hist-entry-size {{
   font-family: 'IBM Plex Sans',sans-serif;
   font-size: .6875rem;
@@ -879,95 +893,121 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 }}
 .hist-entry-prompt {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .75rem;
+  font-size: .8125rem;
   font-weight: 400;
   color: #384250;
-  line-height: 1.45;
+  line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: .125rem 0;
+  margin: .2rem 0;
 }}
 .hist-entry-time {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .625rem;
+  font-size: .6875rem;
   font-weight: 500;
-  color: #B0B8C4;
+  color: #9DA4AE;
 }}
 
-/* sidebar buttons — compact secondary style, override global green */
+/* sidebar buttons — download is green primary, delete is subtle secondary */
 [data-testid="stSidebar"] .stButton > button {{
   font-size: .6875rem !important;
   font-weight: 600 !important;
   letter-spacing: .02em !important;
-  min-height: 30px !important;
-  padding: .3rem .5rem !important;
-  border-radius: 6px !important;
+  min-height: 32px !important;
+  padding: .35rem .6rem !important;
+  border-radius: 8px !important;
   box-shadow: none !important;
   width: 100% !important;
-  background: #fff !important;
-  color: #384250 !important;
-  border: 1px solid #E5E7EB !important;
-  transition: background .15s, color .15s, border-color .15s !important;
+  background: transparent !important;
+  color: #161616 !important;
+  border: 1px solid #9DA4AE !important;
+  transition: background .15s, color .15s, border-color .15s, transform .1s !important;
 }}
 [data-testid="stSidebar"] .stButton > button:hover {{
   background: #F3F4F6 !important;
-  border-color: #D2D6DB !important;
-  transform: none !important;
+  border-color: #384250 !important;
+  transform: translateY(-1px) !important;
 }}
-/* card action buttons — second column (delete) turns red on hover */
+[data-testid="stSidebar"] .stButton > button:focus {{
+  box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
+  outline: none !important;
+}}
+/* card action buttons — first column (download) = green mini-primary */
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button {{
+  background: #1B8354 !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 1px 3px rgba(27,131,84,.25) !important;
+}}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button:hover {{
+  background: #14573A !important;
+  box-shadow: 0 2px 6px rgba(27,131,84,.3) !important;
+  transform: translateY(-1px) !important;
+}}
+/* card action buttons — second column (delete) = subtle, red on hover */
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button {{
+  background: transparent !important;
+  color: #6C737F !important;
+  border: 1px solid #D2D6DB !important;
+}}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button:hover {{
   background: #FEF2F2 !important;
   color: #DC2626 !important;
   border-color: #FECACA !important;
+  transform: translateY(-1px) !important;
 }}
-/* card action buttons — first column (download) turns green on hover */
-[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button {{
-  color: #1B8354 !important;
-  border-color: #C3E0CC !important;
-}}
-[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button:hover {{
-  background: #EBF5EE !important;
-  border-color: #1B8354 !important;
-}}
-/* download buttons — green accent (keys start with "dl_") is handled by column selectors above */
-/* confirm: yes = red, no = neutral */
+/* confirm: yes = red destructive, no = neutral secondary */
 [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
   background: #DC2626 !important;
   color: #fff !important;
   border: none !important;
   font-size: .6875rem !important;
-  min-height: 30px !important;
-  padding: .3rem .5rem !important;
+  min-height: 32px !important;
+  padding: .35rem .6rem !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(220,38,38,.2) !important;
 }}
 [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover {{
   background: #B91C1C !important;
-  transform: none !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(220,38,38,.25) !important;
 }}
 
-/* sidebar empty state */
+/* sidebar empty state — clean, minimal */
 .hist-empty {{
   text-align: center;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
+  background: #fff;
+  border-radius: 16px;
+  margin-top: .25rem;
 }}
 .hist-empty-icon {{
-  font-size: 2rem;
-  line-height: 1;
-  margin-bottom: .625rem;
-  opacity: .35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto .875rem;
+  width: 48px;
+  height: 48px;
+  background: #EBF5EE;
+  border-radius: 50%;
+}}
+.hist-empty-icon svg {{
+  opacity: .6;
+  stroke: #1B8354;
 }}
 .hist-empty-text {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .8125rem;
+  font-size: .875rem;
   font-weight: 500;
-  color: #9DA4AE;
+  color: #384250;
   margin-bottom: .25rem;
 }}
 .hist-empty-hint {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .6875rem;
-  color: #B0B8C4;
+  font-size: .75rem;
+  color: #9DA4AE;
   line-height: 1.5;
 }}
 
@@ -978,18 +1018,25 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stSidebar"] .stCaption,
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{
   font-size: .6875rem !important;
-  color: #B0B8C4 !important;
+  color: #9DA4AE !important;
 }}
 
 /* sidebar download button (actual file download) */
 [data-testid="stSidebar"] .stDownloadButton > button {{
   font-size: .75rem !important;
   padding: .4rem .75rem !important;
-  min-height: 32px !important;
-  background: #EBF5EE !important;
-  color: #14573A !important;
-  border: 1px solid #C3E0CC !important;
-  border-radius: 6px !important;
+  min-height: 34px !important;
+  background: #1B8354 !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(27,131,84,.25) !important;
+  transition: background .15s, box-shadow .15s, transform .1s !important;
+}}
+[data-testid="stSidebar"] .stDownloadButton > button:hover {{
+  background: #14573A !important;
+  box-shadow: 0 2px 6px rgba(27,131,84,.3) !important;
+  transform: translateY(-1px) !important;
 }}
 
 /* footer — clean green & white */
