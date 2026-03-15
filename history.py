@@ -39,13 +39,34 @@ _client_checked = False
 
 
 def _get_client():
-    """Return the Datastore client, or None if unavailable."""
+    """Return the Datastore client, or None if unavailable.
+
+    Auth priority:
+      1. Streamlit secrets  (gcp_service_account section)
+      2. Default credentials (Cloud Run, GOOGLE_APPLICATION_CREDENTIALS, etc.)
+    """
     global _client, _client_checked
     if not _client_checked:
         _client_checked = True
         try:
             from google.cloud import datastore
-            _client = datastore.Client(project=PROJECT_ID)
+
+            # Try Streamlit secrets first (for Streamlit Cloud deployment)
+            try:
+                import streamlit as st
+                if hasattr(st, "secrets") and "gcp_service_account" in st.secrets:
+                    from google.oauth2 import service_account
+                    creds = service_account.Credentials.from_service_account_info(
+                        dict(st.secrets["gcp_service_account"])
+                    )
+                    _client = datastore.Client(project=PROJECT_ID, credentials=creds)
+                    logger.info("Datastore: using Streamlit secrets credentials")
+                else:
+                    raise KeyError("no streamlit secrets")
+            except Exception:
+                # Fall back to default credentials (Cloud Run, env var, etc.)
+                _client = datastore.Client(project=PROJECT_ID)
+
             # Quick connectivity check
             q = _client.query(kind="HistoryEntry")
             q.keys_only()
