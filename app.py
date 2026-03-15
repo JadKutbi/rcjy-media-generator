@@ -305,7 +305,7 @@ if _history_ok:
                 _eid = _e["id"]
                 _icon = _icons.get(_e["type"], "?")
                 _prompt_safe = html_mod.escape(_e.get("prompt", "")[:80])
-                _time = history.format_timestamp(_e.get("created_at", ""), lang)
+                _time = history.format_timestamp(_e.get("created_at", ""), st.session_state.ui_lang)
                 _size = history.format_file_size(_e.get("file_size", 0))
 
                 with st.container(border=True):
