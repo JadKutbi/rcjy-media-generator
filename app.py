@@ -225,7 +225,7 @@ st.set_page_config(
     page_title="RCJY Media Generator",
     page_icon="https://www.rcjy.gov.sa/o/rcjy-theme/images/favicon.ico",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # session state
@@ -247,10 +247,12 @@ L       = T[st.session_state.ui_lang]
 _api_ok = bool(get_api_key())
 
 # sidebar history panel
-if _history_ok:
-    with st.sidebar:
-        st.markdown(f"### {L['hist_title']}")
+with st.sidebar:
+    st.markdown(f"### {L['hist_title']}")
 
+    if not _history_ok:
+        st.caption(L["hist_empty"])
+    else:
         # Stats
         @st.cache_data(ttl=30)
         def _cached_stats():
@@ -280,7 +282,7 @@ if _history_ok:
             _cached_stats.clear()
             st.rerun()
 
-        # Handle pending download — load file into session for download button
+        # Handle pending download
         if st.session_state.get("_hist_download_id"):
             _dl_id = st.session_state.pop("_hist_download_id")
             _dl_data, _dl_mime, _dl_name = history.load_file(_dl_id)
