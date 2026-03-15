@@ -118,9 +118,12 @@ T = {
         "hist_filter":            "Filter by type",
         "hist_all":               "All",
         "hist_empty":             "No history yet.",
+        "hist_empty_hint":        "Generated content will appear here.",
         "hist_delete":            "Delete",
         "hist_clear":             "Clear All",
         "hist_clear_confirm":     "Are you sure? This cannot be undone.",
+        "hist_confirm_yes":       "Yes, delete all",
+        "hist_confirm_no":        "Cancel",
         "hist_cleared":           "History cleared.",
         "hist_download":          "Download",
     },
@@ -212,9 +215,12 @@ T = {
         "hist_filter":            "تصفية حسب النوع",
         "hist_all":               "الكل",
         "hist_empty":             "لا توجد سجلات بعد.",
+        "hist_empty_hint":        "المحتوى المُنشأ سيظهر هنا.",
         "hist_delete":            "حذف",
         "hist_clear":             "مسح الكل",
         "hist_clear_confirm":     "هل أنت متأكد؟ لا يمكن التراجع.",
+        "hist_confirm_yes":       "نعم، حذف الكل",
+        "hist_confirm_no":        "إلغاء",
         "hist_cleared":           "تم مسح السجل.",
         "hist_download":          "تحميل",
     },
@@ -248,10 +254,25 @@ _api_ok = bool(get_api_key())
 
 # sidebar history panel
 with st.sidebar:
-    st.markdown(f"### {L['hist_title']}")
+    # Title with icon
+    st.markdown(
+        f'<div class="hist-title">'
+        f'<span class="hist-title-icon">H</span>'
+        f'{html_mod.escape(L["hist_title"])}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
 
     if not _history_ok:
-        st.caption(L["hist_empty"])
+        # Empty state — styled placeholder
+        st.markdown(
+            f'<div class="hist-empty">'
+            f'<div class="hist-empty-icon">&#9783;</div>'
+            f'<div class="hist-empty-text">{html_mod.escape(L["hist_empty"])}</div>'
+            f'<div class="hist-empty-hint">{html_mod.escape(L["hist_empty_hint"])}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
     else:
         # Stats
         @st.cache_data(ttl=30)
@@ -260,11 +281,20 @@ with st.sidebar:
 
         _stats = _cached_stats()
         if _stats["total"] > 0:
-            _sc1, _sc2 = st.columns(2)
-            with _sc1:
-                st.metric(L["hist_total"], _stats["total"])
-            with _sc2:
-                st.metric(L["hist_size"], history.format_file_size(_stats["total_size"]))
+            _size_fmt = history.format_file_size(_stats["total_size"])
+            st.markdown(
+                f'<div class="hist-stats">'
+                f'<div class="hist-stat">'
+                f'  <div class="hist-stat-value">{_stats["total"]}</div>'
+                f'  <div class="hist-stat-label">{html_mod.escape(L["hist_total"])}</div>'
+                f'</div>'
+                f'<div class="hist-stat">'
+                f'  <div class="hist-stat-value">{html_mod.escape(_size_fmt)}</div>'
+                f'  <div class="hist-stat-label">{html_mod.escape(L["hist_size"])}</div>'
+                f'</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
         # Type filter
         _type_labels = [L["hist_all"], L["tab_text"], L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"]]
@@ -300,45 +330,77 @@ with st.sidebar:
 
         _entries = _cached_entries(_filter_type, 50)
         if not _entries:
-            st.caption(L["hist_empty"])
+            st.markdown(
+                f'<div class="hist-empty">'
+                f'<div class="hist-empty-icon">&#9783;</div>'
+                f'<div class="hist-empty-text">{html_mod.escape(L["hist_empty"])}</div>'
+                f'<div class="hist-empty-hint">{html_mod.escape(L["hist_empty_hint"])}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
         else:
-            _icons = {"text": "Aa", "image": "IMG", "video": "VID", "voice": "AUD", "podcast": "POD"}
+            _badge_labels = {
+                "text": L["tab_text"],
+                "image": L["tab_image"],
+                "video": L["tab_video"],
+                "voice": L["tab_voice"],
+                "podcast": L["tab_podcast"],
+            }
             for _e in _entries:
                 _eid = _e["id"]
-                _icon = _icons.get(_e["type"], "?")
+                _etype = _e.get("type", "text")
+                _badge_cls = f"hist-badge-{_etype}"
+                _badge_text = html_mod.escape(_badge_labels.get(_etype, _etype.title()))
                 _prompt_safe = html_mod.escape(_e.get("prompt", "")[:80])
                 _time = history.format_timestamp(_e.get("created_at", ""), st.session_state.ui_lang)
                 _size = history.format_file_size(_e.get("file_size", 0))
 
                 with st.container(border=True):
-                    st.markdown(f"**`{_icon}`** {_e['type'].title()} — {_size}")
-                    st.caption(_prompt_safe)
-                    st.caption(_time)
+                    # Header row: type badge + size
+                    st.markdown(
+                        f'<div class="hist-entry-header">'
+                        f'<span class="hist-type-badge {_badge_cls}">{_badge_text}</span>'
+                        f'<span class="hist-entry-size">{html_mod.escape(_size)}</span>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    # Prompt preview
+                    if _prompt_safe:
+                        st.markdown(
+                            f'<div class="hist-entry-prompt">{_prompt_safe}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    # Timestamp
+                    st.markdown(
+                        f'<div class="hist-entry-time">{html_mod.escape(_time)}</div>',
+                        unsafe_allow_html=True,
+                    )
+                    # Action buttons
                     _c1, _c2 = st.columns(2)
                     with _c1:
-                        st.button(L["hist_download"], key=f"dl_{_eid}",
+                        st.button(f"↓ {L['hist_download']}", key=f"dl_{_eid}",
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_download_id": eid}))
                     with _c2:
-                        st.button(L["hist_delete"], key=f"del_{_eid}",
+                        st.button(f"× {L['hist_delete']}", key=f"del_{_eid}",
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_delete_id": eid}))
 
         # Clear all
         if _entries:
             st.divider()
-            if st.button(L["hist_clear"], key="hist_clear_btn"):
+            if st.button(L["hist_clear"], key="hist_clear_btn", type="secondary"):
                 st.session_state["_hist_confirm_clear"] = True
             if st.session_state.get("_hist_confirm_clear"):
                 st.warning(L["hist_clear_confirm"])
                 _y, _n = st.columns(2)
                 with _y:
-                    if st.button("✓", key="hist_yes"):
+                    if st.button(L["hist_confirm_yes"], key="hist_yes", type="primary"):
                         history.clear_all()
                         st.session_state["_hist_confirm_clear"] = False
                         _cached_stats.clear()
                         _cached_entries.clear()
                         st.rerun()
                 with _n:
-                    if st.button("✗", key="hist_no"):
+                    if st.button(L["hist_confirm_no"], key="hist_no", type="secondary"):
                         st.session_state["_hist_confirm_clear"] = False
                         st.rerun()
 
@@ -676,12 +738,258 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* sidebar */
-[data-testid="stSidebar"] {{ background: #fff; }}
+/* ──────────────── sidebar ──────────────── */
+[data-testid="stSidebar"] {{
+  background: #FAFBFC;
+  border-right: 1px solid #E5E7EB;
+  direction: {_dir};
+}}
+[data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
+  padding: 1.25rem 1rem 1.5rem !important;
+}}
 [data-testid="collapsedControl"] {{
   z-index: 1001 !important;
   position: fixed !important;
   top: 0.5rem !important;
+}}
+
+/* sidebar title */
+.hist-title {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .8125rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #6C737F;
+  margin: 0 0 .75rem 0;
+  padding: 0 .25rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}}
+.hist-title-icon {{
+  width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: #EBF5EE; border-radius: 4px;
+  font-size: .625rem; color: #1B8354; font-weight: 700;
+  flex-shrink: 0;
+}}
+
+/* sidebar stats bar */
+.hist-stats {{
+  display: flex;
+  gap: .5rem;
+  margin-bottom: .75rem;
+}}
+.hist-stat {{
+  flex: 1;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: .5rem .625rem;
+  text-align: center;
+}}
+.hist-stat-value {{
+  font-family: 'IBM Plex Sans',sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #161616;
+  line-height: 1.2;
+}}
+.hist-stat-label {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .625rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #9DA4AE;
+  margin-top: .125rem;
+}}
+
+/* sidebar filter — compact override */
+[data-testid="stSidebar"] .stSelectbox > label {{
+  font-size: .6875rem !important;
+  margin-bottom: .2rem !important;
+}}
+[data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div {{
+  font-size: .8125rem !important;
+  font-weight: 500 !important;
+  min-height: 34px !important;
+  padding: .25rem .5rem !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  border-color: #E5E7EB !important;
+}}
+
+/* sidebar divider */
+[data-testid="stSidebar"] hr {{
+  border-color: #E5E7EB !important;
+  margin: .5rem 0 !important;
+}}
+
+/* sidebar cards — override global card bloat */
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {{
+  border: 1px solid #E5E7EB !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  margin-top: 0 !important;
+  margin-bottom: .375rem !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:hover {{
+  border-color: #C3E0CC !important;
+  box-shadow: 0 1px 4px rgba(27,131,84,.08) !important;
+}}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
+  padding: .625rem .75rem !important;
+  gap: .25rem !important;
+}}
+
+/* sidebar entry card inner elements */
+.hist-entry-header {{
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .125rem;
+}}
+.hist-type-badge {{
+  font-family: 'IBM Plex Sans',sans-serif;
+  font-size: .5625rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .15rem .4rem;
+  border-radius: 4px;
+  display: inline-block;
+  flex-shrink: 0;
+  line-height: 1.4;
+}}
+.hist-badge-text    {{ background: #EBF5EE; color: #14573A; }}
+.hist-badge-image   {{ background: #EDE9FE; color: #5B21B6; }}
+.hist-badge-video   {{ background: #FEF3C7; color: #92400E; }}
+.hist-badge-voice   {{ background: #DBEAFE; color: #1E40AF; }}
+.hist-badge-podcast {{ background: #FCE7F3; color: #9D174D; }}
+.hist-entry-size {{
+  font-family: 'IBM Plex Sans',sans-serif;
+  font-size: .6875rem;
+  font-weight: 500;
+  color: #9DA4AE;
+  margin-inline-start: auto;
+}}
+.hist-entry-prompt {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .75rem;
+  font-weight: 400;
+  color: #384250;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: .125rem 0;
+}}
+.hist-entry-time {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .625rem;
+  font-weight: 500;
+  color: #B0B8C4;
+}}
+
+/* sidebar buttons — compact secondary style, override global green */
+[data-testid="stSidebar"] .stButton > button {{
+  font-size: .6875rem !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+  min-height: 30px !important;
+  padding: .3rem .5rem !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  background: #fff !important;
+  color: #384250 !important;
+  border: 1px solid #E5E7EB !important;
+  transition: background .15s, color .15s, border-color .15s !important;
+}}
+[data-testid="stSidebar"] .stButton > button:hover {{
+  background: #F3F4F6 !important;
+  border-color: #D2D6DB !important;
+  transform: none !important;
+}}
+/* card action buttons — second column (delete) turns red on hover */
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button:hover {{
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border-color: #FECACA !important;
+}}
+/* card action buttons — first column (download) turns green on hover */
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button {{
+  color: #1B8354 !important;
+  border-color: #C3E0CC !important;
+}}
+[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button:hover {{
+  background: #EBF5EE !important;
+  border-color: #1B8354 !important;
+}}
+/* download buttons — green accent (keys start with "dl_") is handled by column selectors above */
+/* confirm: yes = red, no = neutral */
+[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
+  background: #DC2626 !important;
+  color: #fff !important;
+  border: none !important;
+  font-size: .6875rem !important;
+  min-height: 30px !important;
+  padding: .3rem .5rem !important;
+}}
+[data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover {{
+  background: #B91C1C !important;
+  transform: none !important;
+}}
+
+/* sidebar empty state */
+.hist-empty {{
+  text-align: center;
+  padding: 2rem 1rem;
+}}
+.hist-empty-icon {{
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: .625rem;
+  opacity: .35;
+}}
+.hist-empty-text {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .8125rem;
+  font-weight: 500;
+  color: #9DA4AE;
+  margin-bottom: .25rem;
+}}
+.hist-empty-hint {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .6875rem;
+  color: #B0B8C4;
+  line-height: 1.5;
+}}
+
+/* sidebar metrics — hide default (we use custom stats) */
+[data-testid="stSidebar"] [data-testid="stMetric"] {{ display: none !important; }}
+
+/* sidebar caption override */
+[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{
+  font-size: .6875rem !important;
+  color: #B0B8C4 !important;
+}}
+
+/* sidebar download button (actual file download) */
+[data-testid="stSidebar"] .stDownloadButton > button {{
+  font-size: .75rem !important;
+  padding: .4rem .75rem !important;
+  min-height: 32px !important;
+  background: #EBF5EE !important;
+  color: #14573A !important;
+  border: 1px solid #C3E0CC !important;
+  border-radius: 6px !important;
 }}
 
 /* footer — clean green & white */
