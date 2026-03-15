@@ -2,9 +2,16 @@
 .env
 .streamlit/secrets.toml
 
-# Claude agent config & memory (contains local settings)
-.claude/agent-memory/
-.claude/settings.local.json
+# Claude
+.claude/
+
+# Dev files
+.devcontainer/
+Dockerfile
+.dockerignore
+.env.example
+run.bat
+*.ipynb
 
 # Generated outputs
 generated_outputs/

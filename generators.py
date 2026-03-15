@@ -373,7 +373,7 @@ def generate_video(
 
     key = require_api_key()
 
-    # If extending, force 720p — Veo 3.1 extension only supports 720p.
+    # force 720p when extending
     if extend_seconds > 0:
         resolution = "720p"
 
@@ -403,7 +403,7 @@ def generate_video(
         video_obj = operation.response.generated_videos[0]
 
         if extend_seconds <= 0:
-            # Single clip — download and return
+            # single clip, return directly
             result = _save_video_to_bytes(client, video_obj)
             logger.info("Video generated (%d bytes)", len(result))
             return result, "video/mp4"

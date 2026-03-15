@@ -254,7 +254,7 @@ _api_ok = bool(get_api_key())
 
 # sidebar history panel
 with st.sidebar:
-    # Title — clean text with green accent bar
+    # title
     st.markdown(
         f'<div class="hist-title">'
         f'<span class="hist-title-accent"></span>'
@@ -264,7 +264,7 @@ with st.sidebar:
     )
 
     if not _history_ok:
-        # Empty state — clean, uses existing design language
+        # empty state
         st.markdown(
             f'<div class="hist-empty">'
             f'<div class="hist-empty-icon">'
@@ -521,7 +521,7 @@ header[data-testid="stHeader"] {{ background: transparent !important; }}
 }}
 .rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
 
-/* content card — rcjy card style */
+/* content card */
 [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
   border-radius: 16px !important;
@@ -748,7 +748,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* ──────────────── sidebar ──────────────── */
+/* sidebar */
 [data-testid="stSidebar"] {{
   background: #F3F4F6;
   border-inline-end: 1px solid #E5E7EB;
@@ -768,7 +768,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   top: 0.5rem !important;
 }}
 
-/* sidebar title — clean text with green accent bar */
+/* sidebar title */
 .hist-title {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   font-size: .75rem;
@@ -790,7 +790,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   flex-shrink: 0;
 }}
 
-/* sidebar stats bar — green accent top border matching result cards */
+/* sidebar stats */
 .hist-stats {{
   display: flex;
   gap: .5rem;
@@ -822,7 +822,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   margin-top: .2rem;
 }}
 
-/* sidebar filter — compact override */
+/* sidebar filter */
 [data-testid="stSidebar"] .stSelectbox > label {{
   font-size: .6875rem !important;
   margin-bottom: .2rem !important;
@@ -848,7 +848,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   margin: .5rem 0 !important;
 }}
 
-/* sidebar cards — match main page card style (16px radius, white, no border) */
+/* sidebar cards */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
   border-radius: 16px !important;
@@ -874,7 +874,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   gap: .5rem;
   margin-bottom: .125rem;
 }}
-/* unified green tag style — matches .mtag from main page */
+/* sidebar type badge */
 .hist-type-badge {{
   font-family: 'IBM Plex Sans',sans-serif;
   font-size: .5625rem;
@@ -918,7 +918,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   color: #9DA4AE;
 }}
 
-/* sidebar buttons — download is green primary, delete is subtle secondary */
+/* sidebar buttons */
 [data-testid="stSidebar"] .stButton > button {{
   font-size: .6875rem !important;
   font-weight: 600 !important;
@@ -942,7 +942,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
   outline: none !important;
 }}
-/* card action buttons — first column (download) = green mini-primary */
+/* download button hover */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button {{
   background: #1B8354 !important;
   color: #fff !important;
@@ -954,7 +954,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   box-shadow: 0 2px 6px rgba(27,131,84,.3) !important;
   transform: translateY(-1px) !important;
 }}
-/* card action buttons — second column (delete) = subtle, red on hover */
+/* delete button hover */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button {{
   background: transparent !important;
   color: #6C737F !important;
@@ -966,7 +966,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   border-color: #FECACA !important;
   transform: translateY(-1px) !important;
 }}
-/* confirm: yes = red destructive, no = neutral secondary */
+/* confirm buttons */
 [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
   background: #DC2626 !important;
   color: #fff !important;
@@ -983,7 +983,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   box-shadow: 0 2px 6px rgba(220,38,38,.25) !important;
 }}
 
-/* sidebar empty state — clean, minimal */
+/* sidebar empty state */
 .hist-empty {{
   text-align: center;
   padding: 2.5rem 1rem;
@@ -1019,7 +1019,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   line-height: 1.5;
 }}
 
-/* sidebar metrics — hide default (we use custom stats) */
+/* sidebar metrics hide */
 [data-testid="stSidebar"] [data-testid="stMetric"] {{ display: none !important; }}
 
 /* sidebar caption override */
@@ -1047,7 +1047,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   transform: translateY(-1px) !important;
 }}
 
-/* footer — clean green & white */
+/* footer */
 .rcjy-footer {{
   background: #1B8354;
   margin: 3rem -3rem -3rem;
@@ -1134,7 +1134,7 @@ def _ni(key, label):
             f'class="{cls}" target="_self">{label}</a></li>')
 
 
-# UI language — single link showing the OTHER language (RCJY site style)
+# language toggle link
 _other_lang_text = "العربية" if _nl == "en" else "English"
 _other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}"
 
