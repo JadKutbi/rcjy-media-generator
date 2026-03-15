@@ -675,6 +675,11 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 /* sidebar */
 [data-testid="stSidebar"] {{ background: #fff; }}
+[data-testid="collapsedControl"] {{
+  z-index: 1001 !important;
+  position: fixed !important;
+  top: 0.5rem !important;
+}}
 
 /* footer — clean green & white */
 .rcjy-footer {{
