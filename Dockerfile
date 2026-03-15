@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # App code
-COPY app.py config.py generators.py content_extractor.py ./
+COPY app.py rcjy_config.py generators.py content_extractor.py history.py ./
 COPY .streamlit .streamlit
 
 # Cloud Run uses PORT env var (default 8080)

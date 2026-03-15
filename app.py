@@ -1,3 +1,4 @@
+import html as html_mod
 import logging
 
 import streamlit as st
@@ -12,6 +13,13 @@ from generators import (
     generate_video,
     generate_voice,
 )
+
+try:
+    import history
+    _history_ok = history.is_available()
+except Exception:
+    history = None
+    _history_ok = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -104,6 +112,17 @@ T = {
         "spin_podcast":           "Creating podcast… (2–3 min)",
         "footer_org":             "Royal Commission for Jubail and Yanbu",
         "footer_dept":            "General Administration of Communication and Media",
+        "hist_title":             "History",
+        "hist_total":             "Total",
+        "hist_size":              "Storage",
+        "hist_filter":            "Filter by type",
+        "hist_all":               "All",
+        "hist_empty":             "No history yet.",
+        "hist_delete":            "Delete",
+        "hist_clear":             "Clear All",
+        "hist_clear_confirm":     "Are you sure? This cannot be undone.",
+        "hist_cleared":           "History cleared.",
+        "hist_download":          "Download",
     },
     "ar": {
         "app_name":               "مولّد الوسائط",
@@ -187,6 +206,17 @@ T = {
         "spin_podcast":           "جارٍ إنشاء البودكاست… (٢–٣ دقائق)",
         "footer_org":             "الهيئة الملكية للجبيل وينبع",
         "footer_dept":            "الإدارة العامة للاتصال والإعلام",
+        "hist_title":             "السجل",
+        "hist_total":             "الإجمالي",
+        "hist_size":              "التخزين",
+        "hist_filter":            "تصفية حسب النوع",
+        "hist_all":               "الكل",
+        "hist_empty":             "لا توجد سجلات بعد.",
+        "hist_delete":            "حذف",
+        "hist_clear":             "مسح الكل",
+        "hist_clear_confirm":     "هل أنت متأكد؟ لا يمكن التراجع.",
+        "hist_cleared":           "تم مسح السجل.",
+        "hist_download":          "تحميل",
     },
 }
 
@@ -215,6 +245,100 @@ st.session_state.ui_lang = _qp_lang
 is_ar   = st.session_state.ui_lang == "ar"
 L       = T[st.session_state.ui_lang]
 _api_ok = bool(get_api_key())
+
+# ── SIDEBAR: History Panel ────────────────────────────────────────────────────
+if _history_ok:
+    with st.sidebar:
+        st.markdown(f"### {L['hist_title']}")
+
+        # Stats
+        @st.cache_data(ttl=30)
+        def _cached_stats():
+            return history.get_stats()
+
+        _stats = _cached_stats()
+        if _stats["total"] > 0:
+            _sc1, _sc2 = st.columns(2)
+            with _sc1:
+                st.metric(L["hist_total"], _stats["total"])
+            with _sc2:
+                st.metric(L["hist_size"], history.format_file_size(_stats["total_size"]))
+
+        # Type filter
+        _type_labels = [L["hist_all"], L["tab_text"], L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"]]
+        _type_keys = [None, "text", "image", "video", "voice", "podcast"]
+        _sel = st.selectbox(L["hist_filter"], range(len(_type_labels)),
+                            format_func=lambda i: _type_labels[i], key="hist_filter_sel")
+        _filter_type = _type_keys[_sel]
+
+        st.divider()
+
+        # Handle pending delete
+        if st.session_state.get("_hist_delete_id"):
+            _del_id = st.session_state.pop("_hist_delete_id")
+            history.delete_entry(_del_id)
+            _cached_stats.clear()
+            st.rerun()
+
+        # Handle pending download — load file into session for download button
+        if st.session_state.get("_hist_download_id"):
+            _dl_id = st.session_state.pop("_hist_download_id")
+            _dl_data, _dl_mime, _dl_name = history.load_file(_dl_id)
+            if _dl_data:
+                st.download_button(
+                    f"⬇ {_dl_name}", data=_dl_data,
+                    file_name=_dl_name, mime=_dl_mime,
+                    key=f"dl_actual_{_dl_id}",
+                )
+
+        # Entry list
+        @st.cache_data(ttl=30)
+        def _cached_entries(_type, _limit):
+            return history.get_entries(content_type=_type, limit=_limit)
+
+        _entries = _cached_entries(_filter_type, 50)
+        if not _entries:
+            st.caption(L["hist_empty"])
+        else:
+            _icons = {"text": "Aa", "image": "IMG", "video": "VID", "voice": "AUD", "podcast": "POD"}
+            for _e in _entries:
+                _eid = _e["id"]
+                _icon = _icons.get(_e["type"], "?")
+                _prompt_safe = html_mod.escape(_e.get("prompt", "")[:80])
+                _time = history.format_timestamp(_e.get("created_at", ""), lang)
+                _size = history.format_file_size(_e.get("file_size", 0))
+
+                with st.container(border=True):
+                    st.markdown(f"**`{_icon}`** {_e['type'].title()} — {_size}")
+                    st.caption(_prompt_safe)
+                    st.caption(_time)
+                    _c1, _c2 = st.columns(2)
+                    with _c1:
+                        st.button(L["hist_download"], key=f"dl_{_eid}",
+                                  on_click=lambda eid=_eid: st.session_state.update({"_hist_download_id": eid}))
+                    with _c2:
+                        st.button(L["hist_delete"], key=f"del_{_eid}",
+                                  on_click=lambda eid=_eid: st.session_state.update({"_hist_delete_id": eid}))
+
+        # Clear all
+        if _entries:
+            st.divider()
+            if st.button(L["hist_clear"], key="hist_clear_btn"):
+                st.session_state["_hist_confirm_clear"] = True
+            if st.session_state.get("_hist_confirm_clear"):
+                st.warning(L["hist_clear_confirm"])
+                _y, _n = st.columns(2)
+                with _y:
+                    if st.button("✓", key="hist_yes"):
+                        history.clear_all()
+                        st.session_state["_hist_confirm_clear"] = False
+                        _cached_stats.clear()
+                        _cached_entries.clear()
+                        st.rerun()
+                with _n:
+                    if st.button("✗", key="hist_no"):
+                        st.session_state["_hist_confirm_clear"] = False
+                        st.rerun()
 
 # ── CSS ───────────────────────────────────────────────────────────────────────
 _fonts = (
@@ -787,6 +911,9 @@ if active_tab == "text":
                         text_type=text_type, tone=text_tone,
                         model=text_model, lang=lang,
                     )
+                    if _history_ok:
+                        history.save_entry("text", text_prompt.strip(), st.session_state.result_text,
+                                           "text/plain", {"type": text_type, "tone": text_tone, "model": text_model}, lang)
                 except Exception as e:
                     logger.exception("Text generation failed")
                     st.error(_sanitize_error(e))
@@ -845,6 +972,9 @@ elif active_tab == "image":
                         aspect_ratio=img_aspect, lang=lang,
                     )
                     st.session_state.result_image = (data, mime)
+                    if _history_ok:
+                        history.save_entry("image", img_prompt.strip(), data, mime,
+                                           {"model": img_model, "aspect_ratio": img_aspect}, lang)
                 except Exception as e:
                     logger.exception("Image generation failed")
                     st.error(_sanitize_error(e))
@@ -934,6 +1064,9 @@ elif active_tab == "video":
                         progress_callback=_vid_progress if vid_extend > 0 else None,
                     )
                     st.session_state.result_video = (data, mime)
+                    if _history_ok:
+                        history.save_entry("video", vid_prompt.strip(), data, mime,
+                                           {"model": vid_model, "aspect_ratio": vid_aspect, "resolution": vid_res, "extend_seconds": vid_extend}, lang)
                     _progress_placeholder.empty()
                 except Exception as e:
                     logger.exception("Video generation failed")
@@ -1013,6 +1146,9 @@ elif active_tab == "voice":
                         lang=lang,
                     )
                     st.session_state.result_voice = (data, mime)
+                    if _history_ok:
+                        history.save_entry("voice", voice_prompt.strip(), data, mime,
+                                           {"voice": voice_name, "quality": tts_quality, "style": style_hint}, lang)
                 except Exception as e:
                     logger.exception("Voice generation failed")
                     st.error(_sanitize_error(e))
@@ -1098,6 +1234,9 @@ elif active_tab == "podcast":
                         lang=lang,
                     )
                     st.session_state.result_podcast = (data, mime)
+                    if _history_ok:
+                        history.save_entry("podcast", pod_prompt.strip(), data, mime,
+                                           {"length": "short" if pod_len_idx == 0 else "standard", "host": pod_host, "guest": pod_guest}, lang)
                 except Exception as e:
                     logger.exception("Podcast generation failed")
                     st.error(_sanitize_error(e))
