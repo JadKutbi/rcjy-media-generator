@@ -309,11 +309,17 @@ with st.sidebar:
 
         st.divider()
 
-        # Handle pending delete
+        # Define entry cache before delete handler so .clear() is available
+        @st.cache_data(ttl=30)
+        def _cached_entries(_type, _limit):
+            return history.get_entries(content_type=_type, limit=_limit)
+
+        # Handle pending delete — clear BOTH caches before rerun
         if st.session_state.get("_hist_delete_id"):
             _del_id = st.session_state.pop("_hist_delete_id")
             history.delete_entry(_del_id)
             _cached_stats.clear()
+            _cached_entries.clear()
             st.rerun()
 
         # Handle pending download
@@ -328,10 +334,6 @@ with st.sidebar:
                 )
 
         # Entry list
-        @st.cache_data(ttl=30)
-        def _cached_entries(_type, _limit):
-            return history.get_entries(content_type=_type, limit=_limit)
-
         _entries = _cached_entries(_filter_type, 50)
         if not _entries:
             st.markdown(
@@ -763,33 +765,46 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stSidebar"] {{
   background: #F3F4F6 !important;
   border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
   direction: {_dir};
   z-index: 1000;
 }}
+/* Remove ALL pseudo-elements — no border/line artifacts in LTR or RTL */
+[data-testid="stSidebar"]::before,
 [data-testid="stSidebar"]::after {{
-  /* Clean separator line on the correct edge for LTR/RTL */
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: #E5E7EB;
-  {"left: auto; right: 0;" if not is_ar else "right: auto; left: 0;"}
-}}
-[data-testid="stSidebar"][aria-expanded="false"] {{
-  border: none !important;
-}}
-[data-testid="stSidebar"][aria-expanded="false"]::after {{
   display: none !important;
+  content: none !important;
 }}
-/* Remove any residual resize-handle borders */
-[data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"],
-[data-testid="stSidebar"]::before {{
+/* Remove any residual resize-handle borders/shadows */
+[data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"] {{
   border: none !important;
+  box-shadow: none !important;
   background: transparent !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  outline: none !important;
+}}
+/* Kill sidebar nav element borders and all direct children */
+[data-testid="stSidebar"] > div {{
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}}
+/* Nuclear: kill any stray border/line on the sidebar section itself and its
+   immediate wrapper — covers Streamlit's inner <section> and <div> wrappers */
+section[data-testid="stSidebar"],
+section[data-testid="stSidebar"] > div:first-child {{
+  border: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }}
 [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
-  padding: 1.25rem 1rem 1.5rem !important;
+  padding: 2.5rem 1rem 1.5rem !important;
 }}
 /* Sidebar toggle (collapsed control) — always visible and clickable */
 [data-testid="collapsedControl"] {{
@@ -842,8 +857,8 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .hist-stat {{
   flex: 1;
   background: #fff;
-  border: none;
-  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
   border-top: 3px solid #1B8354;
   padding: .75rem .625rem .625rem;
   text-align: center;
@@ -893,18 +908,18 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 /* sidebar cards */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {{
-  border: none !important;
-  border-radius: 16px !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 12px !important;
   background: #fff !important;
-  box-shadow: none !important;
-  overflow: visible !important;
+  box-shadow: 0 1px 2px rgba(16,24,40,.04) !important;
+  overflow: hidden !important;
   margin-top: 0 !important;
   margin-bottom: .5rem !important;
-  transition: box-shadow .15s ease, transform .1s ease;
+  transition: box-shadow .15s ease, border-color .15s ease;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:hover {{
   box-shadow: 0 2px 8px rgba(27,131,84,.1) !important;
-  transform: translateY(-1px);
+  border-color: #C3E0CC !important;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
   padding: .875rem 1rem !important;
@@ -1032,7 +1047,8 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   text-align: center;
   padding: 2.5rem 1rem;
   background: #fff;
-  border-radius: 16px;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
   margin-top: .25rem;
 }}
 .hist-empty-icon {{
@@ -1141,22 +1157,44 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .rcjy-ftr-vision {{ height: 44px; display: block; }}
 
 /* ---- RTL-specific sidebar fixes ---- */
-/* In RTL mode Streamlit may render the sidebar on the right; remove all
-   physical-direction borders and rely only on the ::after pseudo-element. */
+/* Nuke every possible border/line source on sidebar in RTL */
 [dir="rtl"] [data-testid="stSidebar"],
 .stApp[dir="rtl"] [data-testid="stSidebar"] {{
+  border: none !important;
   border-left: none !important;
   border-right: none !important;
   border-inline-start: none !important;
   border-inline-end: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}}
+[dir="rtl"] [data-testid="stSidebar"]::before,
+[dir="rtl"] [data-testid="stSidebar"]::after,
+.stApp[dir="rtl"] [data-testid="stSidebar"]::before,
+.stApp[dir="rtl"] [data-testid="stSidebar"]::after {{
+  display: none !important;
+  content: none !important;
+}}
+[dir="rtl"] [data-testid="stSidebar"] > div,
+.stApp[dir="rtl"] [data-testid="stSidebar"] > div {{
+  border: none !important;
+  box-shadow: none !important;
 }}
 /* Kill any resize-handle artifact in RTL */
-[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"] {{
+[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"],
+.stApp[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"] {{
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
   width: 0 !important;
   min-width: 0 !important;
+  outline: none !important;
+}}
+/* Also target the sidebar's inner wrapper and any child with role */
+[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarContent"],
+.stApp[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
+  border: none !important;
+  box-shadow: none !important;
 }}
 
 /* responsive */
