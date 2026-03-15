@@ -362,7 +362,8 @@ html, body, .stApp {{
   -webkit-font-smoothing: antialiased;
   direction: {_dir};
 }}
-#MainMenu, footer, header {{ visibility: hidden; }}
+#MainMenu, footer {{ visibility: hidden; }}
+header[data-testid="stHeader"] {{ background: transparent !important; }}
 
 [data-testid="stMainBlockContainer"] {{
   max-width: 100% !important;
@@ -873,7 +874,7 @@ if active_tab == "text":
         input_url, input_files = _ctx_widget()
         ctx_text, has_ctx = _load_ctx(input_url, input_files)
 
-    if st.button(L["btn_text"], use_container_width=True, key="btn_text"):
+    if st.button(L["btn_text"], width="stretch", key="btn_text"):
         if not text_prompt.strip() and not has_ctx:
             st.warning(L["warn_prompt"])
         else:
@@ -932,7 +933,7 @@ elif active_tab == "image":
         input_url, input_files = _ctx_widget()
         ctx_text, has_ctx = _load_ctx(input_url, input_files)
 
-    if st.button(L["btn_image"], use_container_width=True, key="btn_img"):
+    if st.button(L["btn_image"], width="stretch", key="btn_img"):
         if not img_prompt.strip():
             st.warning(L["warn_prompt"])
         else:
@@ -953,7 +954,7 @@ elif active_tab == "image":
                     st.error(_sanitize_error(e))
 
     if st.session_state.result_image:
-        st.image(st.session_state.result_image[0], use_container_width=True)
+        st.image(st.session_state.result_image[0], width="stretch")
         st.download_button(
             L["btn_download"], data=st.session_state.result_image[0],
             file_name="rcjy_image.png", mime="image/png", key="dl_img",
@@ -1013,7 +1014,7 @@ elif active_tab == "video":
         input_url, input_files = _ctx_widget()
         ctx_text, has_ctx = _load_ctx(input_url, input_files)
 
-    if st.button(L["btn_video"], use_container_width=True, key="btn_vid"):
+    if st.button(L["btn_video"], width="stretch", key="btn_vid"):
         if not vid_prompt.strip():
             st.warning(L["warn_prompt"])
         else:
@@ -1101,7 +1102,7 @@ elif active_tab == "voice":
         input_url, input_files = _ctx_widget()
         ctx_text, has_ctx = _load_ctx(input_url, input_files)
 
-    if st.button(L["btn_voice"], use_container_width=True, key="btn_voice"):
+    if st.button(L["btn_voice"], width="stretch", key="btn_voice"):
         if not voice_prompt.strip() and not has_ctx:
             st.warning(L["warn_text"])
         else:
@@ -1182,7 +1183,7 @@ elif active_tab == "podcast":
         input_url, input_files = _ctx_widget()
         ctx_text, has_ctx = _load_ctx(input_url, input_files)
 
-    if st.button(L["btn_podcast"], use_container_width=True, key="btn_pod"):
+    if st.button(L["btn_podcast"], width="stretch", key="btn_pod"):
         if not pod_prompt.strip() and not has_ctx:
             st.warning(L["warn_topic"])
         else:
