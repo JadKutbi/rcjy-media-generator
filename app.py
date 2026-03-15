@@ -432,7 +432,18 @@ html, body, .stApp {{
   direction: {_dir};
 }}
 #MainMenu, footer {{ visibility: hidden; }}
-header[data-testid="stHeader"] {{ background: transparent !important; }}
+/* Keep stHeader visible but transparent so sidebar toggle remains accessible */
+header[data-testid="stHeader"] {{
+  background: transparent !important;
+  pointer-events: none;
+  z-index: 1001 !important;
+}}
+/* Re-enable pointer events on interactive children (sidebar toggle, etc.) */
+header[data-testid="stHeader"] button,
+header[data-testid="stHeader"] a,
+header[data-testid="stHeader"] [data-testid="collapsedControl"] {{
+  pointer-events: auto;
+}}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
 [data-testid="stToolbar"], .styles_viewerBadge__CvC9N {{ display: none !important; }}
@@ -521,8 +532,8 @@ header[data-testid="stHeader"] {{ background: transparent !important; }}
 }}
 .rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
 
-/* content card */
-[data-testid="stVerticalBlockBorderWrapper"] {{
+/* content card — scoped to main area only, not sidebar */
+[data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
   border-radius: 16px !important;
   background: #fff !important;
@@ -530,7 +541,7 @@ header[data-testid="stHeader"] {{ background: transparent !important; }}
   overflow: hidden !important;
   margin-top: .5rem !important;
 }}
-[data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
+[data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
   padding: 1.5rem !important;
   gap: .875rem !important;
 }}
@@ -750,22 +761,54 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 /* sidebar */
 [data-testid="stSidebar"] {{
-  background: #F3F4F6;
-  border-inline-end: 1px solid #E5E7EB;
-  border-right: none;
-  border-left: none;
+  background: #F3F4F6 !important;
+  border: none !important;
   direction: {_dir};
+  z-index: 1000;
+}}
+[data-testid="stSidebar"]::after {{
+  /* Clean separator line on the correct edge for LTR/RTL */
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #E5E7EB;
+  {"left: auto; right: 0;" if not is_ar else "right: auto; left: 0;"}
 }}
 [data-testid="stSidebar"][aria-expanded="false"] {{
   border: none !important;
 }}
+[data-testid="stSidebar"][aria-expanded="false"]::after {{
+  display: none !important;
+}}
+/* Remove any residual resize-handle borders */
+[data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"],
+[data-testid="stSidebar"]::before {{
+  border: none !important;
+  background: transparent !important;
+}}
 [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
   padding: 1.25rem 1rem 1.5rem !important;
 }}
+/* Sidebar toggle (collapsed control) — always visible and clickable */
 [data-testid="collapsedControl"] {{
-  z-index: 1001 !important;
+  z-index: 1002 !important;
   position: fixed !important;
-  top: 0.5rem !important;
+  top: 0.75rem !important;
+  color: #384250 !important;
+}}
+/* Ensure the collapse/expand button inside sidebar header is visible */
+[data-testid="stSidebar"] button[data-testid="stBaseButton-header"],
+[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {{
+  z-index: 1002 !important;
+  color: #384250 !important;
+}}
+[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover,
+[data-testid="collapsedControl"] button:hover {{
+  color: #1B8354 !important;
+  background: #EBF5EE !important;
+  border-radius: 6px;
 }}
 
 /* sidebar title */
@@ -854,6 +897,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   border-radius: 16px !important;
   background: #fff !important;
   box-shadow: none !important;
+  overflow: visible !important;
   margin-top: 0 !important;
   margin-bottom: .5rem !important;
   transition: box-shadow .15s ease, transform .1s ease;
@@ -1095,6 +1139,25 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .rcjy-ftr-rcjy {{ height: 44px; display: block; }}
 .rcjy-ftr-divv {{ width: 1px; height: 40px; background: rgba(255,255,255,.3); }}
 .rcjy-ftr-vision {{ height: 44px; display: block; }}
+
+/* ---- RTL-specific sidebar fixes ---- */
+/* In RTL mode Streamlit may render the sidebar on the right; remove all
+   physical-direction borders and rely only on the ::after pseudo-element. */
+[dir="rtl"] [data-testid="stSidebar"],
+.stApp[dir="rtl"] [data-testid="stSidebar"] {{
+  border-left: none !important;
+  border-right: none !important;
+  border-inline-start: none !important;
+  border-inline-end: none !important;
+}}
+/* Kill any resize-handle artifact in RTL */
+[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"] {{
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  width: 0 !important;
+  min-width: 0 !important;
+}}
 
 /* responsive */
 @media (max-width: 760px) {{
