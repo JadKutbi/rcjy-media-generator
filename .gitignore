@@ -2,9 +2,14 @@
 .env
 .streamlit/secrets.toml
 
+# Claude agent config & memory (contains local settings)
+.claude/agent-memory/
+.claude/settings.local.json
+
 # Generated outputs
 generated_outputs/
 assets/
+history_data/
 
 # Python
 __pycache__/
