@@ -433,6 +433,9 @@ html, body, .stApp {{
 }}
 #MainMenu, footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{ background: transparent !important; }}
+[data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
+.viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
+[data-testid="stToolbar"], .styles_viewerBadge__CvC9N {{ display: none !important; }}
 
 [data-testid="stMainBlockContainer"] {{
   max-width: 100% !important;
@@ -748,8 +751,13 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 /* ──────────────── sidebar ──────────────── */
 [data-testid="stSidebar"] {{
   background: #F3F4F6;
-  border-right: 1px solid #E5E7EB;
+  border-inline-end: 1px solid #E5E7EB;
+  border-right: none;
+  border-left: none;
   direction: {_dir};
+}}
+[data-testid="stSidebar"][aria-expanded="false"] {{
+  border: none !important;
 }}
 [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
   padding: 1.25rem 1rem 1.5rem !important;
