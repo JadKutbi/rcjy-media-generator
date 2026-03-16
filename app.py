@@ -440,11 +440,6 @@ html, body, .stApp {{
 #MainMenu, footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{
   background: transparent !important;
-  z-index: 100 !important;
-  pointer-events: none !important;
-}}
-header[data-testid="stHeader"] * {{
-  pointer-events: auto !important;
 }}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
@@ -465,7 +460,7 @@ header[data-testid="stHeader"] * {{
   box-shadow: 0 1px 4px rgba(13,18,28,.08);
   position: sticky;
   top: 0;
-  z-index: 99;
+  z-index: 10;
 }}
 .rcjy-nav-inner {{
   display: flex;
