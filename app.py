@@ -434,17 +434,9 @@ html, body, .stApp {{
   direction: {_dir};
 }}
 #MainMenu, footer {{ visibility: hidden; }}
-/* Keep stHeader visible but transparent so sidebar toggle remains accessible */
 header[data-testid="stHeader"] {{
   background: transparent !important;
-  pointer-events: none;
-  z-index: 1001 !important;
-}}
-/* Re-enable pointer events on interactive children (sidebar toggle, etc.) */
-header[data-testid="stHeader"] button,
-header[data-testid="stHeader"] a,
-header[data-testid="stHeader"] [data-testid="collapsedControl"] {{
-  pointer-events: auto;
+  height: auto !important;
 }}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
@@ -762,68 +754,26 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 
 /* sidebar */
-[data-testid="stSidebar"] {{
-  background: #F3F4F6 !important;
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-  direction: {_dir};
-  z-index: 1000;
-}}
-/* Remove ALL pseudo-elements — no border/line artifacts in LTR or RTL */
+[data-testid="stSidebar"],
+[data-testid="stSidebar"] *,
 [data-testid="stSidebar"]::before,
 [data-testid="stSidebar"]::after {{
-  display: none !important;
-  content: none !important;
-}}
-/* Remove any residual resize-handle borders/shadows */
-[data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"] {{
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  outline: none !important;
-}}
-/* Kill sidebar nav element borders and all direct children */
-[data-testid="stSidebar"] > div {{
-  border: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}}
-/* Nuclear: kill any stray border/line on the sidebar section itself and its
-   immediate wrapper — covers Streamlit's inner <section> and <div> wrappers */
-section[data-testid="stSidebar"],
-section[data-testid="stSidebar"] > div:first-child {{
-  border: none !important;
   border-left: none !important;
   border-right: none !important;
   border-inline-start: none !important;
   border-inline-end: none !important;
+}}
+[data-testid="stSidebar"] {{
+  background: #F3F4F6 !important;
   box-shadow: none !important;
   outline: none !important;
+  direction: {_dir};
 }}
 [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
   padding: 2.5rem 1rem 1.5rem !important;
 }}
-/* Sidebar toggle (collapsed control) — always visible and clickable */
 [data-testid="collapsedControl"] {{
   z-index: 1002 !important;
-  position: fixed !important;
-  top: 0.75rem !important;
-  color: #384250 !important;
-}}
-/* Ensure the collapse/expand button inside sidebar header is visible */
-[data-testid="stSidebar"] button[data-testid="stBaseButton-header"],
-[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {{
-  z-index: 1002 !important;
-  color: #384250 !important;
-}}
-[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button:hover,
-[data-testid="collapsedControl"] button:hover {{
-  color: #1B8354 !important;
-  background: #EBF5EE !important;
-  border-radius: 6px;
 }}
 
 /* sidebar title */
@@ -1155,47 +1105,6 @@ section[data-testid="stSidebar"] > div:first-child {{
 .rcjy-ftr-rcjy {{ height: 44px; display: block; }}
 .rcjy-ftr-divv {{ width: 1px; height: 40px; background: rgba(255,255,255,.3); }}
 .rcjy-ftr-vision {{ height: 44px; display: block; }}
-
-/* ---- RTL-specific sidebar fixes ---- */
-/* Nuke every possible border/line source on sidebar in RTL */
-[dir="rtl"] [data-testid="stSidebar"],
-.stApp[dir="rtl"] [data-testid="stSidebar"] {{
-  border: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-  box-shadow: none !important;
-  outline: none !important;
-}}
-[dir="rtl"] [data-testid="stSidebar"]::before,
-[dir="rtl"] [data-testid="stSidebar"]::after,
-.stApp[dir="rtl"] [data-testid="stSidebar"]::before,
-.stApp[dir="rtl"] [data-testid="stSidebar"]::after {{
-  display: none !important;
-  content: none !important;
-}}
-[dir="rtl"] [data-testid="stSidebar"] > div,
-.stApp[dir="rtl"] [data-testid="stSidebar"] > div {{
-  border: none !important;
-  box-shadow: none !important;
-}}
-/* Kill any resize-handle artifact in RTL */
-[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"],
-.stApp[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarResizeHandle"] {{
-  border: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  width: 0 !important;
-  min-width: 0 !important;
-  outline: none !important;
-}}
-/* Also target the sidebar's inner wrapper and any child with role */
-[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarContent"],
-.stApp[dir="rtl"] [data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
-  border: none !important;
-  box-shadow: none !important;
-}}
 
 /* responsive */
 @media (max-width: 760px) {{
