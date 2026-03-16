@@ -460,7 +460,7 @@ header[data-testid="stHeader"] {{
   box-shadow: 0 1px 4px rgba(13,18,28,.08);
   position: sticky;
   top: 0;
-  z-index: 999;
+  z-index: 99;
 }}
 .rcjy-nav-inner {{
   display: flex;
@@ -759,9 +759,16 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 /* sidebar */
 [data-testid="stSidebar"] {{
   background: #F3F4F6 !important;
+  z-index: 1000 !important;
 }}
 [data-testid="stSidebarContent"] {{
   padding: 2.5rem 1rem 1.5rem !important;
+}}
+[data-testid="collapsedControl"] {{
+  z-index: 1001 !important;
+}}
+[data-testid="stSidebarCollapsedControl"] {{
+  z-index: 1001 !important;
 }}
 
 /* sidebar title */
