@@ -440,11 +440,6 @@ html, body, .stApp {{
 #MainMenu, footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{
   background: transparent !important;
-  z-index: 100 !important;
-  pointer-events: none !important;
-}}
-header[data-testid="stHeader"] * {{
-  pointer-events: auto !important;
 }}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
@@ -761,24 +756,37 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* sidebar */
+/* sidebar — always visible, no toggle */
 [data-testid="stSidebar"] {{
   background: #F3F4F6 !important;
   z-index: 1000 !important;
+  min-width: 280px !important;
+  width: 280px !important;
+  transform: none !important;
+}}
+[data-testid="stSidebar"][aria-expanded="false"] {{
+  min-width: 280px !important;
+  width: 280px !important;
+  transform: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }}
 [data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarContent"] {{
-  visibility: hidden !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }}
 [data-testid="stSidebarContent"] {{
-  padding: 2.5rem 1rem 1.5rem !important;
+  padding: 2rem 1rem 1.5rem !important;
 }}
-[data-testid="collapsedControl"] {{
-  z-index: 1001 !important;
-  pointer-events: auto !important;
-}}
-[data-testid="stSidebarCollapsedControl"] {{
-  z-index: 1001 !important;
-  pointer-events: auto !important;
+/* hide all sidebar toggle buttons */
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebar"] [data-testid="stBaseButton-header"],
+[data-testid="stSidebar"] [data-testid="stBaseButton-headerNoPadding"] {{
+  display: none !important;
 }}
 
 /* sidebar title */
