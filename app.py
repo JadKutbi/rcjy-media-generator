@@ -766,10 +766,8 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   background: #F3F4F6 !important;
   z-index: 1000 !important;
 }}
-[data-testid="stSidebar"][aria-expanded="false"] {{
-  overflow: hidden !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
+[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarContent"] {{
+  visibility: hidden !important;
 }}
 [data-testid="stSidebarContent"] {{
   padding: 2.5rem 1rem 1.5rem !important;
