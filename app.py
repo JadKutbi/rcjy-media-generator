@@ -440,6 +440,11 @@ html, body, .stApp {{
 #MainMenu, footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{
   background: transparent !important;
+  z-index: 100 !important;
+  pointer-events: none !important;
+}}
+header[data-testid="stHeader"] * {{
+  pointer-events: auto !important;
 }}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
@@ -756,59 +761,55 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* ── sidebar — always-visible panel ── */
+/* ── sidebar ── */
 [data-testid="stSidebar"] {{
-  background: #fff !important;
-  border-inline-start: 1px solid #E5E7EB !important;
-  box-shadow: -2px 0 12px rgba(16,24,40,.04) !important;
+  background: #F3F4F6 !important;
+  border-inline-start: none !important;
+  box-shadow: none !important;
   z-index: 1000 !important;
-  min-width: 300px !important;
-  width: 300px !important;
-  transform: none !important;
-}}
-[data-testid="stSidebar"][aria-expanded="false"] {{
-  min-width: 300px !important;
-  width: 300px !important;
-  transform: none !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}}
-[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarContent"] {{
-  visibility: visible !important;
-  opacity: 1 !important;
 }}
 [data-testid="stSidebarContent"] {{
-  padding: 1.75rem 1.25rem 1.5rem !important;
+  padding: 1.5rem 1rem !important;
 }}
-/* hide all sidebar toggle buttons */
+/* style the toggle arrow */
 [data-testid="collapsedControl"],
-[data-testid="stSidebarCollapsedControl"],
-[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapsedControl"] {{
+  z-index: 1001 !important;
+  pointer-events: auto !important;
+}}
 [data-testid="stSidebar"] [data-testid="stBaseButton-header"],
 [data-testid="stSidebar"] [data-testid="stBaseButton-headerNoPadding"] {{
-  display: none !important;
+  background: #fff !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 6px !important;
+  color: #384250 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06) !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}}
+[data-testid="stSidebar"] [data-testid="stBaseButton-header"]:hover,
+[data-testid="stSidebar"] [data-testid="stBaseButton-headerNoPadding"]:hover {{
+  border-color: #1B8354 !important;
+  color: #1B8354 !important;
+  box-shadow: 0 2px 6px rgba(27,131,84,.12) !important;
 }}
 
 /* ── sidebar title ── */
 .hist-title {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .8125rem;
-  font-weight: 700;
-  letter-spacing: .04em;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .06em;
   text-transform: uppercase;
-  color: #161616;
-  margin: 0 0 1.25rem 0;
-  padding: 0 0 .75rem 0;
-  border-bottom: 2px solid #1B8354;
+  color: #6C737F;
+  margin: 0 0 1rem 0;
+  padding: 0;
   display: flex;
   align-items: center;
   gap: .5rem;
 }}
 .hist-title-accent {{
-  width: 4px;
-  height: 16px;
+  width: 3px;
+  height: 14px;
   background: #1B8354;
   border-radius: 2px;
   flex-shrink: 0;
@@ -817,107 +818,106 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 /* ── sidebar stats ── */
 .hist-stats {{
   display: flex;
-  gap: .625rem;
-  margin-bottom: 1rem;
+  gap: .5rem;
+  margin-bottom: .75rem;
 }}
 .hist-stat {{
   flex: 1;
-  background: linear-gradient(135deg, #EBF5EE 0%, #F0FAF4 100%);
-  border: 1px solid #C3E0CC;
-  border-radius: 10px;
-  padding: .75rem .5rem .625rem;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: .625rem .5rem;
   text-align: center;
 }}
 .hist-stat-value {{
   font-family: 'IBM Plex Sans',sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
-  color: #1B8354;
+  color: #161616;
   line-height: 1.2;
 }}
 .hist-stat-label {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .625rem;
+  font-size: .5625rem;
   font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
-  color: #6C737F;
-  margin-top: .25rem;
+  color: #9DA4AE;
+  margin-top: .2rem;
 }}
 
 /* ── sidebar filter ── */
 [data-testid="stSidebar"] .stSelectbox > label {{
   font-size: .6875rem !important;
   color: #6C737F !important;
-  margin-bottom: .25rem !important;
+  margin-bottom: .2rem !important;
 }}
 [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div {{
   font-size: .8125rem !important;
   font-weight: 500 !important;
-  min-height: 36px !important;
-  padding: .3rem .6rem !important;
-  border-radius: 8px !important;
-  background: #F9FAFB !important;
+  min-height: 34px !important;
+  padding: .25rem .5rem !important;
+  border-radius: 6px !important;
+  background: #fff !important;
   border: 1px solid #E5E7EB !important;
   transition: border-color .2s, box-shadow .2s !important;
 }}
 [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"]:focus-within > div {{
   border-color: #1B8354 !important;
-  box-shadow: 0 0 0 3px rgba(27,131,84,.10) !important;
+  box-shadow: 0 0 0 2px rgba(27,131,84,.10) !important;
 }}
 
 /* ── sidebar divider ── */
 [data-testid="stSidebar"] hr {{
-  border-color: #F3F4F6 !important;
-  margin: .75rem 0 !important;
+  border-color: #E5E7EB !important;
+  margin: .5rem 0 !important;
 }}
 
 /* ── sidebar entry cards ── */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: 1px solid #E5E7EB !important;
-  border-radius: 10px !important;
-  background: #F9FAFB !important;
+  border-radius: 8px !important;
+  background: #fff !important;
   box-shadow: none !important;
   overflow: hidden !important;
   margin-top: 0 !important;
-  margin-bottom: .625rem !important;
-  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  margin-bottom: .5rem !important;
+  border-left: 3px solid #1B8354 !important;
+  transition: box-shadow .15s ease, border-color .15s ease;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-  background: #fff !important;
-  box-shadow: 0 2px 8px rgba(27,131,84,.08) !important;
-  border-color: #1B8354 !important;
+  box-shadow: 0 2px 6px rgba(16,24,40,.06) !important;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
-  padding: .75rem .875rem !important;
-  gap: .375rem !important;
+  padding: .625rem .75rem !important;
+  gap: .25rem !important;
 }}
 
 /* ── sidebar entry inner elements ── */
 .hist-entry-header {{
   display: flex;
   align-items: center;
-  gap: .5rem;
-  margin-bottom: .2rem;
+  gap: .4rem;
+  margin-bottom: .125rem;
 }}
 .hist-type-badge {{
   font-family: 'IBM Plex Sans',sans-serif;
   font-size: .5625rem;
-  font-weight: 700;
-  letter-spacing: .05em;
+  font-weight: 600;
+  letter-spacing: .04em;
   text-transform: uppercase;
-  padding: .2rem .5rem;
-  border-radius: 20px;
+  padding: .15rem .45rem;
+  border-radius: 3px;
   display: inline-block;
   flex-shrink: 0;
   line-height: 1.4;
-  background: #1B8354;
-  color: #fff;
-  border: none;
+  background: #EBF5EE;
+  color: #14573A;
+  border: 1px solid #C3E0CC;
 }}
 .hist-entry-size {{
   font-family: 'IBM Plex Sans',sans-serif;
-  font-size: .6875rem;
+  font-size: .625rem;
   font-weight: 500;
   color: #9DA4AE;
   margin-inline-start: auto;
@@ -927,18 +927,18 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   font-size: .8125rem;
   font-weight: 400;
   color: #384250;
-  line-height: 1.5;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: .25rem 0;
+  margin: .15rem 0;
 }}
 .hist-entry-time {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   font-size: .625rem;
   font-weight: 500;
-  color: #B8BEC8;
+  color: #9DA4AE;
 }}
 
 /* ── sidebar buttons ── */
@@ -946,23 +946,22 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   font-size: .6875rem !important;
   font-weight: 600 !important;
   letter-spacing: .02em !important;
-  min-height: 30px !important;
-  padding: .3rem .5rem !important;
+  min-height: 28px !important;
+  padding: .25rem .5rem !important;
   border-radius: 6px !important;
   box-shadow: none !important;
   width: 100% !important;
   background: transparent !important;
   color: #384250 !important;
-  border: 1px solid #E5E7EB !important;
-  transition: background .15s, color .15s, border-color .15s, transform .1s !important;
+  border: 1px solid #D2D6DB !important;
+  transition: background .15s, color .15s, border-color .15s !important;
 }}
 [data-testid="stSidebar"] .stButton > button:hover {{
-  background: #F3F4F6 !important;
+  background: #fff !important;
   border-color: #384250 !important;
-  transform: translateY(-1px) !important;
 }}
 [data-testid="stSidebar"] .stButton > button:focus {{
-  box-shadow: 0 0 0 3px rgba(27,131,84,.10) !important;
+  box-shadow: 0 0 0 2px rgba(27,131,84,.10) !important;
   outline: none !important;
 }}
 /* download button */
@@ -970,12 +969,9 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   background: #1B8354 !important;
   color: #fff !important;
   border: none !important;
-  box-shadow: 0 1px 2px rgba(27,131,84,.2) !important;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button:hover {{
   background: #14573A !important;
-  box-shadow: 0 2px 6px rgba(27,131,84,.25) !important;
-  transform: translateY(-1px) !important;
 }}
 /* delete button */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button {{
@@ -987,7 +983,6 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   background: #FEF2F2 !important;
   color: #DC2626 !important;
   border-color: #FECACA !important;
-  transform: translateY(-1px) !important;
 }}
 /* confirm buttons */
 [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"] {{
@@ -995,50 +990,47 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   color: #fff !important;
   border: none !important;
   font-size: .6875rem !important;
-  min-height: 30px !important;
-  padding: .3rem .5rem !important;
+  min-height: 28px !important;
+  padding: .25rem .5rem !important;
   border-radius: 6px !important;
-  box-shadow: 0 1px 3px rgba(220,38,38,.15) !important;
 }}
 [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover {{
   background: #B91C1C !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(220,38,38,.2) !important;
 }}
 
 /* ── sidebar empty state ── */
 .hist-empty {{
   text-align: center;
-  padding: 2.5rem 1.25rem;
-  background: #F9FAFB;
-  border: 1px dashed #D2D6DB;
-  border-radius: 10px;
+  padding: 2rem 1rem;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
   margin-top: .25rem;
 }}
 .hist-empty-icon {{
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1rem;
-  width: 52px;
-  height: 52px;
-  background: linear-gradient(135deg, #EBF5EE 0%, #D4EDDB 100%);
+  margin: 0 auto .75rem;
+  width: 44px;
+  height: 44px;
+  background: #EBF5EE;
   border-radius: 50%;
 }}
 .hist-empty-icon svg {{
-  opacity: .7;
+  opacity: .6;
   stroke: #1B8354;
 }}
 .hist-empty-text {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .875rem;
-  font-weight: 600;
+  font-size: .8125rem;
+  font-weight: 500;
   color: #384250;
-  margin-bottom: .35rem;
+  margin-bottom: .2rem;
 }}
 .hist-empty-hint {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .75rem;
+  font-size: .6875rem;
   color: #9DA4AE;
   line-height: 1.5;
 }}
@@ -1051,20 +1043,17 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   color: #9DA4AE !important;
 }}
 [data-testid="stSidebar"] .stDownloadButton > button {{
-  font-size: .75rem !important;
-  padding: .4rem .75rem !important;
-  min-height: 32px !important;
+  font-size: .6875rem !important;
+  padding: .3rem .6rem !important;
+  min-height: 28px !important;
   background: #1B8354 !important;
   color: #fff !important;
   border: none !important;
   border-radius: 6px !important;
-  box-shadow: 0 1px 2px rgba(27,131,84,.2) !important;
-  transition: background .15s, box-shadow .15s, transform .1s !important;
+  transition: background .15s !important;
 }}
 [data-testid="stSidebar"] .stDownloadButton > button:hover {{
   background: #14573A !important;
-  box-shadow: 0 2px 6px rgba(27,131,84,.25) !important;
-  transform: translateY(-1px) !important;
 }}
 
 /* footer */
