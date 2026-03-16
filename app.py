@@ -440,6 +440,11 @@ html, body, .stApp {{
 #MainMenu, footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{
   background: transparent !important;
+  z-index: 100 !important;
+  pointer-events: none !important;
+}}
+header[data-testid="stHeader"] * {{
+  pointer-events: auto !important;
 }}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
@@ -761,14 +766,21 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   background: #F3F4F6 !important;
   z-index: 1000 !important;
 }}
+[data-testid="stSidebar"][aria-expanded="false"] {{
+  overflow: hidden !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+}}
 [data-testid="stSidebarContent"] {{
   padding: 2.5rem 1rem 1.5rem !important;
 }}
 [data-testid="collapsedControl"] {{
   z-index: 1001 !important;
+  pointer-events: auto !important;
 }}
 [data-testid="stSidebarCollapsedControl"] {{
   z-index: 1001 !important;
+  pointer-events: auto !important;
 }}
 
 /* sidebar title */
