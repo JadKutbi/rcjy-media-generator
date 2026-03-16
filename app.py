@@ -756,17 +756,19 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* sidebar — always visible, no toggle */
+/* ── sidebar — always-visible panel ── */
 [data-testid="stSidebar"] {{
-  background: #F3F4F6 !important;
+  background: #fff !important;
+  border-inline-start: 1px solid #E5E7EB !important;
+  box-shadow: -2px 0 12px rgba(16,24,40,.04) !important;
   z-index: 1000 !important;
-  min-width: 280px !important;
-  width: 280px !important;
+  min-width: 300px !important;
+  width: 300px !important;
   transform: none !important;
 }}
 [data-testid="stSidebar"][aria-expanded="false"] {{
-  min-width: 280px !important;
-  width: 280px !important;
+  min-width: 300px !important;
+  width: 300px !important;
   transform: none !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
@@ -778,7 +780,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   opacity: 1 !important;
 }}
 [data-testid="stSidebarContent"] {{
-  padding: 2rem 1rem 1.5rem !important;
+  padding: 1.75rem 1.25rem 1.5rem !important;
 }}
 /* hide all sidebar toggle buttons */
 [data-testid="collapsedControl"],
@@ -789,48 +791,48 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   display: none !important;
 }}
 
-/* sidebar title */
+/* ── sidebar title ── */
 .hist-title {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .75rem;
-  font-weight: 600;
-  letter-spacing: .06em;
+  font-size: .8125rem;
+  font-weight: 700;
+  letter-spacing: .04em;
   text-transform: uppercase;
-  color: #6C737F;
-  margin: 0 0 1rem 0;
-  padding: 0;
+  color: #161616;
+  margin: 0 0 1.25rem 0;
+  padding: 0 0 .75rem 0;
+  border-bottom: 2px solid #1B8354;
   display: flex;
   align-items: center;
   gap: .5rem;
 }}
 .hist-title-accent {{
-  width: 3px;
-  height: 14px;
+  width: 4px;
+  height: 16px;
   background: #1B8354;
   border-radius: 2px;
   flex-shrink: 0;
 }}
 
-/* sidebar stats */
+/* ── sidebar stats ── */
 .hist-stats {{
   display: flex;
-  gap: .5rem;
-  margin-bottom: .75rem;
+  gap: .625rem;
+  margin-bottom: 1rem;
 }}
 .hist-stat {{
   flex: 1;
-  background: #fff;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  border-top: 3px solid #1B8354;
-  padding: .75rem .625rem .625rem;
+  background: linear-gradient(135deg, #EBF5EE 0%, #F0FAF4 100%);
+  border: 1px solid #C3E0CC;
+  border-radius: 10px;
+  padding: .75rem .5rem .625rem;
   text-align: center;
 }}
 .hist-stat-value {{
   font-family: 'IBM Plex Sans',sans-serif;
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #161616;
+  color: #1B8354;
   line-height: 1.2;
 }}
 .hist-stat-label {{
@@ -839,81 +841,80 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   font-weight: 600;
   letter-spacing: .04em;
   text-transform: uppercase;
-  color: #9DA4AE;
-  margin-top: .2rem;
+  color: #6C737F;
+  margin-top: .25rem;
 }}
 
-/* sidebar filter */
+/* ── sidebar filter ── */
 [data-testid="stSidebar"] .stSelectbox > label {{
   font-size: .6875rem !important;
-  margin-bottom: .2rem !important;
+  color: #6C737F !important;
+  margin-bottom: .25rem !important;
 }}
 [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"] > div {{
   font-size: .8125rem !important;
   font-weight: 500 !important;
   min-height: 36px !important;
   padding: .3rem .6rem !important;
-  border-radius: 6px !important;
+  border-radius: 8px !important;
   background: #F9FAFB !important;
-  border: 1px solid #9DA4AE !important;
+  border: 1px solid #E5E7EB !important;
   transition: border-color .2s, box-shadow .2s !important;
 }}
 [data-testid="stSidebar"] .stSelectbox [data-baseweb="select"]:focus-within > div {{
   border-color: #1B8354 !important;
-  box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
+  box-shadow: 0 0 0 3px rgba(27,131,84,.10) !important;
 }}
 
-/* sidebar divider */
+/* ── sidebar divider ── */
 [data-testid="stSidebar"] hr {{
-  border-color: #E5E7EB !important;
-  margin: .5rem 0 !important;
+  border-color: #F3F4F6 !important;
+  margin: .75rem 0 !important;
 }}
 
-/* sidebar cards */
+/* ── sidebar entry cards ── */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: 1px solid #E5E7EB !important;
-  border-radius: 12px !important;
-  background: #fff !important;
-  box-shadow: 0 1px 2px rgba(16,24,40,.04) !important;
+  border-radius: 10px !important;
+  background: #F9FAFB !important;
+  box-shadow: none !important;
   overflow: hidden !important;
   margin-top: 0 !important;
-  margin-bottom: .5rem !important;
-  transition: box-shadow .15s ease, border-color .15s ease;
+  margin-bottom: .625rem !important;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:hover {{
-  box-shadow: 0 2px 8px rgba(27,131,84,.1) !important;
-  border-color: #C3E0CC !important;
+  background: #fff !important;
+  box-shadow: 0 2px 8px rgba(27,131,84,.08) !important;
+  border-color: #1B8354 !important;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] > [data-testid="stVerticalBlock"] {{
-  padding: .875rem 1rem !important;
+  padding: .75rem .875rem !important;
   gap: .375rem !important;
 }}
 
-/* sidebar entry card inner elements */
+/* ── sidebar entry inner elements ── */
 .hist-entry-header {{
   display: flex;
   align-items: center;
   gap: .5rem;
-  margin-bottom: .125rem;
+  margin-bottom: .2rem;
 }}
-/* sidebar type badge */
 .hist-type-badge {{
   font-family: 'IBM Plex Sans',sans-serif;
   font-size: .5625rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: .05em;
   text-transform: uppercase;
-  padding: .18rem .55rem;
-  border-radius: 4px;
+  padding: .2rem .5rem;
+  border-radius: 20px;
   display: inline-block;
   flex-shrink: 0;
   line-height: 1.4;
-  background: #EBF5EE;
-  color: #14573A;
-  border: 1px solid #C3E0CC;
-  transition: background .15s, color .15s;
+  background: #1B8354;
+  color: #fff;
+  border: none;
 }}
-.hist-type-badge:hover {{ background: #D4EDDB; color: #104631; }}
 .hist-entry-size {{
   font-family: 'IBM Plex Sans',sans-serif;
   font-size: .6875rem;
@@ -931,28 +932,28 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: .2rem 0;
+  margin: .25rem 0;
 }}
 .hist-entry-time {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .6875rem;
+  font-size: .625rem;
   font-weight: 500;
-  color: #9DA4AE;
+  color: #B8BEC8;
 }}
 
-/* sidebar buttons */
+/* ── sidebar buttons ── */
 [data-testid="stSidebar"] .stButton > button {{
   font-size: .6875rem !important;
   font-weight: 600 !important;
   letter-spacing: .02em !important;
-  min-height: 32px !important;
-  padding: .35rem .6rem !important;
-  border-radius: 8px !important;
+  min-height: 30px !important;
+  padding: .3rem .5rem !important;
+  border-radius: 6px !important;
   box-shadow: none !important;
   width: 100% !important;
   background: transparent !important;
-  color: #161616 !important;
-  border: 1px solid #9DA4AE !important;
+  color: #384250 !important;
+  border: 1px solid #E5E7EB !important;
   transition: background .15s, color .15s, border-color .15s, transform .1s !important;
 }}
 [data-testid="stSidebar"] .stButton > button:hover {{
@@ -961,26 +962,26 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   transform: translateY(-1px) !important;
 }}
 [data-testid="stSidebar"] .stButton > button:focus {{
-  box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
+  box-shadow: 0 0 0 3px rgba(27,131,84,.10) !important;
   outline: none !important;
 }}
-/* download button hover */
+/* download button */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button {{
   background: #1B8354 !important;
   color: #fff !important;
   border: none !important;
-  box-shadow: 0 1px 3px rgba(27,131,84,.25) !important;
+  box-shadow: 0 1px 2px rgba(27,131,84,.2) !important;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:first-child .stButton > button:hover {{
   background: #14573A !important;
-  box-shadow: 0 2px 6px rgba(27,131,84,.3) !important;
+  box-shadow: 0 2px 6px rgba(27,131,84,.25) !important;
   transform: translateY(-1px) !important;
 }}
-/* delete button hover */
+/* delete button */
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button {{
   background: transparent !important;
-  color: #6C737F !important;
-  border: 1px solid #D2D6DB !important;
+  color: #9DA4AE !important;
+  border: 1px solid #E5E7EB !important;
 }}
 [data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] [data-testid="column"]:last-child .stButton > button:hover {{
   background: #FEF2F2 !important;
@@ -994,46 +995,46 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   color: #fff !important;
   border: none !important;
   font-size: .6875rem !important;
-  min-height: 32px !important;
-  padding: .35rem .6rem !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(220,38,38,.2) !important;
+  min-height: 30px !important;
+  padding: .3rem .5rem !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 3px rgba(220,38,38,.15) !important;
 }}
 [data-testid="stSidebar"] button[data-testid="stBaseButton-primary"]:hover {{
   background: #B91C1C !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(220,38,38,.25) !important;
+  box-shadow: 0 2px 6px rgba(220,38,38,.2) !important;
 }}
 
-/* sidebar empty state */
+/* ── sidebar empty state ── */
 .hist-empty {{
   text-align: center;
-  padding: 2.5rem 1rem;
-  background: #fff;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
+  padding: 2.5rem 1.25rem;
+  background: #F9FAFB;
+  border: 1px dashed #D2D6DB;
+  border-radius: 10px;
   margin-top: .25rem;
 }}
 .hist-empty-icon {{
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto .875rem;
-  width: 48px;
-  height: 48px;
-  background: #EBF5EE;
+  margin: 0 auto 1rem;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #EBF5EE 0%, #D4EDDB 100%);
   border-radius: 50%;
 }}
 .hist-empty-icon svg {{
-  opacity: .6;
+  opacity: .7;
   stroke: #1B8354;
 }}
 .hist-empty-text {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   font-size: .875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #384250;
-  margin-bottom: .25rem;
+  margin-bottom: .35rem;
 }}
 .hist-empty-hint {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
@@ -1042,31 +1043,27 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   line-height: 1.5;
 }}
 
-/* sidebar metrics hide */
+/* ── sidebar utilities ── */
 [data-testid="stSidebar"] [data-testid="stMetric"] {{ display: none !important; }}
-
-/* sidebar caption override */
 [data-testid="stSidebar"] .stCaption,
 [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {{
   font-size: .6875rem !important;
   color: #9DA4AE !important;
 }}
-
-/* sidebar download button (actual file download) */
 [data-testid="stSidebar"] .stDownloadButton > button {{
   font-size: .75rem !important;
   padding: .4rem .75rem !important;
-  min-height: 34px !important;
+  min-height: 32px !important;
   background: #1B8354 !important;
   color: #fff !important;
   border: none !important;
-  border-radius: 8px !important;
-  box-shadow: 0 1px 3px rgba(27,131,84,.25) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 1px 2px rgba(27,131,84,.2) !important;
   transition: background .15s, box-shadow .15s, transform .1s !important;
 }}
 [data-testid="stSidebar"] .stDownloadButton > button:hover {{
   background: #14573A !important;
-  box-shadow: 0 2px 6px rgba(27,131,84,.3) !important;
+  box-shadow: 0 2px 6px rgba(27,131,84,.25) !important;
   transform: translateY(-1px) !important;
 }}
 
