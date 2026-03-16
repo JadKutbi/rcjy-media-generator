@@ -431,12 +431,15 @@ html, body, .stApp {{
   color: #161616;
   background: #F3F4F6 !important;
   -webkit-font-smoothing: antialiased;
+}}
+/* Apply RTL only to content areas, not the app shell */
+[data-testid="stMainBlockContainer"],
+[data-testid="stSidebarContent"] {{
   direction: {_dir};
 }}
 #MainMenu, footer {{ visibility: hidden; }}
 header[data-testid="stHeader"] {{
   background: transparent !important;
-  height: auto !important;
 }}
 [data-testid="stAppViewBlockContainer"] [data-testid="stBottomBlockContainer"] {{ display: none !important; }}
 .viewerBadge_container__r5tak, .stDeployButton, [data-testid="stDecoration"],
@@ -754,26 +757,11 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
 
 /* sidebar */
-[data-testid="stSidebar"],
-[data-testid="stSidebar"] *,
-[data-testid="stSidebar"]::before,
-[data-testid="stSidebar"]::after {{
-  border-left: none !important;
-  border-right: none !important;
-  border-inline-start: none !important;
-  border-inline-end: none !important;
-}}
 [data-testid="stSidebar"] {{
   background: #F3F4F6 !important;
-  box-shadow: none !important;
-  outline: none !important;
-  direction: {_dir};
 }}
-[data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
+[data-testid="stSidebarContent"] {{
   padding: 2.5rem 1rem 1.5rem !important;
-}}
-[data-testid="collapsedControl"] {{
-  z-index: 1002 !important;
 }}
 
 /* sidebar title */
