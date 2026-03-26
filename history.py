@@ -80,7 +80,7 @@ def _save_index(entries: list[dict]):
 
 
 def is_available() -> bool:
-    """Always available — uses local filesystem."""
+    """Always available, uses local filesystem."""
     try:
         _ensure_dirs()
         return True

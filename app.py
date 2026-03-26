@@ -370,7 +370,7 @@ header[data-testid="stHeader"] {{
 }}
 .rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
 
-/* content card — scoped to main area only, not sidebar */
+/* content card */
 [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
   border-radius: 16px !important;
@@ -799,7 +799,7 @@ _nl = lang
 
 
 def _ni(key, label):
-    """One nav item — target=_self keeps navigation in the same tab."""
+    """Build one nav item link."""
     cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
     return (f'<li><a href="?tab={key}&lang={_nl}" '
             f'class="{cls}" target="_self">{label}</a></li>')
@@ -844,7 +844,7 @@ def _tags(*names):
 
 
 def _ctx_widget():
-    """Reference material expander — same keys across tabs so state is shared."""
+    """Reference material expander, shared across tabs."""
     with st.expander(L["context_label"], expanded=False):
         st.caption(L["context_hint"])
         _cu, _cf = st.columns(2, gap="medium")
