@@ -3,7 +3,7 @@ import logging
 
 import streamlit as st
 
-from rcjy_config import RCJY_LOGO_URL, SUPPORTED_FILE_TYPES, get_api_key
+from rcjy_config import RCJY_LOGO_URL, SUPPORTED_FILE_TYPES, has_credentials
 from content_extractor import get_content_from_input
 from generators import (
     _sanitize_error,
@@ -104,7 +104,7 @@ T = {
         "warn_prompt":            "Please enter a prompt.",
         "warn_topic":             "Please enter a topic or attach reference content.",
         "warn_text":              "Please enter text to speak.",
-        "warn_api":               "GEMINI_API_KEY is not set. Add it as an environment variable.",
+        "warn_api":               "No API credentials configured. Add GCP service account or GEMINI_API_KEY.",
         "spin_text":              "Generating text…",
         "spin_image":             "Generating image…",
         "spin_video":             "Generating video…",
@@ -202,7 +202,7 @@ T = {
         "warn_prompt":            "الرجاء إدخال وصف.",
         "warn_topic":             "الرجاء إدخال موضوع أو إرفاق محتوى.",
         "warn_text":              "الرجاء إدخال النص للنطق.",
-        "warn_api":               "مفتاح GEMINI_API_KEY غير مضبوط.",
+        "warn_api":               "لم يتم إعداد بيانات الاعتماد. أضف حساب خدمة GCP أو مفتاح GEMINI_API_KEY.",
         "spin_text":              "جارٍ إنشاء النص…",
         "spin_image":             "جارٍ إنشاء الصورة…",
         "spin_video":             "جارٍ إنشاء الفيديو…",
@@ -252,7 +252,7 @@ st.session_state.ui_lang = _qp_lang
 
 is_ar   = st.session_state.ui_lang == "ar"
 L       = T[st.session_state.ui_lang]
-_api_ok = bool(get_api_key())
+_api_ok = has_credentials()
 
 # css
 _fonts = (
@@ -604,7 +604,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   display: none !important;
 }}
 
-/* ── history tab ── */
+/* history tab */
 .hist-stat-card {{
   background: #F9FAFB;
   border: 1px solid #E5E7EB;
@@ -782,10 +782,11 @@ hr.hist-sep {{
   .rcjy-nav-links {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 }}
 </style>
-<!-- Security headers via meta tags (defense-in-depth for client-side) -->
+<!-- Security headers (defense-in-depth) -->
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
 """, unsafe_allow_html=True)
 
 # navbar
@@ -838,7 +839,7 @@ if not _api_ok:
 
 # shared helpers
 def _tags(*names):
-    html = "".join(f'<span class="mtag">{n}</span>' for n in names)
+    html = "".join(f'<span class="mtag">{html_mod.escape(n)}</span>' for n in names)
     st.markdown(f'<div class="mtags">{html}</div>', unsafe_allow_html=True)
 
 

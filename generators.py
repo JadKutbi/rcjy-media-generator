@@ -6,14 +6,12 @@ import tempfile
 import time
 import wave
 
-from rcjy_config import MODELS, require_api_key
+from google.genai import types as genai_types
+
+from rcjy_config import MODELS, get_genai_client
 from content_extractor import get_content_from_input
 
 logger = logging.getLogger("rcjy.generators")
-
-_TIMEOUT_FAST = (30, 180)
-_TIMEOUT_SLOW = (30, 300)
-_TIMEOUT_HEAVY = (30, 600)
 
 MAX_PROMPT_LENGTH = 10_000
 MAX_CONTEXT_LENGTH = 50_000
@@ -23,10 +21,8 @@ MAX_TTS_TEXT_LENGTH = 5_000
 def _scrub_api_key(text: str) -> str:
     """Remove any API key patterns from text to prevent accidental leakage."""
     import re
-    # Scrub Google API keys (AIza pattern) and generic key= params
     text = re.sub(r'(?i)key=[\w\-]{10,}', 'key=***REDACTED***', text)
     text = re.sub(r'AIza[A-Za-z0-9_\-]{30,}', '***REDACTED***', text)
-    # Scrub any Bearer tokens
     text = re.sub(r'(?i)bearer\s+[\w\-\.]{10,}', 'Bearer ***REDACTED***', text)
     return text
 
@@ -60,7 +56,7 @@ def _validate_prompt(prompt: str, max_len: int = MAX_PROMPT_LENGTH) -> str:
     return prompt
 
 
-# Allowlists for parameter validation (prevents injection of arbitrary model IDs)
+# Allowlists for parameter validation
 _ALLOWED_TEXT_TYPES = {"article", "social", "press", "ad", "email", "script", "summary", "creative"}
 _ALLOWED_TONES = {"professional", "friendly", "formal", "persuasive", "informative"}
 _ALLOWED_LANGS = {"en", "ar", "both"}
@@ -97,43 +93,28 @@ def _concat_wavs(wav_list: list[bytes]) -> bytes:
     return buf.getvalue()
 
 
-def _api_post(url: str, payload: dict, timeout=_TIMEOUT_SLOW, retries: int = 3):
-    import requests
+def _retry(fn, retries=2):
+    """Call fn(), retrying on rate-limit and timeout errors."""
     last_err = None
-    # Extract a safe URL for logging (strip API key query param)
-    _safe_url = url.split("?")[0] if "?" in url else url
     for attempt in range(retries + 1):
         try:
-            t0 = time.monotonic()
-            resp = requests.post(url, json=payload, timeout=timeout)
-            elapsed = time.monotonic() - t0
-            resp.raise_for_status()
-            logger.info("API call OK (%.1fs) %s", elapsed, _safe_url)
-            return resp.json()
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            return fn()
+        except Exception as e:
             last_err = e
-            logger.warning("API timeout (attempt %d/%d): %s", attempt + 1, retries + 1, type(e).__name__)
-            if attempt < retries:
-                time.sleep(5 * (attempt + 1))
-            continue
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if e.response is not None else 0
-            if status == 429:
+            msg = str(e).lower()
+            if "429" in str(e) or "rate" in msg or "quota" in msg or "resource_exhausted" in msg:
                 wait = min(30 * (attempt + 1), 120)
-                logger.warning("Rate limited (429), waiting %ds (attempt %d/%d)", wait, attempt + 1, retries + 1)
-                last_err = e
+                logger.warning("Rate limited, waiting %ds (attempt %d/%d)", wait, attempt + 1, retries + 1)
                 if attempt < retries:
                     time.sleep(wait)
-                continue
-            if 400 <= status < 500:
-                logger.error("API client error %d on %s", status, _safe_url)
-                raise
-            last_err = e
-            logger.warning("API server error %d (attempt %d/%d)", status, attempt + 1, retries + 1)
-            if attempt < retries:
-                time.sleep(5)
-            continue
-    raise RuntimeError(f"API call failed after {retries + 1} attempts: {_scrub_api_key(str(last_err))}")
+                    continue
+            if "timeout" in msg or "timed out" in msg or "deadline" in msg:
+                logger.warning("Timeout (attempt %d/%d)", attempt + 1, retries + 1)
+                if attempt < retries:
+                    time.sleep(5 * (attempt + 1))
+                    continue
+            raise
+    raise last_err
 
 
 def _lang_instruction(lang: str) -> str:
@@ -143,6 +124,8 @@ def _lang_instruction(lang: str) -> str:
         return "IMPORTANT: Generate output in both Arabic and English (bilingual). "
     return ""
 
+
+# Text generation
 
 def generate_text(
     prompt: str,
@@ -195,25 +178,26 @@ Requirements:
 
     user_content = combined_text[:30000] if combined_text else prompt
 
-    key = require_api_key()
-    url_api = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={key}"
+    client = get_genai_client()
     logger.info("Generating text: type=%s, tone=%s, model=%s, lang=%s", text_type, tone, model, lang)
 
-    payload = {
-        "contents": [{"role": "user", "parts": [{"text": f"{system_prompt}\n\n{user_content}"}]}],
-        "generationConfig": {"temperature": 0.8, "maxOutputTokens": 8192},
-    }
+    response = _retry(lambda: client.models.generate_content(
+        model=model_id,
+        contents=f"{system_prompt}\n\n{user_content}",
+        config=genai_types.GenerateContentConfig(
+            temperature=0.8,
+            max_output_tokens=8192,
+        ),
+    ))
 
-    data = _api_post(url_api, payload, timeout=_TIMEOUT_SLOW, retries=2)
-    result = "".join(
-        p.get("text", "")
-        for p in data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-    )
+    result = response.text or ""
     if not result.strip():
         raise RuntimeError("Text generation returned empty result.")
     logger.info("Text generated (%d chars)", len(result))
     return result
 
+
+# Image generation
 
 def generate_image(
     prompt: str,
@@ -232,71 +216,63 @@ def generate_image(
     model_id = MODELS["image"].get(model, MODELS["image"]["imagen_fast"])
     lang_prefix = _lang_instruction(lang)
     full_prompt = f"{lang_prefix}{context_text}\n\n{prompt}".strip() if context_text else f"{lang_prefix}{prompt}"
-    key = require_api_key()
 
+    client = get_genai_client()
     logger.info("Generating image: model=%s, aspect=%s, lang=%s", model, aspect_ratio, lang)
     is_imagen = "imagen" in model_id
 
     if is_imagen:
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:predict?key={key}"
-        payload = {
-            "instances": [{"prompt": full_prompt}],
-            "parameters": {"sampleCount": 1, "aspectRatio": aspect_ratio},
-        }
-        data = _api_post(api_url, payload, timeout=_TIMEOUT_SLOW)
-        preds = data.get("predictions", [])
-        if not preds:
+        response = _retry(lambda: client.models.generate_images(
+            model=model_id,
+            prompt=full_prompt,
+            config=genai_types.GenerateImagesConfig(
+                number_of_images=1,
+                aspect_ratio=aspect_ratio,
+            ),
+        ))
+        if not response.generated_images:
             raise RuntimeError("No image returned. Try a different prompt or model.")
-        p = preds[0]
-        b64 = (
-            p.get("bytesBase64Encoded")
-            or p.get("b64_json")
-            or (p.get("image", {}).get("bytesBase64Encoded") if isinstance(p.get("image"), dict) else None)
-        )
-        if b64:
-            return base64.b64decode(b64), "image/png"
-        raise RuntimeError("Could not extract image data. Try a different model.")
+        img = response.generated_images[0]
+        return img.image.image_bytes, "image/png"
 
     else:
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={key}"
-        parts = [{"text": full_prompt}]
+        # Gemini native image generation
+        parts = [genai_types.Part(text=full_prompt)]
         if files:
             _, file_attachments = get_content_from_input(files=files)
             for name, mime, raw in file_attachments:
                 if "image" in mime:
-                    parts.append({"inlineData": {"mimeType": mime, "data": base64.b64encode(raw).decode()}})
-        payload = {
-            "contents": [{"role": "user", "parts": parts}],
-            "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]},
-        }
-        if aspect_ratio:
-            payload["generationConfig"]["imageConfig"] = {"aspectRatio": aspect_ratio}
-        data = _api_post(api_url, payload, timeout=_TIMEOUT_SLOW)
-        for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
-            if "inlineData" in part:
-                b64 = part["inlineData"].get("data")
-                if b64:
-                    return base64.b64decode(b64), "image/png"
+                    parts.append(genai_types.Part(
+                        inline_data=genai_types.Blob(mime_type=mime, data=raw)
+                    ))
+        response = _retry(lambda: client.models.generate_content(
+            model=model_id,
+            contents=genai_types.Content(role="user", parts=parts),
+            config=genai_types.GenerateContentConfig(
+                response_modalities=["TEXT", "IMAGE"],
+            ),
+        ))
+        for part in response.candidates[0].content.parts:
+            if part.inline_data and part.inline_data.data:
+                return part.inline_data.data, part.inline_data.mime_type or "image/png"
 
     raise RuntimeError("No image in API response. Try a different prompt.")
 
 
+# Video generation
+
 def _build_video_prompt(prompt: str, context_text: str, lang: str) -> str:
     """Build the full prompt for video generation with standard rules."""
-    # Video models can't render text correctly (especially Arabic), so we
-    # explicitly tell it to avoid any on-screen text, titles, or captions.
     no_text_rule = (
         "CRITICAL: Do NOT include any text, titles, subtitles, captions, watermarks, "
         "labels, or writing of any kind in the video. The video must be purely visual "
         "with no on-screen text whatsoever. "
     )
-
     lang_prefix = ""
     if lang == "ar":
         lang_prefix = "Create a video suitable for an Arabic-speaking audience. "
     elif lang == "both":
         lang_prefix = "Create a video suitable for a bilingual Arabic/English audience. "
-
     full_prompt = f"{no_text_rule}{lang_prefix}"
     if context_text:
         full_prompt += f"{context_text}\n\n"
@@ -353,8 +329,6 @@ def generate_video(
         progress_callback: Optional callable(message: str) invoked with
             progress updates during multi-step extension.
     """
-    from google import genai
-
     prompt = _validate_prompt(prompt)
     lang = lang if lang in _ALLOWED_LANGS else "en"
     aspect_ratio = aspect_ratio if aspect_ratio in {"16:9", "9:16"} else "16:9"
@@ -371,8 +345,6 @@ def generate_video(
 
     full_prompt = _build_video_prompt(prompt, context_text, lang)
 
-    key = require_api_key()
-
     # force 720p when extending
     if extend_seconds > 0:
         resolution = "720p"
@@ -383,117 +355,112 @@ def generate_video(
         model_id, aspect_ratio, duration, resolution, extend_seconds, lang,
     )
 
-    _saved = os.environ.pop("GOOGLE_GENAI_USE_VERTEXAI", None)
-    try:
-        client = genai.Client(api_key=key, vertexai=False)
+    client = get_genai_client()
 
-        # generate initial clip
+    # generate initial clip
+    if progress_callback:
+        progress_callback("Generating initial clip...")
+    operation = client.models.generate_videos(
+        model=model_id,
+        prompt=full_prompt,
+        config={
+            "aspect_ratio": aspect_ratio,
+            "duration_seconds": duration,
+            "resolution": resolution.lower(),
+        },
+    )
+    operation = _poll_video_operation(client, operation)
+    video_obj = operation.response.generated_videos[0]
+
+    if extend_seconds <= 0:
+        # single clip, return directly
+        result = _save_video_to_bytes(client, video_obj)
+        logger.info("Video generated (%d bytes)", len(result))
+        return result, "video/mp4"
+
+    # extension loop
+    initial_dur = int(duration)
+    current_dur = initial_dur
+    target_dur = min(initial_dur + extend_seconds, 148)
+    max_extensions = 20
+    ext_count = 0
+
+    logger.info(
+        "Starting extension loop: current=%ds, target=%ds", current_dur, target_dur,
+    )
+
+    while current_dur < target_dur and ext_count < max_extensions:
+        ext_count += 1
+
+        if ext_count > 1:
+            logger.info("Waiting 10s before next extension to avoid rate limits...")
+            time.sleep(10)
+
+        msg = f"Extending video ({current_dur}s -> {current_dur + 7}s) [step {ext_count}]..."
+        logger.info(msg)
         if progress_callback:
-            progress_callback("Generating initial clip...")
-        operation = client.models.generate_videos(
-            model=model_id,
-            prompt=full_prompt,
-            config={
-                "aspect_ratio": aspect_ratio,
-                "duration_seconds": duration,
-                "resolution": resolution.lower(),
-            },
-        )
+            progress_callback(msg)
+
+        ext_prompt = f"Continue the scene seamlessly. {full_prompt}"
+
+        for attempt in range(3):
+            try:
+                operation = client.models.generate_videos(
+                    model=model_id,
+                    prompt=ext_prompt,
+                    video=video_obj.video,
+                    config={
+                        "number_of_videos": 1,
+                        "resolution": "720p",
+                    },
+                )
+                break
+            except Exception as e:
+                if ("429" in str(e) or "rate" in str(e).lower() or "quota" in str(e).lower()) and attempt < 2:
+                    wait = 30 * (attempt + 1)
+                    logger.warning("Rate limited on extension, waiting %ds (attempt %d/3)", wait, attempt + 1)
+                    if progress_callback:
+                        progress_callback(f"Rate limited, retrying in {wait}s...")
+                    time.sleep(wait)
+                else:
+                    raise
+
         operation = _poll_video_operation(client, operation)
         video_obj = operation.response.generated_videos[0]
+        current_dur += 7
 
-        if extend_seconds <= 0:
-            # single clip, return directly
-            result = _save_video_to_bytes(client, video_obj)
-            logger.info("Video generated (%d bytes)", len(result))
-            return result, "video/mp4"
+    # download final extended video
+    if progress_callback:
+        progress_callback("Downloading final video...")
+    result = _save_video_to_bytes(client, video_obj)
+    logger.info(
+        "Extended video generated (%d bytes, ~%ds, %d extensions)",
+        len(result), current_dur, ext_count,
+    )
+    return result, "video/mp4"
 
-        # extension loop
-        initial_dur = int(duration)
-        current_dur = initial_dur
-        # Each extension adds 7 seconds; max 20 extensions (148 s total).
-        target_dur = min(initial_dur + extend_seconds, 148)
-        max_extensions = 20
-        ext_count = 0
 
-        logger.info(
-            "Starting extension loop: current=%ds, target=%ds", current_dur, target_dur,
-        )
+# Voice / TTS generation
 
-        while current_dur < target_dur and ext_count < max_extensions:
-            ext_count += 1
-
-            # Pause between extensions to avoid rate limits
-            if ext_count > 1:
-                logger.info("Waiting 10s before next extension to avoid rate limits...")
-                time.sleep(10)
-
-            msg = f"Extending video ({current_dur}s -> {current_dur + 7}s) [step {ext_count}]..."
-            logger.info(msg)
-            if progress_callback:
-                progress_callback(msg)
-
-            # Use a continuation prompt that maintains scene coherence
-            ext_prompt = (
-                f"Continue the scene seamlessly. {full_prompt}"
-            )
-
-            # Retry extension on rate limit errors
-            for attempt in range(3):
-                try:
-                    operation = client.models.generate_videos(
-                        model=model_id,
-                        prompt=ext_prompt,
-                        video=video_obj.video,
-                        config={
-                            "number_of_videos": 1,
-                            "resolution": "720p",
-                        },
+def _tts_single(text: str, voice_name: str, model_id: str, client) -> bytes:
+    """Generate single-speaker TTS audio via the SDK."""
+    response = _retry(lambda: client.models.generate_content(
+        model=model_id,
+        contents=text,
+        config=genai_types.GenerateContentConfig(
+            response_modalities=["AUDIO"],
+            speech_config=genai_types.SpeechConfig(
+                voice_config=genai_types.VoiceConfig(
+                    prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(
+                        voice_name=voice_name
                     )
-                    break
-                except Exception as e:
-                    if ("429" in str(e) or "rate" in str(e).lower() or "quota" in str(e).lower()) and attempt < 2:
-                        wait = 30 * (attempt + 1)
-                        logger.warning("Rate limited on extension, waiting %ds (attempt %d/3)", wait, attempt + 1)
-                        if progress_callback:
-                            progress_callback(f"Rate limited, retrying in {wait}s...")
-                        time.sleep(wait)
-                    else:
-                        raise
-
-            operation = _poll_video_operation(client, operation)
-            video_obj = operation.response.generated_videos[0]
-            current_dur += 7
-
-        # download final extended video
-        if progress_callback:
-            progress_callback("Downloading final video...")
-        result = _save_video_to_bytes(client, video_obj)
-        logger.info(
-            "Extended video generated (%d bytes, ~%ds, %d extensions)",
-            len(result), current_dur, ext_count,
-        )
-        return result, "video/mp4"
-    finally:
-        if _saved is not None:
-            os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = _saved
-
-
-def _tts_single(text: str, voice_name: str, model_id: str, key: str) -> bytes:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_id}:generateContent?key={key}"
-    payload = {
-        "contents": [{"role": "user", "parts": [{"text": text}]}],
-        "generationConfig": {
-            "responseModalities": ["AUDIO"],
-            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_name}}},
-        },
-    }
-    data = _api_post(url, payload, timeout=_TIMEOUT_SLOW, retries=2)
-    for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
-        if "inlineData" in part:
-            b64 = part["inlineData"].get("data")
-            if b64:
-                return _pcm_to_wav(base64.b64decode(b64))
+                )
+            ),
+        ),
+    ))
+    for part in response.candidates[0].content.parts:
+        if part.inline_data and part.inline_data.data:
+            return _pcm_to_wav(part.inline_data.data)
     raise RuntimeError("No audio in TTS response.")
 
 
@@ -515,8 +482,8 @@ def generate_voice(
     text = _validate_prompt(text, max_len=MAX_TTS_TEXT_LENGTH)
     lang = lang if lang in _ALLOWED_LANGS else "en"
     voice_name = voice_name if voice_name in _ALLOWED_VOICES else "Kore"
-    style_hint = style_hint[:100].strip()  # limit style hint length
-    display_name = display_name[:50].strip()  # limit display name length
+    style_hint = style_hint[:100].strip()
+    display_name = display_name[:50].strip()
     if tts_model not in MODELS.get("voice", {}):
         tts_model = "flash"
     model_id = (
@@ -533,19 +500,20 @@ def generate_voice(
     if context_text:
         full_text = f"[Context: {context_text[:500]}]\n\n{full_text}"
 
-    key = require_api_key()
+    client = get_genai_client()
     logger.info("Generating voice: voice=%s, model=%s, lang=%s", voice_name, tts_model, lang)
-    wav = _tts_single(full_text, voice_name, model_id, key)
+    wav = _tts_single(full_text, voice_name, model_id, client)
     logger.info("Voice generated (%d bytes)", len(wav))
     return wav, "audio/wav"
 
 
-def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str, lang: str = "en") -> bytes:
-    voice_id = (
+# Podcast generation
+
+def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, client, lang: str = "en") -> bytes:
+    model_id = (
         MODELS["voice"].get("flash", MODELS["voice"])
         if isinstance(MODELS["voice"], dict) else MODELS["voice"]
     )
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{voice_id}:generateContent?key={key}"
 
     lines = script.strip().split("\n")
     chunks, current_chunk, current_words = [], [], 0
@@ -573,27 +541,38 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, key: str,
             tts_instruction = f"Read this bilingual Arabic-English podcast dialogue naturally:\n\n{chunk}"
         else:
             tts_instruction = f"Read this podcast dialogue naturally:\n\n{chunk}"
-        payload = {
-            "contents": [{"role": "user", "parts": [{"text": tts_instruction}]}],
-            "generationConfig": {
-                "responseModalities": ["AUDIO"],
-                "speechConfig": {
-                    "multiSpeakerVoiceConfig": {
-                        "speakerVoiceConfigs": [
-                            {"speaker": "Host", "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_host}}},
-                            {"speaker": "Guest", "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice_guest}}},
+
+        # capture loop variable for lambda
+        _inst = tts_instruction
+        response = _retry(lambda _t=_inst: client.models.generate_content(
+            model=model_id,
+            contents=_t,
+            config=genai_types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=genai_types.SpeechConfig(
+                    multi_speaker_voice_config=genai_types.MultiSpeakerVoiceConfig(
+                        speaker_voice_configs=[
+                            genai_types.SpeakerVoiceConfig(
+                                speaker="Host",
+                                voice_config=genai_types.VoiceConfig(
+                                    prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(voice_name=voice_host)
+                                ),
+                            ),
+                            genai_types.SpeakerVoiceConfig(
+                                speaker="Guest",
+                                voice_config=genai_types.VoiceConfig(
+                                    prebuilt_voice_config=genai_types.PrebuiltVoiceConfig(voice_name=voice_guest)
+                                ),
+                            ),
                         ]
-                    }
-                },
-            },
-        }
-        data = _api_post(url, payload, timeout=_TIMEOUT_SLOW, retries=2)
-        for part in data.get("candidates", [{}])[0].get("content", {}).get("parts", []):
-            if "inlineData" in part:
-                b64 = part["inlineData"].get("data")
-                if b64:
-                    wav_parts.append(_pcm_to_wav(base64.b64decode(b64)))
-                    break
+                    )
+                ),
+            ),
+        ))
+        for part in response.candidates[0].content.parts:
+            if part.inline_data and part.inline_data.data:
+                wav_parts.append(_pcm_to_wav(part.inline_data.data))
+                break
 
     if not wav_parts:
         raise RuntimeError("No audio generated from any chunk.")
@@ -671,18 +650,13 @@ Content:
 {combined_text[:15000]}
 """
 
-    key = require_api_key()
-    url_text = f"https://generativelanguage.googleapis.com/v1beta/models/{MODELS['podcast']}:generateContent?key={key}"
-    script_data = _api_post(
-        url_text,
-        {"contents": [{"role": "user", "parts": [{"text": script_prompt}]}]},
-        timeout=_TIMEOUT_SLOW, retries=2,
-    )
+    client = get_genai_client()
+    script_response = _retry(lambda: client.models.generate_content(
+        model=MODELS["podcast"],
+        contents=script_prompt,
+    ))
 
-    script = "".join(
-        p.get("text", "")
-        for p in script_data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-    )
+    script = script_response.text or ""
     if not script.strip():
         raise RuntimeError("Script generation returned empty result.")
 
@@ -694,6 +668,6 @@ Content:
         script = " ".join(words[:600])
 
     logger.info("Podcast script ready (%d words), starting TTS", len(script.split()))
-    wav = _multi_speaker_tts(script, voice_host, voice_guest, key, lang=lang)
+    wav = _multi_speaker_tts(script, voice_host, voice_guest, client, lang=lang)
     logger.info("Podcast generated (%d bytes)", len(wav))
     return wav, "audio/wav"

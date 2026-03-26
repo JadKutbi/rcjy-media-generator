@@ -1,8 +1,7 @@
-# RCJY Media Generator - Production Dependencies
-# Royal Commission for Jubail and Yanbu
-# Versions pinned for security — update periodically with `pip-audit`
+# RCJY Media Generator
+# Versions pinned for security
 
-# Google AI - SOTA Models (Imagen 4, Nano Banana, Veo 3.1, Gemini TTS)
+# Google AI SDK (Vertex AI + AI Studio)
 google-genai>=1.0.0,<2.0.0
 
 # Web Framework

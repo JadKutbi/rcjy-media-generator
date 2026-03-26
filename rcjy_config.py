@@ -1,4 +1,7 @@
+import atexit
+import json
 import os
+import tempfile
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -6,6 +9,10 @@ ASSETS_DIR = BASE_DIR / "assets"
 OUTPUT_DIR = BASE_DIR / "generated_outputs"
 ASSETS_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
+
+# GCP Vertex AI configuration
+GCP_PROJECT = "rcjy-ai-shared-services-proj"
+GCP_LOCATION = "us-central1"
 
 # API key resolution: env var -> streamlit secrets -> .env file
 def get_api_key() -> str:
@@ -41,7 +48,84 @@ def require_api_key() -> str:
     return key
 
 
-# SOTA model IDs
+# Vertex AI / google-genai client
+
+_creds_setup_done = False
+
+
+def _cleanup_temp_creds():
+    """Remove temp credentials file on shutdown."""
+    path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if path and os.path.basename(path).startswith("gcp_sa_"):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def _setup_gcp_credentials():
+    """Write GCP service account JSON from Streamlit secrets to a temp file."""
+    global _creds_setup_done
+    if _creds_setup_done or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        return
+    _creds_setup_done = True
+    try:
+        import streamlit as st
+        sa = st.secrets.get("gcp_service_account")
+        if sa:
+            sa_dict = dict(sa)
+            fd, path = tempfile.mkstemp(suffix=".json", prefix="gcp_sa_")
+            os.chmod(path, 0o600)
+            with os.fdopen(fd, "w") as f:
+                json.dump(sa_dict, f)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path
+            atexit.register(_cleanup_temp_creds)
+    except Exception:
+        pass
+
+
+def has_credentials() -> bool:
+    """Check if either GCP credentials or API key are available."""
+    _setup_gcp_credentials()
+    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        return True
+    return bool(get_api_key())
+
+
+_genai_client = None
+
+
+def get_genai_client():
+    """Get a google-genai client.  Prefers Vertex AI, falls back to API key."""
+    global _genai_client
+    if _genai_client is not None:
+        return _genai_client
+
+    from google import genai
+
+    _setup_gcp_credentials()
+
+    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        _genai_client = genai.Client(
+            vertexai=True,
+            project=GCP_PROJECT,
+            location=GCP_LOCATION,
+        )
+        return _genai_client
+
+    key = get_api_key()
+    if key:
+        _genai_client = genai.Client(api_key=key)
+        return _genai_client
+
+    raise ValueError(
+        "No GCP credentials or API key configured. "
+        "Add gcp_service_account to .streamlit/secrets.toml for Vertex AI, "
+        "or set GEMINI_API_KEY for AI Studio."
+    )
+
+
+# Model IDs
 MODELS = {
     "image": {
         "imagen_fast": "imagen-4.0-fast-generate-001",
