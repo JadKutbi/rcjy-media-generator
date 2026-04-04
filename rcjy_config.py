@@ -10,11 +10,14 @@ OUTPUT_DIR = BASE_DIR / "generated_outputs"
 ASSETS_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
-# GCP Vertex AI configuration
-GCP_PROJECT = "rcjy-ai-shared-services-proj"
-GCP_LOCATION = "us-central1"
+# GCP config
+GCP_PROJECT = os.getenv("GCP_PROJECT", "rcjy-ai-shared-services-proj")
+GCP_LOCATION = os.getenv("GCP_LOCATION", "me-central2")
 
-# API key resolution: env var -> streamlit secrets -> .env file
+# GCS bucket
+GCS_HISTORY_BUCKET = os.getenv("GCS_HISTORY_BUCKET", "rcjy-ai-shared-services-storage")
+
+# API key resolution
 def get_api_key() -> str:
     key = os.getenv("GEMINI_API_KEY", "").strip()
     if key:
@@ -48,13 +51,13 @@ def require_api_key() -> str:
     return key
 
 
-# Vertex AI / google-genai client
+# Vertex AI client
 
 _creds_setup_done = False
 
 
 def _cleanup_temp_creds():
-    """Remove temp credentials file on shutdown."""
+    # Remove temp credentials file on shutdown
     path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
     if path and os.path.basename(path).startswith("gcp_sa_"):
         try:
@@ -64,7 +67,7 @@ def _cleanup_temp_creds():
 
 
 def _setup_gcp_credentials():
-    """Write GCP service account JSON from Streamlit secrets to a temp file."""
+    # Write GCP service account JSON from Streamlit secrets to temp file
     global _creds_setup_done
     if _creds_setup_done or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
         return
@@ -85,9 +88,10 @@ def _setup_gcp_credentials():
 
 
 def has_credentials() -> bool:
-    """Check if either GCP credentials or API key are available."""
+    # Check if credentials are available
     _setup_gcp_credentials()
-    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+    # Cloud Run ADC or explicit creds
+    if os.environ.get("K_SERVICE") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
         return True
     return bool(get_api_key())
 
@@ -96,44 +100,47 @@ _genai_client = None
 
 
 def get_genai_client():
-    """Get a google-genai client.  Prefers Vertex AI, falls back to API key."""
+    # Get genai client: API key first, fallback to Vertex AI
     global _genai_client
     if _genai_client is not None:
         return _genai_client
 
     from google import genai
 
-    _setup_gcp_credentials()
-
-    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
-        _genai_client = genai.Client(
-            vertexai=True,
-            project=GCP_PROJECT,
-            location=GCP_LOCATION,
-        )
-        return _genai_client
-
+    # Prefer API key
     key = get_api_key()
     if key:
         _genai_client = genai.Client(api_key=key)
         return _genai_client
 
+    _setup_gcp_credentials()
+
+    # Fallback to Vertex AI
+    if os.environ.get("K_SERVICE") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        try:
+            _genai_client = genai.Client(
+                vertexai=True,
+                project=GCP_PROJECT,
+                location=GCP_LOCATION,
+            )
+            return _genai_client
+        except Exception:
+            pass
+
     raise ValueError(
-        "No GCP credentials or API key configured. "
-        "Add gcp_service_account to .streamlit/secrets.toml for Vertex AI, "
-        "or set GEMINI_API_KEY for AI Studio."
+        "No credentials found. Set GEMINI_API_KEY, or on Cloud Run attach a service account "
+        "with Vertex AI User role, or locally run 'gcloud auth application-default login'."
     )
 
 
-# Model IDs
+# Models
 MODELS = {
     "image": {
         "imagen_fast": "imagen-4.0-fast-generate-001",
         "imagen": "imagen-4.0-generate-001",
         "imagen_ultra": "imagen-4.0-ultra-generate-001",
-        "nano_banana": "gemini-2.5-flash-image",
-        "nano_banana_2": "gemini-3.1-flash-image-preview",
-        "nano_banana_pro": "gemini-3-pro-image-preview",
+        "gemini_flash": "gemini-3.1-flash-image-preview",
+        "gemini_pro": "gemini-3-pro-image-preview",
     },
     "video": {
         "standard": "veo-3.1-generate-preview",

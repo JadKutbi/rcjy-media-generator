@@ -11,3 +11,6 @@ enableXsrfProtection = true
 enableCORS = false
 maxUploadSize = 50
 maxMessageSize = 50
+
+[browser]
+gatherUsageStats = false

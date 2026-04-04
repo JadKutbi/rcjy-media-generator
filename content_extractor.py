@@ -14,66 +14,65 @@ from PIL import Image
 
 logger = logging.getLogger("rcjy.content_extractor")
 
-# SSRF prevention
+# SSRF limits
 _ALLOWED_SCHEMES = {"http", "https"}
 _MAX_URL_RESPONSE_BYTES = 10 * 1024 * 1024  # 10 MB max download from URL
 _URL_REQUEST_TIMEOUT = 15  # seconds
 _MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB per uploaded file
 
 
-def _is_private_ip(hostname: str) -> bool:
-    """Return True if hostname resolves to a private/reserved IP address."""
+_BLOCKED_HOSTS = {
+    "metadata.google.internal",
+    "metadata.google",
+    "169.254.169.254",
+    "100.100.100.200",
+}
+
+
+def _is_safe_ip(ip_str: str) -> bool:
+    # Check if IP is safe (not private/reserved/loopback)
     try:
-        # Resolve hostname to IP(s) to catch DNS rebinding via private names
-        for info in socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM):
-            ip_str = info[4][0]
-            ip = ipaddress.ip_address(ip_str)
-            if (
-                ip.is_private
-                or ip.is_loopback
-                or ip.is_link_local
-                or ip.is_reserved
-                or ip.is_multicast
-                or ip.is_unspecified
-            ):
-                return True
-    except (socket.gaierror, ValueError, OSError):
-        # If we can't resolve, block it to be safe
-        return True
-    return False
+        ip = ipaddress.ip_address(ip_str)
+        return not (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        )
+    except ValueError:
+        return False
 
 
-def _validate_url(url: str) -> str:
-    """Validate and sanitize a URL for safe fetching. Returns cleaned URL or raises ValueError."""
+def _resolve_and_validate(hostname: str) -> str:
+    # Resolve hostname once and return a safe IP, or raise ValueError
+    if hostname.lower() in _BLOCKED_HOSTS:
+        raise ValueError("Access to cloud metadata endpoints is not allowed.")
+    try:
+        infos = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
+    except (socket.gaierror, OSError):
+        raise ValueError("Could not resolve hostname.")
+    for info in infos:
+        ip_str = info[4][0]
+        if _is_safe_ip(ip_str):
+            return ip_str
+    raise ValueError("URLs pointing to internal/private network addresses are not allowed.")
+
+
+def _validate_url(url: str) -> tuple[str, str]:
+    # Validate URL, resolve DNS once. Returns (url, resolved_ip)
     url = url.strip()
     if not url:
         raise ValueError("Empty URL")
-
     parsed = urlparse(url)
-
-    # Scheme validation
     if parsed.scheme.lower() not in _ALLOWED_SCHEMES:
         raise ValueError(f"URL scheme '{parsed.scheme}' is not allowed. Only http/https are permitted.")
-
     hostname = parsed.hostname
     if not hostname:
         raise ValueError("URL has no hostname.")
-
-    # Block private/internal IPs (SSRF prevention)
-    if _is_private_ip(hostname):
-        raise ValueError("URLs pointing to internal/private network addresses are not allowed.")
-
-    # Block common cloud metadata endpoints
-    _blocked_hosts = {
-        "metadata.google.internal",
-        "metadata.google",
-        "169.254.169.254",  # AWS/GCP/Azure metadata
-        "100.100.100.200",  # Alibaba Cloud metadata
-    }
-    if hostname.lower() in _blocked_hosts:
-        raise ValueError("Access to cloud metadata endpoints is not allowed.")
-
-    return url
+    resolved_ip = _resolve_and_validate(hostname)
+    return url, resolved_ip
 
 try:
     from pypdf import PdfReader
@@ -130,28 +129,68 @@ def is_video(filename: str) -> bool:
 
 def extract_from_url(url: str, max_chars: int = 50000) -> str:
     try:
-        url = _validate_url(url)
+        url, resolved_ip = _validate_url(url)
     except ValueError as e:
         logger.warning("URL validation failed for user-supplied URL: %s", e)
         return f"Invalid URL: {e}"
 
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; RCJY-MediaBot/1.0)"}
-        response = requests.get(
-            url,
+        # Pin the resolved IP to prevent DNS rebinding (TOCTOU)
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
+        pinned_url = url.replace(f"://{hostname}", f"://{resolved_ip}", 1)
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (compatible; RCJY-MediaBot/1.0)",
+            "Host": hostname,
+        }
+        session = requests.Session()
+        session.max_redirects = 5
+        # Disable redirects to validate each hop
+        response = session.get(
+            pinned_url,
             headers=headers,
             timeout=_URL_REQUEST_TIMEOUT,
-            allow_redirects=True,
+            allow_redirects=False,
             stream=True,
+            verify=True if parsed.scheme == "https" else False,
         )
+
+        # Follow redirects manually with validation
+        redirect_count = 0
+        while response.is_redirect and redirect_count < 5:
+            redirect_count += 1
+            next_url = response.headers.get("Location", "")
+            if not next_url:
+                break
+            # Resolve absolute URL
+            if not next_url.startswith("http"):
+                next_url = f"{parsed.scheme}://{hostname}{next_url}"
+            try:
+                next_url, next_ip = _validate_url(next_url)
+            except ValueError:
+                logger.warning("Redirect to blocked destination: %s", next_url)
+                return "Error: URL redirected to a blocked destination."
+            next_parsed = urlparse(next_url)
+            next_host = next_parsed.hostname
+            pinned_next = next_url.replace(f"://{next_host}", f"://{next_ip}", 1)
+            response = session.get(
+                pinned_next,
+                headers={"User-Agent": headers["User-Agent"], "Host": next_host},
+                timeout=_URL_REQUEST_TIMEOUT,
+                allow_redirects=False,
+                stream=True,
+            )
+
         response.raise_for_status()
 
-        # Check Content-Length to avoid downloading huge files
+        # Check Content-Length
         content_length = response.headers.get("Content-Length")
         if content_length and int(content_length) > _MAX_URL_RESPONSE_BYTES:
             return "Error: URL response exceeds maximum allowed size (10 MB)."
 
-        # Read with size limit even if Content-Length is absent
+        # Read with size limit
         chunks = []
         total = 0
         for chunk in response.iter_content(chunk_size=8192, decode_unicode=False):
@@ -161,14 +200,6 @@ def extract_from_url(url: str, max_chars: int = 50000) -> str:
                 break
             chunks.append(chunk)
         raw_content = b"".join(chunks)
-
-        # Verify the final URL after redirects is also safe (redirect-based SSRF)
-        final_url = response.url
-        try:
-            _validate_url(final_url)
-        except ValueError:
-            logger.warning("URL redirected to blocked destination: %s", final_url)
-            return "Error: URL redirected to a blocked destination."
 
         text_content = raw_content.decode("utf-8", errors="ignore")
         soup = BeautifulSoup(text_content, "html.parser")
@@ -306,7 +337,7 @@ def get_content_from_input(
             if f is None:
                 continue
             name = getattr(f, "name", "attachment")
-            # Sanitize filename: strip path components to prevent traversal
+            # Strip path components to prevent traversal
             name = Path(name).name  # removes any directory components
             suffix = Path(name).suffix.lower()
             mime = get_mime_type(name)
@@ -316,7 +347,7 @@ def get_content_from_input(
             except Exception:
                 pass
 
-            # Enforce per-file size limit
+            # Check file size
             try:
                 f.seek(0, 2)  # seek to end
                 file_size = f.tell()

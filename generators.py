@@ -19,7 +19,7 @@ MAX_TTS_TEXT_LENGTH = 5_000
 
 
 def _scrub_api_key(text: str) -> str:
-    """Remove any API key patterns from text to prevent accidental leakage."""
+    # Remove API key patterns from text
     import re
     text = re.sub(r'(?i)key=[\w\-]{10,}', 'key=***REDACTED***', text)
     text = re.sub(r'AIza[A-Za-z0-9_\-]{30,}', '***REDACTED***', text)
@@ -32,9 +32,11 @@ def _sanitize_error(e: Exception) -> str:
     if "timed out" in msg.lower() or "timeout" in msg.lower():
         return "Request timed out. Please try again with simpler content or a shorter prompt."
     if "quota" in msg.lower() or "rate" in msg.lower() or "429" in msg:
-        return "API rate limit reached. Please wait a moment and try again."
+        logger.error("Rate/quota error (raw): %s", msg)
+        return f"API rate/quota error: {msg}"
     if "403" in msg or "permission" in msg.lower():
-        return "API access denied. Please check your API key permissions."
+        logger.error("Permission error (raw): %s", msg)
+        return f"API access denied: {msg}"
     if "404" in msg:
         return "The requested AI model is not available. Please try a different model."
     if "400" in msg or "invalid" in msg.lower():
@@ -56,7 +58,7 @@ def _validate_prompt(prompt: str, max_len: int = MAX_PROMPT_LENGTH) -> str:
     return prompt
 
 
-# Allowlists for parameter validation
+# Allowlists
 _ALLOWED_TEXT_TYPES = {"article", "social", "press", "ad", "email", "script", "summary", "creative"}
 _ALLOWED_TONES = {"professional", "friendly", "formal", "persuasive", "informative"}
 _ALLOWED_LANGS = {"en", "ar", "both"}
@@ -94,7 +96,7 @@ def _concat_wavs(wav_list: list[bytes]) -> bytes:
 
 
 def _retry(fn, retries=2):
-    """Call fn(), retrying on rate-limit and timeout errors."""
+    # Retry on rate-limit and timeout errors
     last_err = None
     for attempt in range(retries + 1):
         try:
@@ -125,7 +127,6 @@ def _lang_instruction(lang: str) -> str:
     return ""
 
 
-# Text generation
 
 def generate_text(
     prompt: str,
@@ -197,7 +198,6 @@ Requirements:
     return result
 
 
-# Image generation
 
 def generate_image(
     prompt: str,
@@ -259,10 +259,9 @@ def generate_image(
     raise RuntimeError("No image in API response. Try a different prompt.")
 
 
-# Video generation
 
 def _build_video_prompt(prompt: str, context_text: str, lang: str) -> str:
-    """Build the full prompt for video generation with standard rules."""
+    # Build prompt for video generation with standard rules
     no_text_rule = (
         "CRITICAL: Do NOT include any text, titles, subtitles, captions, watermarks, "
         "labels, or writing of any kind in the video. The video must be purely visual "
@@ -281,7 +280,7 @@ def _build_video_prompt(prompt: str, context_text: str, lang: str) -> str:
 
 
 def _poll_video_operation(client, operation, timeout: int = 900):
-    """Poll a video generation operation until done or timeout."""
+    # Poll video generation operation until done or timeout
     elapsed = 0
     while not operation.done:
         time.sleep(15)
@@ -295,7 +294,7 @@ def _poll_video_operation(client, operation, timeout: int = 900):
 
 
 def _save_video_to_bytes(client, video) -> bytes:
-    """Download a generated video and return its bytes."""
+    # Download generated video and return bytes
     client.files.download(file=video.video)
     fd, tmp_path = tempfile.mkstemp(suffix=".mp4")
     try:
@@ -319,16 +318,7 @@ def generate_video(
     extend_seconds: int = 0,
     progress_callback=None,
 ) -> tuple[bytes, str]:
-    """Generate a video, optionally extended beyond the initial clip.
-
-    Args:
-        extend_seconds: Total desired duration beyond the initial clip using
-            Veo 3.1 video extension.  Each extension adds ~7 s.  Set to 0
-            (default) for a single clip.  Extension forces 720p resolution.
-            Maximum total duration is ~148 s.
-        progress_callback: Optional callable(message: str) invoked with
-            progress updates during multi-step extension.
-    """
+    # Generate video, optionally extended via Veo 3.1 extension loop
     prompt = _validate_prompt(prompt)
     lang = lang if lang in _ALLOWED_LANGS else "en"
     aspect_ratio = aspect_ratio if aspect_ratio in {"16:9", "9:16"} else "16:9"
@@ -440,10 +430,9 @@ def generate_video(
     return result, "video/mp4"
 
 
-# Voice / TTS generation
 
 def _tts_single(text: str, voice_name: str, model_id: str, client) -> bytes:
-    """Generate single-speaker TTS audio via the SDK."""
+    # Single-speaker TTS audio via SDK
     response = _retry(lambda: client.models.generate_content(
         model=model_id,
         contents=text,
@@ -507,7 +496,6 @@ def generate_voice(
     return wav, "audio/wav"
 
 
-# Podcast generation
 
 def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, client, lang: str = "en") -> bytes:
     model_id = (
@@ -542,7 +530,7 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, client, l
         else:
             tts_instruction = f"Read this podcast dialogue naturally:\n\n{chunk}"
 
-        # capture loop variable for lambda
+        # capture loop var
         _inst = tts_instruction
         response = _retry(lambda _t=_inst: client.models.generate_content(
             model=model_id,

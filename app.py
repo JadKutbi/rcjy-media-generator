@@ -1,7 +1,11 @@
 import html as html_mod
+import io
 import logging
+import random
+import time
 
 import streamlit as st
+from PIL import Image, ImageDraw, ImageFont
 
 from rcjy_config import RCJY_LOGO_URL, SUPPORTED_FILE_TYPES, has_credentials
 from content_extractor import get_content_from_input
@@ -17,9 +21,18 @@ from generators import (
 try:
     import history
     _history_ok = history.is_available()
-except Exception:
-    history = None
-    _history_ok = False
+    if not _history_ok:
+        logging.getLogger("rcjy.app").warning("GCS history not available — falling back to session history")
+        import history_local as history
+        _history_ok = True
+except Exception as _hist_err:
+    logging.getLogger("rcjy.app").warning("GCS history import/init failed (%s) — using session history", _hist_err)
+    try:
+        import history_local as history
+        _history_ok = True
+    except Exception:
+        history = None
+        _history_ok = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,7 +41,65 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rcjy.app")
 
-# translations
+# rate limiting per session
+_RATE_COOLDOWN = {"text": 5, "image": 10, "video": 30, "voice": 10, "podcast": 20}
+
+def _rate_check(action: str) -> bool:
+    # Returns True if allowed, False if rate limited
+    key = f"_last_{action}"
+    now = time.time()
+    last = st.session_state.get(key, 0)
+    cooldown = _RATE_COOLDOWN.get(action, 10)
+    if now - last < cooldown:
+        remaining = int(cooldown - (now - last))
+        msg = f"انتظر {remaining} ثانية" if st.session_state.get("ui_lang") == "ar" else f"Please wait {remaining}s before generating again"
+        st.warning(msg)
+        return False
+    st.session_state[key] = now
+    return True
+
+# captcha gate (one-time per session)
+def _generate_captcha() -> tuple[bytes, str]:
+    # Generate image CAPTCHA with random code
+    code = "".join(random.choices("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", k=5))
+    w, h = 320, 100
+    img = Image.new("RGB", (w, h), color=(249, 250, 251))
+    draw = ImageDraw.Draw(img)
+    # Try to load a larger font
+    _font = None
+    for size in (40, 36, 32):
+        try:
+            _font = ImageFont.truetype("arial.ttf", size)
+            break
+        except OSError:
+            try:
+                _font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size)
+                break
+            except OSError:
+                continue
+    if _font is None:
+        _font = ImageFont.load_default()
+    # Noise lines
+    for _ in range(8):
+        x1, y1 = random.randint(0, w), random.randint(0, h)
+        x2, y2 = random.randint(0, w), random.randint(0, h)
+        draw.line([(x1, y1), (x2, y2)], fill=(random.randint(180, 220), random.randint(180, 220), random.randint(180, 220)), width=2)
+    # Draw each character with slight offset and rotation
+    char_w = w // (len(code) + 1)
+    for i, ch in enumerate(code):
+        x = char_w * (i + 1) - char_w // 2 + random.randint(-5, 5)
+        y = random.randint(15, 35)
+        color = (random.randint(0, 60), random.randint(60, 120), random.randint(0, 80))
+        draw.text((x, y), ch, fill=color, font=_font)
+    # Noise dots
+    for _ in range(150):
+        x, y = random.randint(0, w - 1), random.randint(0, h - 1)
+        draw.point((x, y), fill=(random.randint(140, 200), random.randint(140, 200), random.randint(140, 200)))
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue(), code
+
+# i18n
 T = {
     "en": {
         "app_name":               "Media Generator",
@@ -50,7 +121,7 @@ T = {
         "tab_podcast":            "Podcast",
         "tab_history":            "History",
         "prompt_label":           "Prompt",
-        "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about Jubail Industrial City's new green hydrogen facility.\n\nTip: Output follows your interface language. To override, specify in your prompt (e.g. 'write in Arabic').",
+        "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about Jubail Industrial City's role as one of the world's largest industrial hubs.\n\nTip: Output follows your interface language. To override, specify in your prompt (e.g. 'write in Arabic').",
         "prompt_ph_image":        "Describe the image…\ne.g. Aerial golden-hour view of Jubail Industrial City, petrochemical towers, calm sea.",
         "prompt_ph_video":        "Describe the video scene…\ne.g. Cinematic drone flight over Yanbu Industrial Port at sunrise, dramatic sky.",
         "prompt_ph_voice":        "Enter the text to be spoken…\n\nTip: Output follows your interface language. To override, specify in your prompt.",
@@ -59,24 +130,34 @@ T = {
         "aspect_label":           "Aspect Ratio",
         "duration_label":         "Duration (sec)",
         "total_duration_label":   "Total Duration",
-        "total_dur_8":            "8s (single clip)",
-        "total_dur_15":           "~15s (1 extension)",
-        "total_dur_22":           "~22s (2 extensions)",
-        "total_dur_29":           "~29s (3 extensions)",
-        "total_dur_43":           "~43s (5 extensions)",
-        "total_dur_57":           "~57s (7 extensions)",
-        "total_dur_78":           "~78s (10 extensions)",
-        "total_dur_148":          "~148s (20 extensions, max)",
-        "extend_note":            "Extension forces 720p resolution. Each step adds ~7s and takes 2-5 min.",
+        "total_dur_8":            "8 seconds",
+        "total_dur_15":           "~15 seconds",
+        "total_dur_22":           "~22 seconds",
+        "total_dur_29":           "~29 seconds",
+        "total_dur_43":           "~43 seconds",
+        "total_dur_57":           "~57 seconds",
+        "total_dur_78":           "~78 seconds",
+        "total_dur_99":           "~99 seconds",
+        "total_dur_120":          "~120 seconds",
+        "total_dur_148":          "~148 seconds",
+        "extend_note":            "Extended videos are rendered at 720p. Each step takes 2-5 min.",
         "resolution_label":       "Resolution",
         "video_model_label":      "Video Model",
         "voice_label":            "Voice",
         "quality_label":          "Quality",
         "style_label":            "Delivery Style",
-        "style_placeholder":      "e.g. professional, warm, authoritative",
+        "style_professional":     "Professional",
+        "style_warm":             "Warm",
+        "style_authoritative":    "Authoritative",
+        "style_conversational":   "Conversational",
+        "style_energetic":        "Energetic",
+        "style_calm":             "Calm",
+        "style_formal":           "Formal",
+        "img_generate_new":       "Generate New Image",
+        "img_generate_edit":      "Generate / Edit Image",
         "length_label":           "Episode Length",
-        "length_short":           "Short",
-        "length_standard":        "Long",
+        "length_short":           "~2 minutes",
+        "length_standard":        "~4 minutes",
         "host_label":             "Host Voice",
         "guest_label":            "Guest Voice",
         "text_type_label":        "Content Type",
@@ -148,7 +229,7 @@ T = {
         "tab_podcast":            "بودكاست",
         "tab_history":            "السجل",
         "prompt_label":           "الوصف",
-        "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن منشأة الهيدروجين الأخضر الجديدة في الجبيل.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف (مثلاً: 'اكتب بالإنجليزية').",
+        "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن مدينة الجبيل الصناعية ودورها كأحد أكبر المراكز الصناعية في العالم.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف (مثلاً: 'اكتب بالإنجليزية').",
         "prompt_ph_image":        "اكتب وصفاً للصورة…\nمثال: منظر جوي لمدينة الجبيل الصناعية عند الغسق.",
         "prompt_ph_video":        "اكتب وصفاً لمشهد الفيديو…\nمثال: تحليق سينمائي فوق ميناء ينبع عند الفجر.",
         "prompt_ph_voice":        "أدخل النص الذي تريد تحويله إلى صوت…\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
@@ -157,24 +238,34 @@ T = {
         "aspect_label":           "نسبة الأبعاد",
         "duration_label":         "المدة (ثانية)",
         "total_duration_label":   "المدة الإجمالية",
-        "total_dur_8":            "٨ث (مقطع واحد)",
-        "total_dur_15":           "~١٥ث (تمديد ١)",
-        "total_dur_22":           "~٢٢ث (تمديدان ٢)",
-        "total_dur_29":           "~٢٩ث (٣ تمديدات)",
-        "total_dur_43":           "~٤٣ث (٥ تمديدات)",
-        "total_dur_57":           "~٥٧ث (٧ تمديدات)",
-        "total_dur_78":           "~٧٨ث (١٠ تمديدات)",
-        "total_dur_148":          "~١٤٨ث (٢٠ تمديد، الحد الأقصى)",
-        "extend_note":            "التمديد يفرض دقة 720p. كل خطوة تضيف ~٧ث وتستغرق ٢-٥ دقائق.",
+        "total_dur_8":            "٨ ثوانٍ",
+        "total_dur_15":           "~١٥ ثانية",
+        "total_dur_22":           "~٢٢ ثانية",
+        "total_dur_29":           "~٢٩ ثانية",
+        "total_dur_43":           "~٤٣ ثانية",
+        "total_dur_57":           "~٥٧ ثانية",
+        "total_dur_78":           "~٧٨ ثانية",
+        "total_dur_99":           "~٩٩ ثانية",
+        "total_dur_120":          "~١٢٠ ثانية",
+        "total_dur_148":          "~١٤٨ ثانية",
+        "extend_note":            "الفيديوهات الممتدة تُعرض بدقة 720p. كل خطوة تستغرق ٢-٥ دقائق.",
         "resolution_label":       "الدقة",
         "video_model_label":      "نموذج الفيديو",
         "voice_label":            "الصوت",
         "quality_label":          "الجودة",
         "style_label":            "أسلوب الأداء",
-        "style_placeholder":      "مثال: رسمي، دافئ، موثوق",
+        "style_professional":     "احترافي",
+        "style_warm":             "دافئ",
+        "style_authoritative":    "موثوق",
+        "style_conversational":   "حواري",
+        "style_energetic":        "حيوي",
+        "style_calm":             "هادئ",
+        "style_formal":           "رسمي",
+        "img_generate_new":       "إنشاء صورة جديدة",
+        "img_generate_edit":      "إنشاء / تعديل صورة",
         "length_label":           "مدة الحلقة",
-        "length_short":           "قصير",
-        "length_standard":        "طويل",
+        "length_short":           "~٢ دقائق",
+        "length_standard":        "~٤ دقائق",
         "host_label":             "صوت المقدّم",
         "guest_label":            "صوت الضيف",
         "text_type_label":        "نوع المحتوى",
@@ -228,7 +319,7 @@ T = {
     },
 }
 
-# page config
+# config
 st.set_page_config(
     page_title="RCJY Media Generator",
     page_icon="https://www.rcjy.gov.sa/o/rcjy-theme/images/favicon.ico",
@@ -236,14 +327,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# session state
+# state
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "en"
 for _k in ("result_text", "result_image", "result_video", "result_voice", "result_podcast"):
     if _k not in st.session_state:
         st.session_state[_k] = None
 
-# Sync UI language from URL params so nav language toggles work without widgets
+# Sync UI lang from URL params
 _qp = st.query_params
 _qp_lang = _qp.get("lang", st.session_state.ui_lang)
 if _qp_lang not in ("en", "ar"):
@@ -254,7 +345,64 @@ is_ar   = st.session_state.ui_lang == "ar"
 L       = T[st.session_state.ui_lang]
 _api_ok = has_credentials()
 
-# css
+# captcha gate — one-time per session
+if _qp.get("_v") == "1":
+    st.session_state["_captcha_passed"] = True
+if not st.session_state.get("_captcha_passed"):
+    if "_captcha_code" not in st.session_state:
+        img_bytes, code = _generate_captcha()
+        st.session_state["_captcha_code"] = code
+        st.session_state["_captcha_img"] = img_bytes
+
+    _cap_title = "التحقق الأمني" if is_ar else "Security Verification"
+    _cap_sub = "أدخل الرمز الظاهر في الصورة للمتابعة" if is_ar else "Enter the code shown below to continue"
+    _cap_hint = "أدخل الرمز" if is_ar else "Enter code"
+    _cap_btn = "تحقق" if is_ar else "Verify"
+    _cap_err = "الرمز غير صحيح، حاول مرة أخرى" if is_ar else "Incorrect code, try again"
+    _cap_new = "رمز جديد" if is_ar else "New Code"
+    _cap_dir = "rtl" if is_ar else "ltr"
+
+    st.markdown(f"""
+    <div style="max-width:440px;margin:4rem auto 0;text-align:center;direction:{_cap_dir}">
+      <div style="width:56px;height:56px;margin:0 auto 1rem;background:#1B8354;border-radius:14px;display:flex;align-items:center;justify-content:center">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+      <h2 style="font-family:'IBM Plex Sans','Noto Kufi Arabic',sans-serif;font-size:1.5rem;font-weight:600;color:#161616;margin:0 0 .375rem">{_cap_title}</h2>
+      <p style="font-family:'IBM Plex Sans','Noto Kufi Arabic',sans-serif;font-size:.9rem;color:#6C737F;margin:0 0 1.5rem">{_cap_sub}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    _cap_col1, _cap_col2, _cap_col3 = st.columns([1, 2, 1])
+    with _cap_col2:
+        st.image(st.session_state["_captcha_img"], use_container_width=True)
+        _cap_input = st.text_input(_cap_hint, key="_captcha_input", max_chars=5, label_visibility="collapsed", placeholder=_cap_hint)
+        _bc1, _bc2 = st.columns(2)
+        with _bc1:
+            if st.button(_cap_new, key="_captcha_refresh", use_container_width=True):
+                img_bytes, code = _generate_captcha()
+                st.session_state["_captcha_code"] = code
+                st.session_state["_captcha_img"] = img_bytes
+                st.rerun()
+        with _bc2:
+            _do_verify = st.button(_cap_btn, key="_captcha_submit", type="primary", use_container_width=True)
+    if _do_verify:
+        if _cap_input.strip().upper() == st.session_state["_captcha_code"]:
+            st.session_state["_captcha_passed"] = True
+            del st.session_state["_captcha_code"]
+            del st.session_state["_captcha_img"]
+            st.query_params["_v"] = "1"
+            st.rerun()
+        else:
+            st.error(_cap_err)
+            img_bytes, code = _generate_captcha()
+            st.session_state["_captcha_code"] = code
+            st.session_state["_captcha_img"] = img_bytes
+            st.rerun()
+    st.stop()
+
+# styles
 _fonts = (
     "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700"
     "&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap"
@@ -265,7 +413,7 @@ st.markdown(f"""
 <style>
 @import url('{_fonts}');
 
-/* reset & base */
+/* base */
 html, body, .stApp {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', system-ui, sans-serif !important;
   font-size: 16px;
@@ -273,7 +421,7 @@ html, body, .stApp {{
   background: #F3F4F6 !important;
   -webkit-font-smoothing: antialiased;
 }}
-/* Apply RTL only to content areas, not the app shell */
+/* RTL */
 [data-testid="stMainBlockContainer"],
 [data-testid="stSidebarContent"] {{
   direction: {_dir};
@@ -348,14 +496,14 @@ header[data-testid="stHeader"] {{
   font-weight: 600 !important;
   box-shadow: 0 1px 3px rgba(27,131,84,.25);
 }}
-/* lang controls */
+/* lang */
 .rcjy-nav-right {{
   display: flex;
   align-items: center;
   gap: .75rem;
   flex-shrink: 0;
 }}
-/* lang toggle */
+/* toggle */
 .rcjy-lang-link {{
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   font-size: .875rem;
@@ -370,7 +518,7 @@ header[data-testid="stHeader"] {{
 }}
 .rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
 
-/* content card */
+/* card */
 [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
   border-radius: 16px !important;
@@ -461,7 +609,7 @@ header[data-testid="stHeader"] {{
   box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
 }}
 
-/* model tags */
+/* tags */
 .mtags {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .5rem; }}
 .mtag {{
   font-family: 'IBM Plex Sans', sans-serif;
@@ -482,7 +630,7 @@ header[data-testid="stHeader"] {{
 /* divider */
 hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 
-/* primary button */
+/* button */
 .stButton > button {{
   font-family: 'IBM Plex Sans', 'Noto Kufi Arabic', sans-serif !important;
   font-size: 1rem !important;
@@ -510,7 +658,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   outline-offset: 2px !important;
 }}
 
-/* download button */
+/* download */
 .stDownloadButton > button {{
   font-family: 'IBM Plex Sans', sans-serif !important;
   font-size: .875rem !important;
@@ -529,7 +677,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   transform: translateY(-1px) !important;
 }}
 
-/* file uploader */
+/* uploader */
 [data-testid="stFileUploader"] section {{
   border: 2px dashed #D2D6DB !important;
   border-radius: 8px !important;
@@ -560,7 +708,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 [data-testid="stExpander"] summary:hover {{ color: #1B8354 !important; }}
 [data-testid="stExpander"] > div > div {{ padding: .9rem 1rem !important; }}
 
-/* context badge */
+/* badge */
 .ctx-badge {{
   display: inline-flex;
   align-items: center;
@@ -575,7 +723,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   margin-top: .35rem;
 }}
 
-/* result area */
+/* result */
 .result-wrap {{
   background: #fff;
   border: 1px solid #D2D6DB;
@@ -591,20 +739,20 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
 .result-wrap h2,
 .result-wrap h3 {{ color: #161616 !important; font-weight: 600 !important; }}
 
-/* alerts & spinner */
+/* alerts */
 .stAlert {{ border-radius: 8px !important; }}
 .stAlert p {{ font-size: .9375rem !important; }}
 .stSpinner > div {{ border-top-color: #1B8354 !important; }}
 
 
-/* hide sidebar completely */
+/* hide sidebar */
 [data-testid="stSidebar"],
 [data-testid="collapsedControl"],
 [data-testid="stSidebarCollapsedControl"] {{
   display: none !important;
 }}
 
-/* history tab */
+/* history */
 .hist-stat-card {{
   background: #F9FAFB;
   border: 1px solid #E5E7EB;
@@ -629,7 +777,7 @@ hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
   margin-top: .15rem;
 }}
 
-/* history entry row */
+/* history row */
 .hist-row {{
   display: flex;
   flex-wrap: wrap;
@@ -684,7 +832,7 @@ hr.hist-sep {{
   margin: .25rem 0 .125rem !important;
 }}
 
-/* history empty state */
+/* history empty */
 .hist-empty {{
   text-align: center;
   padding: 3rem 1.5rem;
@@ -720,7 +868,7 @@ hr.hist-sep {{
 /* footer */
 .rcjy-footer {{
   background: #1B8354;
-  margin: 3rem -3rem -3rem;
+  margin: 4rem -3rem -3rem;
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
   direction: {_dir};
 }}
@@ -730,41 +878,59 @@ hr.hist-sep {{
   justify-content: space-between;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 1.5rem 2.5rem;
+  padding: 2rem 2.5rem;
   gap: 2rem;
   flex-wrap: wrap;
 }}
 .rcjy-ftr-left {{
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: .625rem;
 }}
 .rcjy-ftr-copy {{
-  color: rgba(255,255,255,.85);
-  font-size: .8125rem;
+  color: rgba(255,255,255,.9);
+  font-size: .9375rem;
   font-weight: 500;
 }}
 .rcjy-ftr-links {{
   display: flex;
-  gap: 1.25rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
 }}
 .rcjy-ftr-links a {{
-  color: rgba(255,255,255,.65);
+  color: rgba(255,255,255,.7);
   text-decoration: none;
-  font-size: .75rem;
+  font-size: .8125rem;
+  font-weight: 400;
   transition: color .2s;
 }}
 .rcjy-ftr-links a:hover {{ color: #fff; }}
 .rcjy-ftr-logos {{
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.75rem;
   flex-shrink: 0;
 }}
-.rcjy-ftr-rcjy {{ height: 44px; display: block; }}
-.rcjy-ftr-divv {{ width: 1px; height: 40px; background: rgba(255,255,255,.3); }}
-.rcjy-ftr-vision {{ height: 44px; display: block; }}
+.rcjy-ftr-rcjy {{ height: 52px; display: block; }}
+.rcjy-ftr-divv {{ width: 1px; height: 48px; background: rgba(255,255,255,.3); }}
+.rcjy-ftr-vision {{ height: 52px; display: block; }}
+
+/* disclaimer */
+.rcjy-disclaimer {{
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  padding: .75rem 1.25rem;
+  background: linear-gradient(135deg, #FFF7ED, #FFFBF5);
+  border: 1px solid #F5C27A;
+  border-radius: 10px;
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .85rem;
+  font-weight: 500;
+  color: #92600A;
+  margin-bottom: .75rem;
+  line-height: 1.5;
+}}
 
 /* responsive */
 @media (max-width: 760px) {{
@@ -774,40 +940,42 @@ hr.hist-sep {{
   .rcjy-nav-item {{ font-size: .8125rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
   .rcjy-nav-right {{ gap: .5rem; }}
-  .rcjy-footer {{ margin: 3rem -1rem -3rem; }}
-  .rcjy-ftr-main {{ padding: 1.25rem 1rem; flex-direction: column; align-items: flex-start; }}
-  .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 36px; }}
+  .rcjy-footer {{ margin: 4rem -1rem -3rem; }}
+  .rcjy-ftr-main {{ padding: 1.5rem 1rem; flex-direction: column; align-items: flex-start; }}
+  .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 42px; }}
 }}
 @media (max-width: 480px) {{
   .rcjy-nav-links {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 }}
 </style>
-<!-- Security headers (defense-in-depth) -->
+<!-- security headers -->
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
 """, unsafe_allow_html=True)
 
-# navbar
+# nav
 active_tab = _qp.get("tab", "text")
 if active_tab not in ("text", "image", "video", "voice", "podcast", "history"):
     active_tab = "text"
-# Output language = UI language (user can override via prompt instructions)
+# Output lang = UI lang
 lang = st.session_state.ui_lang
 _nl = lang
 
 
 def _ni(key, label):
-    """Build one nav item link."""
+    # Build nav item link
     cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
-    return (f'<li><a href="?tab={key}&lang={_nl}" '
+    _vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
+    return (f'<li><a href="?tab={key}&lang={_nl}{_vp}" '
             f'class="{cls}" target="_self">{label}</a></li>')
 
 
-# language toggle link
+# lang toggle
 _other_lang_text = "العربية" if _nl == "en" else "English"
-_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}"
+_vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
+_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}{_vp}"
 
 _VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/vision_logo"
 
@@ -836,15 +1004,23 @@ st.markdown(f"""
 if not _api_ok:
     st.warning(L["warn_api"])
 
+# public data disclaimer
+_disc_dir = "rtl" if is_ar else "ltr"
+_disc_text = ("هذه الأداة مخصصة للبيانات العامة فقط. لا تقم بإدخال أو إرفاق أي بيانات سرية أو خاصة."
+              if is_ar else "This tool is for public data use only. Do not enter or attach any confidential or private information.")
+st.markdown(f"""
+<div class="rcjy-disclaimer" style="direction:{_disc_dir}">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+  </svg>
+  <span>{_disc_text}</span>
+</div>
+""", unsafe_allow_html=True)
 
-# shared helpers
-def _tags(*names):
-    html = "".join(f'<span class="mtag">{html_mod.escape(n)}</span>' for n in names)
-    st.markdown(f'<div class="mtags">{html}</div>', unsafe_allow_html=True)
 
-
+# helpers
 def _ctx_widget():
-    """Reference material expander, shared across tabs."""
+    # Reference material expander
     with st.expander(L["context_label"], expanded=False):
         st.caption(L["context_hint"])
         _cu, _cf = st.columns(2, gap="medium")
@@ -856,7 +1032,7 @@ def _ctx_widget():
                 accept_multiple_files=True, key="input_files",
             )
         if files:
-            # Sanitize filenames before display (escape HTML entities)
+            # Escape filenames for display
             safe_names = ", ".join(html_mod.escape(f.name) for f in files)
             st.caption(f"{L['attached']}: {safe_names}")
         return url, files
@@ -873,7 +1049,7 @@ def _load_ctx(url, files):
     return ctx, has_ctx
 
 
-# text tab
+# tabs
 if active_tab == "text":
     _type_map = {
         L["text_type_article"]: "article", L["text_type_social"]:  "social",
@@ -890,15 +1066,12 @@ if active_tab == "text":
     }
 
     with st.container(border=True):
-        _tags("Gemini 3.1 Pro", "Gemini 3 Flash")
-        _c1, _c2, _c3 = st.columns(3)
+        _c1, _c2 = st.columns(2)
         with _c1:
             text_type = _type_map[st.selectbox(L["text_type_label"], list(_type_map), key="text_type")]
         with _c2:
             text_tone = _tone_map[st.selectbox(L["text_tone_label"], list(_tone_map), key="text_tone")]
-        with _c3:
-            _ms = st.selectbox(L["text_model_label"], ["Pro", "Flash"], key="text_model")
-            text_model = "pro" if _ms == "Pro" else "flash"
+        text_model = "pro"
 
         st.divider()
 
@@ -912,6 +1085,8 @@ if active_tab == "text":
     if st.button(L["btn_text"], use_container_width=True, key="btn_text"):
         if not text_prompt.strip() and not has_ctx:
             st.warning(L["warn_prompt"])
+        elif not _rate_check("text"):
+            pass
         else:
             with st.spinner(L["spin_text"]):
                 try:
@@ -937,25 +1112,20 @@ if active_tab == "text":
             file_name="rcjy_content.txt", mime="text/plain", key="dl_text",
         )
 
-# image tab
+# image
 elif active_tab == "image":
     with st.container(border=True):
-        _tags("Imagen 4", "Nano Banana 2", "Nano Banana Pro", "Up to 4K")
         _i1, _i2 = st.columns(2)
         with _i1:
-            img_model = st.selectbox(
+            _img_model_map = {
+                L["img_generate_new"]:  "imagen",
+                L["img_generate_edit"]: "gemini_pro",
+            }
+            img_model = _img_model_map[st.selectbox(
                 L["model_label"],
-                ["imagen_fast", "imagen", "imagen_ultra", "nano_banana", "nano_banana_2", "nano_banana_pro"],
-                format_func=lambda x: {
-                    "imagen_fast":      "Imagen 4 Fast",
-                    "imagen":           "Imagen 4 Flagship",
-                    "imagen_ultra":     "Imagen 4 Ultra",
-                    "nano_banana":      "Nano Banana",
-                    "nano_banana_2":    "Nano Banana 2",
-                    "nano_banana_pro":  "Nano Banana Pro",
-                }[x],
+                list(_img_model_map),
                 key="img_model",
-            )
+            )]
         with _i2:
             img_aspect = st.selectbox(L["aspect_label"], ["16:9", "9:16", "1:1", "4:3", "3:4"], key="img_aspect")
 
@@ -971,6 +1141,8 @@ elif active_tab == "image":
     if st.button(L["btn_image"], use_container_width=True, key="btn_img"):
         if not img_prompt.strip():
             st.warning(L["warn_prompt"])
+        elif not _rate_check("image"):
+            pass
         else:
             with st.spinner(L["spin_image"]):
                 try:
@@ -995,9 +1167,9 @@ elif active_tab == "image":
             file_name="rcjy_image.png", mime="image/png", key="dl_img",
         )
 
-# video tab
+# video
 elif active_tab == "video":
-    # Total-duration options: value = extend_seconds beyond the initial 8s clip
+    # Total duration options
     _dur_options = {
         L["total_dur_8"]:   0,
         L["total_dur_15"]:  7,
@@ -1006,18 +1178,17 @@ elif active_tab == "video":
         L["total_dur_43"]:  35,
         L["total_dur_57"]:  49,
         L["total_dur_78"]:  70,
+        L["total_dur_99"]:  91,
+        L["total_dur_120"]: 112,
         L["total_dur_148"]: 140,
     }
 
     with st.container(border=True):
-        _tags("Veo 3.1 Standard", "Veo 3.1 Fast", "Up to 4K", "Up to ~148s")
-        _v1, _v2, _v3, _v4 = st.columns(4)
+        vid_model = "standard"
+        _v1, _v2, _v3 = st.columns(3)
         with _v1:
-            _vm = st.selectbox(L["video_model_label"], ["Standard", "Fast"], key="vid_model")
-            vid_model = "standard" if _vm == "Standard" else "fast"
-        with _v2:
             vid_aspect = st.selectbox(L["aspect_label"], ["16:9", "9:16"], key="vid_aspect")
-        with _v3:
+        with _v2:
             _dur_label = st.selectbox(
                 L["total_duration_label"],
                 list(_dur_options.keys()),
@@ -1025,8 +1196,8 @@ elif active_tab == "video":
                 key="vid_total_dur",
             )
             vid_extend = _dur_options[_dur_label]
-        with _v4:
-            # Extension forces 720p; only allow higher res for single clips
+        with _v3:
+            # Extension forces 720p
             if vid_extend > 0:
                 vid_res = st.selectbox(
                     L["resolution_label"], ["720p"], key="vid_res_ext",
@@ -1052,9 +1223,11 @@ elif active_tab == "video":
     if st.button(L["btn_video"], use_container_width=True, key="btn_vid"):
         if not vid_prompt.strip():
             st.warning(L["warn_prompt"])
+        elif not _rate_check("video"):
+            pass
         else:
             _spin_msg = L["spin_video_extend"] if vid_extend > 0 else L["spin_video"]
-            # For extended videos use a placeholder so we can show progress
+            # Progress placeholder
             _progress_placeholder = st.empty()
 
             def _vid_progress(msg: str):
@@ -1087,7 +1260,7 @@ elif active_tab == "video":
             file_name="rcjy_video.mp4", mime="video/mp4", key="dl_vid",
         )
 
-# voice tab
+# voice
 elif active_tab == "voice":
     _voice_opts_v = {
         "نورة ♀":   "Kore",
@@ -1113,8 +1286,16 @@ elif active_tab == "voice":
         "Perseus ♂": "Perseus",
     }
     with st.container(border=True):
-        _tags("Gemini TTS Flash", "Gemini TTS Pro")
-        _o1, _o2, _o3 = st.columns(3)
+        _style_map = {
+            L["style_professional"]:   "professional",
+            L["style_warm"]:           "warm",
+            L["style_authoritative"]:  "authoritative",
+            L["style_conversational"]: "conversational",
+            L["style_energetic"]:      "energetic",
+            L["style_calm"]:           "calm",
+            L["style_formal"]:         "formal",
+        }
+        _o1, _o2 = st.columns(2)
         with _o1:
             _vsel = st.selectbox(
                 L["voice_label"], list(_voice_opts_v), key="voice_name_sel",
@@ -1122,11 +1303,9 @@ elif active_tab == "voice":
             voice_name = _voice_opts_v[_vsel]
             _voice_display = _vsel.split(" ♀")[0].split(" ♂")[0].strip()
         with _o2:
-            tts_quality = st.selectbox(L["quality_label"], ["Flash", "Pro"], key="tts_q")
-        with _o3:
-            style_hint = st.text_input(
-                L["style_label"], placeholder=L["style_placeholder"], key="voice_style",
-            )
+            style_hint = _style_map[st.selectbox(
+                L["style_label"], list(_style_map), key="voice_style",
+            )]
 
         st.divider()
 
@@ -1140,6 +1319,8 @@ elif active_tab == "voice":
     if st.button(L["btn_voice"], use_container_width=True, key="btn_voice"):
         if not voice_prompt.strip() and not has_ctx:
             st.warning(L["warn_text"])
+        elif not _rate_check("voice"):
+            pass
         else:
             with st.spinner(L["spin_voice"]):
                 try:
@@ -1147,13 +1328,13 @@ elif active_tab == "voice":
                         text=voice_prompt.strip(), context_text=ctx_text if has_ctx else "",
                         voice_name=voice_name, display_name=_voice_display if is_ar else "",
                         style_hint=style_hint,
-                        tts_model="pro" if tts_quality == "Pro" else "flash",
+                        tts_model="pro",
                         lang=lang,
                     )
                     st.session_state.result_voice = (data, mime)
                     if _history_ok:
                         history.save_entry("voice", voice_prompt.strip(), data, mime,
-                                           {"voice": voice_name, "quality": tts_quality, "style": style_hint}, lang)
+                                           {"voice": voice_name, "quality": "pro", "style": style_hint}, lang)
                 except Exception as e:
                     logger.exception("Voice generation failed")
                     st.error(_sanitize_error(e))
@@ -1165,7 +1346,7 @@ elif active_tab == "voice":
             file_name="rcjy_voice.wav", mime="audio/wav", key="dl_voice",
         )
 
-# podcast tab
+# podcast
 elif active_tab == "podcast":
     _pod_len_opts = [L["length_short"], L["length_standard"]]
     _voice_opts   = {
@@ -1193,7 +1374,6 @@ elif active_tab == "podcast":
     }
 
     with st.container(border=True):
-        _tags("Gemini 3 Flash", "Multi-Speaker TTS")
         _p1, _p2, _p3 = st.columns(3)
         with _p1:
             pod_len_idx = st.selectbox(
@@ -1221,6 +1401,8 @@ elif active_tab == "podcast":
     if st.button(L["btn_podcast"], use_container_width=True, key="btn_pod"):
         if not pod_prompt.strip() and not has_ctx:
             st.warning(L["warn_topic"])
+        elif not _rate_check("podcast"):
+            pass
         else:
             with st.spinner(L["spin_podcast"]):
                 try:
@@ -1251,22 +1433,13 @@ elif active_tab == "podcast":
             file_name="rcjy_podcast.wav", mime="audio/wav", key="dl_pod",
         )
 
-# history tab
+# history
 elif active_tab == "history":
     with st.container(border=True):
         if not _history_ok:
-            st.markdown(
-                f'<div class="hist-empty">'
-                f'<div class="hist-empty-icon">'
-                f'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9DA4AE" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">'
-                f'<path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/>'
-                f'</svg>'
-                f'</div>'
-                f'<div class="hist-empty-text">{html_mod.escape(L["hist_empty"])}</div>'
-                f'<div class="hist-empty-hint">{html_mod.escape(L["hist_empty_hint"])}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
+            _hist_unavail = ("خدمة السجل غير متوفرة حالياً — تحقق من صلاحيات التخزين للحساب الخدمي"
+                             if is_ar else "History service unavailable — check storage permissions for the service account")
+            st.warning(_hist_unavail)
         else:
             @st.cache_data(ttl=30)
             def _cached_stats():
@@ -1276,7 +1449,7 @@ elif active_tab == "history":
             def _cached_entries(_type, _limit):
                 return history.get_entries(content_type=_type, limit=_limit)
 
-            # Handle pending delete
+            # Pending delete
             if st.session_state.get("_hist_delete_id"):
                 _del_id = st.session_state.pop("_hist_delete_id")
                 history.delete_entry(_del_id)
@@ -1284,7 +1457,7 @@ elif active_tab == "history":
                 _cached_entries.clear()
                 st.rerun()
 
-            # Handle pending download
+            # Pending download
             if st.session_state.get("_hist_download_id"):
                 _dl_id = st.session_state.pop("_hist_download_id")
                 _dl_data, _dl_mime, _dl_name = history.load_file(_dl_id)
@@ -1297,7 +1470,7 @@ elif active_tab == "history":
 
             _stats = _cached_stats()
 
-            # Filter + stats row
+            # Filter + stats
             _fc, _sc1, _sc2 = st.columns([3, 1, 1])
             with _fc:
                 _type_labels = [L["hist_all"], L["tab_text"], L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"]]
@@ -1372,7 +1545,7 @@ elif active_tab == "history":
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_delete_id": eid}))
                     st.markdown('<hr class="hist-sep">', unsafe_allow_html=True)
 
-                # Clear all
+                # Clear
                 if st.button(L["hist_clear"], key="hist_clear_btn"):
                     st.session_state["_hist_confirm_clear"] = True
                 if st.session_state.get("_hist_confirm_clear"):
@@ -1391,6 +1564,7 @@ elif active_tab == "history":
                             st.rerun()
 
 # footer
+
 _ftr_lang = "ar" if is_ar else "en"
 _ftr_copy = (
     "جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع" if is_ar
