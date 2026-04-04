@@ -1,3 +1,4 @@
+# GCS-backed history storage
 
 import json
 import logging
@@ -18,6 +19,7 @@ FILES_PREFIX = "rcjy-media-history/files/"
 MAX_ENTRIES = 200
 MAX_RETRIES = 3
 
+# ID format
 _SAFE_ID_RE = re.compile(r"^[a-f0-9]{16}$")
 
 _EXT_MAP = {
@@ -33,15 +35,20 @@ _EXT_MAP = {
 _ALLOWED_TYPES = {"text", "image", "video", "voice", "podcast"}
 _ALLOWED_LANGS = {"en", "ar", "both"}
 
+# GCS client cache
 _gcs_client = None
 _bucket = None
 
+
 def _validate_entry_id(entry_id: str) -> str:
+    # Validate entry ID format
     if not isinstance(entry_id, str) or not _SAFE_ID_RE.match(entry_id):
         raise ValueError(f"Invalid entry ID format: {entry_id!r}")
     return entry_id
 
+
 def _get_bucket():
+    # Get cached GCS bucket
     global _gcs_client, _bucket
     if _bucket is not None:
         return _bucket
@@ -49,10 +56,13 @@ def _get_bucket():
     _bucket = _gcs_client.bucket(GCS_HISTORY_BUCKET)
     return _bucket
 
+
 def _load_index() -> tuple[list[dict], int]:
+    # Load index from GCS with generation for concurrency control
     try:
         bucket = _get_bucket()
         blob = bucket.blob(INDEX_BLOB)
+        # Download with generation info
         content = blob.download_as_text(encoding="utf-8")
         generation = blob.generation
         return json.loads(content), generation
@@ -62,7 +72,9 @@ def _load_index() -> tuple[list[dict], int]:
         logger.exception("Failed to load history index from GCS")
         return [], 0
 
+
 def _save_index(entries: list[dict], expected_generation: int) -> bool:
+    # Save index with optimistic concurrency
     bucket = _get_bucket()
     blob = bucket.blob(INDEX_BLOB)
     data = json.dumps(entries, ensure_ascii=False, indent=1)
@@ -74,16 +86,20 @@ def _save_index(entries: list[dict], expected_generation: int) -> bool:
         )
         return True
     except PreconditionFailed:
+        # Another instance updated the index concurrently
         return False
 
+
 def is_available() -> bool:
+    # Check if GCS bucket is accessible
     try:
         bucket = _get_bucket()
         bucket.exists()
         return True
     except Exception:
-        logger.exception("GCS bucket not accessible")
+        logger.debug("GCS bucket not accessible, using local history")
         return False
+
 
 def save_entry(
     content_type: str,
@@ -93,12 +109,14 @@ def save_entry(
     settings: Optional[dict] = None,
     lang: str = "en",
 ) -> Optional[str]:
+    # Save generated content to GCS
     try:
         entry_id = uuid.uuid4().hex[:16]
         ext = _EXT_MAP.get(mime, ".bin")
         filename = f"{entry_id}{ext}"
         blob_name = f"{FILES_PREFIX}{filename}"
 
+        # Upload file
         bucket = _get_bucket()
         file_blob = bucket.blob(blob_name)
 
@@ -109,9 +127,11 @@ def save_entry(
             file_blob.upload_from_string(data, content_type=mime)
             file_size = len(data)
 
+        # Sanitize
         content_type = content_type if content_type in _ALLOWED_TYPES else "unknown"
         lang = lang if lang in _ALLOWED_LANGS else "en"
 
+        # Build metadata
         now = datetime.now(timezone.utc)
         meta = {
             "id": entry_id,
@@ -126,10 +146,12 @@ def save_entry(
             "preview": (data[:300] if isinstance(data, str) else ""),
         }
 
+        # Retry loop for index update
         for attempt in range(MAX_RETRIES):
             entries, generation = _load_index()
             entries.insert(0, meta)
 
+            # Prune old entries
             if len(entries) > MAX_ENTRIES:
                 for old in entries[MAX_ENTRIES:]:
                     _delete_file_blob(old.get("filename", ""))
@@ -141,6 +163,7 @@ def save_entry(
 
             logger.warning("Index conflict on save (attempt %d), retrying", attempt + 1)
 
+        # All retries failed, clean up
         logger.error("Failed to update index after %d retries", MAX_RETRIES)
         file_blob.delete()
         return None
@@ -148,7 +171,9 @@ def save_entry(
         logger.exception("History save failed")
         return None
 
+
 def get_entries(content_type: Optional[str] = None, limit: int = 50) -> list[dict]:
+    # Return history entries, newest first
     try:
         entries, _ = _load_index()
         if content_type:
@@ -158,7 +183,9 @@ def get_entries(content_type: Optional[str] = None, limit: int = 50) -> list[dic
         logger.exception("History get_entries failed")
         return []
 
+
 def load_file(entry_id: str) -> tuple:
+    # Load generated file from GCS
     try:
         entry_id = _validate_entry_id(entry_id)
         entries, _ = _load_index()
@@ -186,7 +213,9 @@ def load_file(entry_id: str) -> tuple:
         logger.exception("History load_file failed: %s", entry_id)
         return None, None, None
 
+
 def delete_entry(entry_id: str) -> bool:
+    # Delete single history entry
     try:
         entry_id = _validate_entry_id(entry_id)
 
@@ -213,7 +242,9 @@ def delete_entry(entry_id: str) -> bool:
         logger.exception("History delete failed: %s", entry_id)
         return False
 
+
 def clear_all() -> int:
+    # Delete all history entries
     try:
         for attempt in range(MAX_RETRIES):
             entries, generation = _load_index()
@@ -221,6 +252,7 @@ def clear_all() -> int:
             if count == 0:
                 return 0
 
+            # Delete all blobs
             for e in entries:
                 _delete_file_blob(e.get("filename", ""))
 
@@ -235,7 +267,9 @@ def clear_all() -> int:
         logger.exception("History clear_all failed")
         return 0
 
+
 def get_stats() -> dict:
+    # Return history stats
     try:
         entries, _ = _load_index()
         total = len(entries)
@@ -249,7 +283,10 @@ def get_stats() -> dict:
         logger.exception("History get_stats failed")
         return {"total": 0, "total_size": 0, "by_type": {}}
 
+
+
 def _delete_file_blob(filename: str):
+    # Delete file blob, ignore if missing
     if not filename:
         return
     try:
@@ -261,6 +298,7 @@ def _delete_file_blob(filename: str):
     except Exception:
         logger.warning("Could not delete blob: %s", filename)
 
+
 def format_file_size(size_bytes: int) -> str:
     if size_bytes < 1024:
         return f"{size_bytes} B"
@@ -268,7 +306,9 @@ def format_file_size(size_bytes: int) -> str:
         return f"{size_bytes / 1024:.1f} KB"
     return f"{size_bytes / (1024 * 1024):.1f} MB"
 
+
 def format_timestamp(iso_str: str, lang: str = "en") -> str:
+    # Human-readable relative timestamp
     try:
         if isinstance(iso_str, datetime):
             dt = iso_str
