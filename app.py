@@ -18,21 +18,15 @@ from generators import (
     generate_voice,
 )
 
+import history_local
+_history_ok = True
+history = history_local
 try:
-    import history
-    _history_ok = history.is_available()
-    if not _history_ok:
-        logging.getLogger("rcjy.app").warning("GCS history not available — falling back to session history")
-        import history_local as history
-        _history_ok = True
-except Exception as _hist_err:
-    logging.getLogger("rcjy.app").warning("GCS history import/init failed (%s) — using session history", _hist_err)
-    try:
-        import history_local as history
-        _history_ok = True
-    except Exception:
-        history = None
-        _history_ok = False
+    import history as _history_gcs
+    if _history_gcs.is_available():
+        history = _history_gcs
+except Exception:
+    pass
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,11 +35,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("rcjy.app")
 
-# rate limiting per session
 _RATE_COOLDOWN = {"text": 5, "image": 10, "video": 30, "voice": 10, "podcast": 20}
 
 def _rate_check(action: str) -> bool:
-    # Returns True if allowed, False if rate limited
     key = f"_last_{action}"
     now = time.time()
     last = st.session_state.get(key, 0)
@@ -58,14 +50,11 @@ def _rate_check(action: str) -> bool:
     st.session_state[key] = now
     return True
 
-# captcha gate (one-time per session)
 def _generate_captcha() -> tuple[bytes, str]:
-    # Generate image CAPTCHA with random code
     code = "".join(random.choices("ABCDEFGHJKLMNPQRSTUVWXYZ23456789", k=5))
     w, h = 320, 100
     img = Image.new("RGB", (w, h), color=(249, 250, 251))
     draw = ImageDraw.Draw(img)
-    # Try to load a larger font
     _font = None
     for size in (40, 36, 32):
         try:
@@ -79,19 +68,16 @@ def _generate_captcha() -> tuple[bytes, str]:
                 continue
     if _font is None:
         _font = ImageFont.load_default()
-    # Noise lines
     for _ in range(8):
         x1, y1 = random.randint(0, w), random.randint(0, h)
         x2, y2 = random.randint(0, w), random.randint(0, h)
         draw.line([(x1, y1), (x2, y2)], fill=(random.randint(180, 220), random.randint(180, 220), random.randint(180, 220)), width=2)
-    # Draw each character with slight offset and rotation
     char_w = w // (len(code) + 1)
     for i, ch in enumerate(code):
         x = char_w * (i + 1) - char_w // 2 + random.randint(-5, 5)
         y = random.randint(15, 35)
         color = (random.randint(0, 60), random.randint(60, 120), random.randint(0, 80))
         draw.text((x, y), ch, fill=color, font=_font)
-    # Noise dots
     for _ in range(150):
         x, y = random.randint(0, w - 1), random.randint(0, h - 1)
         draw.point((x, y), fill=(random.randint(140, 200), random.randint(140, 200), random.randint(140, 200)))
@@ -99,7 +85,6 @@ def _generate_captcha() -> tuple[bytes, str]:
     img.save(buf, format="PNG")
     return buf.getvalue(), code
 
-# i18n
 T = {
     "en": {
         "app_name":               "Media Generator",
@@ -121,26 +106,17 @@ T = {
         "tab_podcast":            "Podcast",
         "tab_history":            "History",
         "prompt_label":           "Prompt",
-        "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about Jubail Industrial City's role as one of the world's largest industrial hubs.\n\nTip: Output follows your interface language. To override, specify in your prompt (e.g. 'write in Arabic').",
-        "prompt_ph_image":        "Describe the image…\ne.g. Aerial golden-hour view of Jubail Industrial City, petrochemical towers, calm sea.",
-        "prompt_ph_video":        "Describe the video scene…\ne.g. Cinematic drone flight over Yanbu Industrial Port at sunrise, dramatic sky.",
-        "prompt_ph_voice":        "Enter the text to be spoken…\n\nTip: Output follows your interface language. To override, specify in your prompt.",
-        "prompt_ph_podcast":      "Describe the podcast topic…\ne.g. The economic transformation of Jubail and Yanbu and their role in Vision 2030.\n\nTip: Output follows your interface language. To override, specify in your prompt.",
+        "prompt_ph_text":         "Describe what you want to create…\ne.g. A press release about the Royal Commission for Jubail and Yanbu's role in managing four industrial cities and its contribution to Vision 2030.\n\nTip: Output follows your interface language. To override, specify in your prompt (e.g. 'write in Arabic').",
+        "prompt_ph_image":        "Describe the image…\ne.g. Aerial view of Ras Al-Khair mining city at sunrise, phosphate and aluminum plants along the Arabian Gulf coast.",
+        "prompt_ph_video":        "Describe the video scene…\ne.g. Cinematic drone flight over Jazan City for Primary Industries, Red Sea coastline, modern industrial port.",
+        "prompt_ph_voice":        "Enter the text to be spoken…\ne.g. Yanbu Industrial City hosts the largest oil export port on the Red Sea and serves as a gateway to European markets via the Suez Canal.\n\nTip: Output follows your interface language. To override, specify in your prompt.",
+        "prompt_ph_podcast":      "Describe the podcast topic…\ne.g. How the four RCJY industrial cities — Jubail, Yanbu, Ras Al-Khair, and Jazan — are driving Saudi Arabia's industrial diversification under Vision 2030.\n\nTip: Output follows your interface language. To override, specify in your prompt.",
         "model_label":            "Model",
         "aspect_label":           "Aspect Ratio",
         "duration_label":         "Duration (sec)",
         "total_duration_label":   "Total Duration",
-        "total_dur_8":            "8 seconds",
-        "total_dur_15":           "~15 seconds",
-        "total_dur_22":           "~22 seconds",
-        "total_dur_29":           "~29 seconds",
-        "total_dur_43":           "~43 seconds",
-        "total_dur_57":           "~57 seconds",
-        "total_dur_78":           "~78 seconds",
-        "total_dur_99":           "~99 seconds",
-        "total_dur_120":          "~120 seconds",
-        "total_dur_148":          "~148 seconds",
         "extend_note":            "Extended videos are rendered at 720p. Each step takes 2-5 min.",
+        "dur_seconds":            "seconds",
         "resolution_label":       "Resolution",
         "video_model_label":      "Video Model",
         "voice_label":            "Voice",
@@ -229,26 +205,17 @@ T = {
         "tab_podcast":            "بودكاست",
         "tab_history":            "السجل",
         "prompt_label":           "الوصف",
-        "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن مدينة الجبيل الصناعية ودورها كأحد أكبر المراكز الصناعية في العالم.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف (مثلاً: 'اكتب بالإنجليزية').",
-        "prompt_ph_image":        "اكتب وصفاً للصورة…\nمثال: منظر جوي لمدينة الجبيل الصناعية عند الغسق.",
-        "prompt_ph_video":        "اكتب وصفاً لمشهد الفيديو…\nمثال: تحليق سينمائي فوق ميناء ينبع عند الفجر.",
-        "prompt_ph_voice":        "أدخل النص الذي تريد تحويله إلى صوت…\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
-        "prompt_ph_podcast":      "اكتب موضوع البودكاست…\nمثال: التحول الاقتصادي لمدينتي الجبيل وينبع ودورهما في رؤية 2030.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
+        "prompt_ph_text":         "اكتب وصفاً لما تريد إنشاءه…\nمثال: بيان صحفي عن دور الهيئة الملكية للجبيل وينبع في إدارة أربع مدن صناعية وإسهامها في رؤية 2030.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف (مثلاً: 'اكتب بالإنجليزية').",
+        "prompt_ph_image":        "اكتب وصفاً للصورة…\nمثال: منظر جوي لمدينة رأس الخير للصناعات التعدينية عند الشروق، مصانع الفوسفات والألمنيوم على ساحل الخليج العربي.",
+        "prompt_ph_video":        "اكتب وصفاً لمشهد الفيديو…\nمثال: تحليق سينمائي فوق مدينة جازان للصناعات الأساسية والتحويلية، ساحل البحر الأحمر، الميناء الصناعي الحديث.",
+        "prompt_ph_voice":        "أدخل النص الذي تريد تحويله إلى صوت…\nمثال: تستضيف مدينة ينبع الصناعية أكبر ميناء لتصدير النفط على البحر الأحمر وتُعد بوابة للأسواق الأوروبية عبر قناة السويس.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
+        "prompt_ph_podcast":      "اكتب موضوع البودكاست…\nمثال: كيف تسهم المدن الصناعية الأربع للهيئة الملكية — الجبيل وينبع ورأس الخير وجازان — في تنويع الصناعة السعودية ضمن رؤية 2030.\n\nتلميح: المخرجات تتبع لغة الواجهة. للتغيير، حدد في الوصف.",
         "model_label":            "النموذج",
         "aspect_label":           "نسبة الأبعاد",
         "duration_label":         "المدة (ثانية)",
         "total_duration_label":   "المدة الإجمالية",
-        "total_dur_8":            "٨ ثوانٍ",
-        "total_dur_15":           "~١٥ ثانية",
-        "total_dur_22":           "~٢٢ ثانية",
-        "total_dur_29":           "~٢٩ ثانية",
-        "total_dur_43":           "~٤٣ ثانية",
-        "total_dur_57":           "~٥٧ ثانية",
-        "total_dur_78":           "~٧٨ ثانية",
-        "total_dur_99":           "~٩٩ ثانية",
-        "total_dur_120":          "~١٢٠ ثانية",
-        "total_dur_148":          "~١٤٨ ثانية",
         "extend_note":            "الفيديوهات الممتدة تُعرض بدقة 720p. كل خطوة تستغرق ٢-٥ دقائق.",
+        "dur_seconds":            "ثانية",
         "resolution_label":       "الدقة",
         "video_model_label":      "نموذج الفيديو",
         "voice_label":            "الصوت",
@@ -319,7 +286,6 @@ T = {
     },
 }
 
-# config
 st.set_page_config(
     page_title="RCJY Media Generator",
     page_icon="https://www.rcjy.gov.sa/o/rcjy-theme/images/favicon.ico",
@@ -327,14 +293,12 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# state
 if "ui_lang" not in st.session_state:
     st.session_state.ui_lang = "en"
 for _k in ("result_text", "result_image", "result_video", "result_voice", "result_podcast"):
     if _k not in st.session_state:
         st.session_state[_k] = None
 
-# Sync UI lang from URL params
 _qp = st.query_params
 _qp_lang = _qp.get("lang", st.session_state.ui_lang)
 if _qp_lang not in ("en", "ar"):
@@ -345,9 +309,6 @@ is_ar   = st.session_state.ui_lang == "ar"
 L       = T[st.session_state.ui_lang]
 _api_ok = has_credentials()
 
-# captcha gate — one-time per session
-if _qp.get("_v") == "1":
-    st.session_state["_captcha_passed"] = True
 if not st.session_state.get("_captcha_passed"):
     if "_captcha_code" not in st.session_state:
         img_bytes, code = _generate_captcha()
@@ -392,7 +353,6 @@ if not st.session_state.get("_captcha_passed"):
             st.session_state["_captcha_passed"] = True
             del st.session_state["_captcha_code"]
             del st.session_state["_captcha_img"]
-            st.query_params["_v"] = "1"
             st.rerun()
         else:
             st.error(_cap_err)
@@ -402,14 +362,15 @@ if not st.session_state.get("_captcha_passed"):
             st.rerun()
     st.stop()
 
-# styles
-_fonts = (
-    "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700"
-    "&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap"
-)
 _dir = "rtl" if is_ar else "ltr"
 
-st.markdown(f"""
+@st.cache_data
+def _build_css(direction):
+    _fonts = (
+        "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700"
+        "&family=Noto+Kufi+Arabic:wght@300;400;500;600;700&display=swap"
+    )
+    return f"""
 <style>
 @import url('{_fonts}');
 
@@ -608,24 +569,6 @@ header[data-testid="stHeader"] {{
   border-color: #1B8354 !important;
   box-shadow: 0 0 0 3px rgba(27,131,84,.12) !important;
 }}
-
-/* tags */
-.mtags {{ display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: .5rem; }}
-.mtag {{
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: .6875rem;
-  font-weight: 600;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  color: #14573A;
-  background: #EBF5EE;
-  border: 1px solid #C3E0CC;
-  border-radius: 4px;
-  padding: .18rem .55rem;
-  display: inline-block;
-  transition: background .15s, color .15s;
-}}
-.mtag:hover {{ background: #D4EDDB; color: #104631; }}
 
 /* divider */
 hr {{ border-color: #E5E7EB !important; margin: .25rem 0 !important; }}
@@ -915,21 +858,53 @@ hr.hist-sep {{
 .rcjy-ftr-divv {{ width: 1px; height: 48px; background: rgba(255,255,255,.3); }}
 .rcjy-ftr-vision {{ height: 52px; display: block; }}
 
-/* disclaimer */
-.rcjy-disclaimer {{
+/* gov banner */
+.rcjy-gov-banner {{
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 -3rem 1rem;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  direction: {_dir};
+}}
+.rcjy-gov-item {{
+  flex: 1;
   display: flex;
   align-items: center;
   gap: .625rem;
-  padding: .75rem 1.25rem;
-  background: linear-gradient(135deg, #FFF7ED, #FFFBF5);
-  border: 1px solid #F5C27A;
-  border-radius: 10px;
-  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .85rem;
-  font-weight: 500;
-  color: #92600A;
-  margin-bottom: .75rem;
-  line-height: 1.5;
+  padding: .625rem 2rem;
+}}
+.rcjy-gov-item + .rcjy-gov-item {{
+  border-{'right' if is_ar else 'left'}: 1px solid #E5E7EB;
+}}
+.rcjy-gov-icon {{
+  width: 32px;
+  height: 32px;
+  background: #EBF5EE;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}}
+.rcjy-gov-icon svg {{ stroke: #1B8354; }}
+.rcjy-gov-title {{
+  font-size: .8125rem;
+  font-weight: 600;
+  color: #161616;
+  line-height: 1.3;
+}}
+.rcjy-gov-desc {{
+  font-size: .6875rem;
+  color: #6C737F;
+  line-height: 1.4;
+}}
+@media (max-width: 760px) {{
+  .rcjy-gov-banner {{ flex-direction: column; margin: 0 -1rem .75rem; }}
+  .rcjy-gov-item + .rcjy-gov-item {{ border-left: none; border-top: 1px solid #E5E7EB; }}
+  .rcjy-gov-item {{ padding: .5rem 1rem; }}
 }}
 
 /* responsive */
@@ -948,34 +923,31 @@ hr.hist-sep {{
   .rcjy-nav-links {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 }}
 </style>
-<!-- security headers -->
 <meta http-equiv="X-Content-Type-Options" content="nosniff">
 <meta http-equiv="X-Frame-Options" content="DENY">
+<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+<meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), payment=()">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
-""", unsafe_allow_html=True)
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors 'none'; base-uri 'self'; form-action 'self' https:;">
+"""
 
-# nav
+st.markdown(_build_css(_dir), unsafe_allow_html=True)
+
 active_tab = _qp.get("tab", "text")
 if active_tab not in ("text", "image", "video", "voice", "podcast", "history"):
     active_tab = "text"
-# Output lang = UI lang
 lang = st.session_state.ui_lang
 _nl = lang
 
 
 def _ni(key, label):
-    # Build nav item link
     cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
-    _vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
-    return (f'<li><a href="?tab={key}&lang={_nl}{_vp}" '
+    return (f'<li><a href="?tab={key}&lang={_nl}" '
             f'class="{cls}" target="_self">{label}</a></li>')
 
 
-# lang toggle
 _other_lang_text = "العربية" if _nl == "en" else "English"
-_vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
-_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}{_vp}"
+_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}"
 
 _VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/vision_logo"
 
@@ -1004,23 +976,39 @@ st.markdown(f"""
 if not _api_ok:
     st.warning(L["warn_api"])
 
-# public data disclaimer
-_disc_dir = "rtl" if is_ar else "ltr"
-_disc_text = ("هذه الأداة مخصصة للبيانات العامة فقط. لا تقم بإدخال أو إرفاق أي بيانات سرية أو خاصة."
-              if is_ar else "This tool is for public data use only. Do not enter or attach any confidential or private information.")
+if is_ar:
+    _gov_t1 = "للبيانات العامة فقط"
+    _gov_d1 = "لا تقم بإدخال أو إرفاق أي بيانات سرية أو خاصة."
+    _gov_t2 = "اتصال آمن"
+    _gov_d2 = "هذا الموقع يستخدم بروتوكول HTTPS للتشفير والأمان."
+else:
+    _gov_t1 = "Public Data Only"
+    _gov_d1 = "Do not enter or attach any confidential or private information."
+    _gov_t2 = "Secure Connection"
+    _gov_d2 = "This site uses HTTPS encryption for security."
 st.markdown(f"""
-<div class="rcjy-disclaimer" style="direction:{_disc_dir}">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-  </svg>
-  <span>{_disc_text}</span>
+<div class="rcjy-gov-banner">
+  <div class="rcjy-gov-item">
+    <div class="rcjy-gov-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    </div>
+    <div><div class="rcjy-gov-title">{_gov_t1}</div><div class="rcjy-gov-desc">{_gov_d1}</div></div>
+  </div>
+  <div class="rcjy-gov-item">
+    <div class="rcjy-gov-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    <div><div class="rcjy-gov-title">{_gov_t2}</div><div class="rcjy-gov-desc">{_gov_d2}</div></div>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 
 
-# helpers
 def _ctx_widget():
-    # Reference material expander
     with st.expander(L["context_label"], expanded=False):
         st.caption(L["context_hint"])
         _cu, _cf = st.columns(2, gap="medium")
@@ -1032,7 +1020,6 @@ def _ctx_widget():
                 accept_multiple_files=True, key="input_files",
             )
         if files:
-            # Escape filenames for display
             safe_names = ", ".join(html_mod.escape(f.name) for f in files)
             st.caption(f"{L['attached']}: {safe_names}")
         return url, files
@@ -1049,7 +1036,6 @@ def _load_ctx(url, files):
     return ctx, has_ctx
 
 
-# tabs
 if active_tab == "text":
     _type_map = {
         L["text_type_article"]: "article", L["text_type_social"]:  "social",
@@ -1112,7 +1098,6 @@ if active_tab == "text":
             file_name="rcjy_content.txt", mime="text/plain", key="dl_text",
         )
 
-# image
 elif active_tab == "image":
     with st.container(border=True):
         _i1, _i2 = st.columns(2)
@@ -1167,21 +1152,16 @@ elif active_tab == "image":
             file_name="rcjy_image.png", mime="image/png", key="dl_img",
         )
 
-# video
 elif active_tab == "video":
-    # Total duration options
-    _dur_options = {
-        L["total_dur_8"]:   0,
-        L["total_dur_15"]:  7,
-        L["total_dur_22"]:  14,
-        L["total_dur_29"]:  21,
-        L["total_dur_43"]:  35,
-        L["total_dur_57"]:  49,
-        L["total_dur_78"]:  70,
-        L["total_dur_99"]:  91,
-        L["total_dur_120"]: 112,
-        L["total_dur_148"]: 140,
-    }
+    _dur_options = {}
+    for _ext in range(21):
+        _total = 8 + _ext * 7
+        _extend_val = _ext * 7
+        if _ext == 0:
+            _label = f"8 {L['dur_seconds']}"
+        else:
+            _label = f"~{_total} {L['dur_seconds']}"
+        _dur_options[_label] = _extend_val
 
     with st.container(border=True):
         vid_model = "standard"
@@ -1197,7 +1177,6 @@ elif active_tab == "video":
             )
             vid_extend = _dur_options[_dur_label]
         with _v3:
-            # Extension forces 720p
             if vid_extend > 0:
                 vid_res = st.selectbox(
                     L["resolution_label"], ["720p"], key="vid_res_ext",
@@ -1227,7 +1206,6 @@ elif active_tab == "video":
             pass
         else:
             _spin_msg = L["spin_video_extend"] if vid_extend > 0 else L["spin_video"]
-            # Progress placeholder
             _progress_placeholder = st.empty()
 
             def _vid_progress(msg: str):
@@ -1260,7 +1238,6 @@ elif active_tab == "video":
             file_name="rcjy_video.mp4", mime="video/mp4", key="dl_vid",
         )
 
-# voice
 elif active_tab == "voice":
     _voice_opts_v = {
         "نورة ♀":   "Kore",
@@ -1346,7 +1323,6 @@ elif active_tab == "voice":
             file_name="rcjy_voice.wav", mime="audio/wav", key="dl_voice",
         )
 
-# podcast
 elif active_tab == "podcast":
     _pod_len_opts = [L["length_short"], L["length_standard"]]
     _voice_opts   = {
@@ -1433,7 +1409,6 @@ elif active_tab == "podcast":
             file_name="rcjy_podcast.wav", mime="audio/wav", key="dl_pod",
         )
 
-# history
 elif active_tab == "history":
     with st.container(border=True):
         if not _history_ok:
@@ -1449,7 +1424,6 @@ elif active_tab == "history":
             def _cached_entries(_type, _limit):
                 return history.get_entries(content_type=_type, limit=_limit)
 
-            # Pending delete
             if st.session_state.get("_hist_delete_id"):
                 _del_id = st.session_state.pop("_hist_delete_id")
                 history.delete_entry(_del_id)
@@ -1457,7 +1431,6 @@ elif active_tab == "history":
                 _cached_entries.clear()
                 st.rerun()
 
-            # Pending download
             if st.session_state.get("_hist_download_id"):
                 _dl_id = st.session_state.pop("_hist_download_id")
                 _dl_data, _dl_mime, _dl_name = history.load_file(_dl_id)
@@ -1470,7 +1443,6 @@ elif active_tab == "history":
 
             _stats = _cached_stats()
 
-            # Filter + stats
             _fc, _sc1, _sc2 = st.columns([3, 1, 1])
             with _fc:
                 _type_labels = [L["hist_all"], L["tab_text"], L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"]]
@@ -1545,7 +1517,6 @@ elif active_tab == "history":
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_delete_id": eid}))
                     st.markdown('<hr class="hist-sep">', unsafe_allow_html=True)
 
-                # Clear
                 if st.button(L["hist_clear"], key="hist_clear_btn"):
                     st.session_state["_hist_confirm_clear"] = True
                 if st.session_state.get("_hist_confirm_clear"):
@@ -1563,23 +1534,17 @@ elif active_tab == "history":
                             st.session_state["_hist_confirm_clear"] = False
                             st.rerun()
 
-# footer
-
 _ftr_lang = "ar" if is_ar else "en"
 _ftr_copy = (
     "جميع الحقوق محفوظة للهيئة الملكية للجبيل وينبع" if is_ar
     else "All rights reserved to the Royal Commission for Jubail and Yanbu"
 )
-_ftr_privacy = "سياسة الخصوصية" if is_ar else "Privacy Policy"
-_ftr_terms = "الشروط والأحكام" if is_ar else "Terms &amp; Conditions"
 _ftr_site = "الموقع الرسمي" if is_ar else "RCJY Official Website"
 _ftr_html = (
     '<div class="rcjy-footer"><div class="rcjy-ftr-main">'
     '<div class="rcjy-ftr-left">'
     f'<span class="rcjy-ftr-copy">{_ftr_copy} &copy; 2026</span>'
     '<div class="rcjy-ftr-links">'
-    f'<a href="https://www.rcjy.gov.sa/{_ftr_lang}/privacy-policy" target="_blank" rel="noopener">{_ftr_privacy}</a>'
-    f'<a href="https://www.rcjy.gov.sa/{_ftr_lang}/terms-and-conditions" target="_blank" rel="noopener">{_ftr_terms}</a>'
     f'<a href="https://www.rcjy.gov.sa/{_ftr_lang}/home" target="_blank" rel="noopener">{_ftr_site}</a>'
     '</div></div>'
     '<div class="rcjy-ftr-logos">'
