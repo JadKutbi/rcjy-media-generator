@@ -29,20 +29,21 @@ def _scrub_api_key(text: str) -> str:
 
 def _sanitize_error(e: Exception) -> str:
     msg = _scrub_api_key(str(e))
-    if "timed out" in msg.lower() or "timeout" in msg.lower():
+    low = msg.lower()
+    if "timed out" in low or "timeout" in low:
         return "Request timed out. Please try again with simpler content or a shorter prompt."
-    if "quota" in msg.lower() or "rate" in msg.lower() or "429" in msg:
+    if "safety" in low or "blocked" in low or "filtered" in low or "responsible ai" in low:
+        return "Content was blocked by safety filters. Please rephrase your prompt and try again."
+    if "quota" in low or "rate limit" in low or "429" in msg:
         logger.error("Rate/quota error (raw): %s", msg)
-        return f"API rate/quota error: {msg}"
-    if "403" in msg or "permission" in msg.lower():
+        return "API rate or quota limit reached. Please wait a moment and try again."
+    if "403" in msg or "permission" in low:
         logger.error("Permission error (raw): %s", msg)
-        return f"API access denied: {msg}"
+        return "API access denied. Please check your API key configuration."
     if "404" in msg:
         return "The requested AI model is not available. Please try a different model."
-    if "400" in msg or "invalid" in msg.lower():
+    if "400" in msg or "invalid" in low:
         return "Invalid request. Please simplify your prompt and try again."
-    if "safety" in msg.lower() or "blocked" in msg.lower():
-        return "Content was blocked by safety filters. Please modify your prompt."
     if len(msg) > 200:
         msg = msg[:200] + "..."
     return f"Generation failed: {msg}"
@@ -121,10 +122,14 @@ def _retry(fn, retries=2):
 
 def _lang_instruction(lang: str) -> str:
     if lang == "ar":
-        return "IMPORTANT: Generate ALL output in Arabic (العربية). "
+        return ("IMPORTANT: By default, generate output in Arabic. "
+                "However, if the user's prompt is written in English or another language, "
+                "respond in that language instead. If the prompt explicitly requests a specific language, use that language. ")
     if lang == "both":
         return "IMPORTANT: Generate output in both Arabic and English (bilingual). "
-    return ""
+    return ("IMPORTANT: By default, generate output in English. "
+            "However, if the user's prompt is written in Arabic or another language, "
+            "respond in that language instead. If the prompt explicitly requests a specific language, use that language. ")
 
 
 
@@ -154,8 +159,6 @@ def generate_text(
     )
 
     lang_hint = _lang_instruction(lang)
-    if lang == "ar":
-        lang_hint = "IMPORTANT: اكتب المحتوى بالكامل باللهجة السعودية الخليجية أو العربية الفصحى. "
 
     type_labels = {
         "article": "article or blog post",

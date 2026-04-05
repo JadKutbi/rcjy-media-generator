@@ -976,7 +976,7 @@ def _ni(key, label):
 
 
 # lang toggle
-_other_lang_text = "العربية" if _nl == "en" else "English"
+_other_lang_text = "عربي" if _nl == "en" else "English"
 _vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
 _other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}{_vp}"
 
