@@ -139,8 +139,8 @@ MODELS = {
         "imagen_fast": "imagen-4.0-fast-generate-001",
         "imagen": "imagen-4.0-generate-001",
         "imagen_ultra": "imagen-4.0-ultra-generate-001",
-        "gemini_flash": "gemini-2.0-flash-preview-image-generation",
-        "gemini_pro": "gemini-2.0-flash-exp",
+        "gemini_flash": "gemini-3.1-flash-image-preview",
+        "gemini_pro": "gemini-3-pro-image-preview",
     },
     "video": {
         "standard": "veo-3.1-generate-preview",
