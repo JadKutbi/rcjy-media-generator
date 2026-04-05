@@ -1,4 +1,4 @@
-# Session-state based history fallback (for when GCS is unavailable)
+# In-memory history fallback (persists across page reloads via cache_resource)
 
 import uuid
 from datetime import datetime, timezone
@@ -19,10 +19,9 @@ _EXT_MAP = {
 }
 
 
+@st.cache_resource
 def _get_store() -> dict:
-    if "_local_history" not in st.session_state:
-        st.session_state["_local_history"] = {"entries": [], "files": {}}
-    return st.session_state["_local_history"]
+    return {"entries": [], "files": {}}
 
 
 def is_available() -> bool:
