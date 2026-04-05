@@ -255,12 +255,14 @@ def generate_image(
             model=model_id,
             contents=genai_types.Content(role="user", parts=parts),
             config=genai_types.GenerateContentConfig(
-                response_modalities=["TEXT", "IMAGE"],
+                response_modalities=["IMAGE"],
             ),
         ))
-        for part in response.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.data:
-                return part.inline_data.data, part.inline_data.mime_type or "image/png"
+        if response.candidates:
+            for part in response.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.data:
+                    return part.inline_data.data, part.inline_data.mime_type or "image/png"
+        logger.warning("Gemini image response had no image data, candidates=%s", len(response.candidates) if response.candidates else 0)
 
     raise RuntimeError("No image in API response. Try a different prompt.")
 
