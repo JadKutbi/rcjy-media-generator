@@ -258,11 +258,11 @@ def generate_image(
                 response_modalities=["IMAGE"],
             ),
         ))
-        if response.candidates:
+        if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
             for part in response.candidates[0].content.parts:
                 if part.inline_data and part.inline_data.data:
                     return part.inline_data.data, part.inline_data.mime_type or "image/png"
-        logger.warning("Gemini image response had no image data, candidates=%s", len(response.candidates) if response.candidates else 0)
+        logger.warning("Gemini image response had no image data")
 
     raise RuntimeError("No image in API response. Try a different prompt.")
 
