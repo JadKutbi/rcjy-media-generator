@@ -220,8 +220,7 @@ def generate_image(
         model = "imagen_fast"
     context_text = context_text[:MAX_CONTEXT_LENGTH] if context_text else ""
     model_id = MODELS["image"].get(model, MODELS["image"]["imagen_fast"])
-    lang_prefix = _lang_instruction(lang)
-    full_prompt = f"{lang_prefix}{context_text}\n\n{prompt}".strip() if context_text else f"{lang_prefix}{prompt}"
+    full_prompt = f"{context_text}\n\n{prompt}".strip() if context_text else prompt
 
     client = get_genai_client()
     logger.info("Generating image: model=%s, aspect=%s, lang=%s", model, aspect_ratio, lang)
