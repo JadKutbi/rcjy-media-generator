@@ -445,7 +445,7 @@ header[data-testid="stHeader"] {{
 .rcjy-nav {{
   background: #fff;
   border-bottom: 3px solid #1B8354;
-  margin: 0 -3rem 0;
+  margin: 0 -3rem 1.5rem;
   box-shadow: 0 1px 4px rgba(13,18,28,.08);
   position: sticky;
   top: 0;
@@ -454,17 +454,67 @@ header[data-testid="stHeader"] {{
 .rcjy-nav-inner {{
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: .75rem 3rem;
-  min-height: 60px;
+  padding: 0 3rem;
+  min-height: 72px;
+  gap: 1.25rem;
   direction: {_dir};
 }}
 .rcjy-nav-logo-link {{
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  text-decoration: none;
 }}
 .rcjy-nav-logo {{ height: 48px; display: block; }}
+.rcjy-nav-links {{
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 2px;
+  flex: 1 1 auto;
+  align-items: center;
+}}
+.rcjy-nav-item {{
+  display: block;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .9375rem;
+  font-weight: 500;
+  color: #0d121c;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .2s, color .2s;
+}}
+.rcjy-nav-item:hover {{ background: #F3F4F6; color: #1B8354; text-decoration: none; }}
+.rcjy-nav-item:focus, .rcjy-nav-item:visited {{ text-decoration: none; }}
+.rcjy-nav-links a {{ text-decoration: none !important; }}
+.rcjy-nav-active {{
+  background: #1B8354 !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(27,131,84,.25);
+}}
+.rcjy-nav-right {{
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-shrink: 0;
+}}
+.rcjy-lang-link {{
+  font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
+  font-size: .875rem;
+  font-weight: 500;
+  color: #0d121c;
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid #D2D6DB;
+  border-radius: 8px;
+  transition: background .2s, color .2s, border-color .2s;
+  white-space: nowrap;
+}}
+.rcjy-lang-link:hover {{ background: #F3F4F6; color: #1B8354; border-color: #1B8354; }}
 /* card */
 [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"] {{
   border: none !important;
@@ -887,10 +937,15 @@ hr.hist-sep {{
   [data-testid="stMainBlockContainer"] {{ padding: 0 1rem 2rem !important; }}
   .rcjy-nav {{ margin: 0 -1rem 1rem; }}
   .rcjy-nav-inner {{ padding: 0 1rem; gap: .5rem; min-height: 56px; flex-wrap: wrap; }}
+  .rcjy-nav-item {{ font-size: .8125rem !important; padding: 7px 9px !important; }}
   .rcjy-nav-logo {{ height: 36px; }}
+  .rcjy-nav-right {{ gap: .5rem; }}
   .rcjy-footer {{ margin: 4rem -1rem -3rem; }}
   .rcjy-ftr-main {{ padding: 1.5rem 1rem; flex-direction: column; align-items: flex-start; }}
   .rcjy-ftr-rcjy, .rcjy-ftr-vision {{ height: 42px; }}
+}}
+@media (max-width: 480px) {{
+  .rcjy-nav-links {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
 }}
 </style>
 <!-- security headers -->
@@ -908,39 +963,41 @@ active_tab = st.session_state["_active_tab"]
 lang = st.session_state.ui_lang
 _nl = lang
 
-_VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/vision_logo"
 _other_lang_text = "عربي" if _nl == "en" else "English"
+_vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
+_other_lang_href = f"?tab={active_tab}&lang={'ar' if _nl == 'en' else 'en'}{_vp}"
 
-def _switch_tab(t):
-    st.session_state["_active_tab"] = t
+_VISION_LOGO = "https://www.rcjy.gov.sa/documents/d/rcjy-internet/vision_logo"
 
-def _switch_lang():
-    st.session_state.ui_lang = "ar" if st.session_state.ui_lang == "en" else "en"
 
-# Logo header
+def _ni(key, label):
+    cls = "rcjy-nav-item rcjy-nav-active" if key == active_tab else "rcjy-nav-item"
+    _vp = "&_v=1" if st.session_state.get("_captcha_passed") else ""
+    return (f'<li><a href="?tab={key}&lang={_nl}{_vp}" '
+            f'class="{cls}" target="_self">{label}</a></li>')
+
+
 st.markdown(f"""
 <nav class="rcjy-nav">
   <div class="rcjy-nav-inner">
-    <div class="rcjy-nav-logo-link">
+    <a href="?tab={active_tab}&lang={_nl}{_vp}" class="rcjy-nav-logo-link" target="_self">
       <img class="rcjy-nav-logo" src="{RCJY_LOGO_URL}" alt="RCJY"
            onerror="this.style.display='none'">
+    </a>
+    <ul class="rcjy-nav-links">
+      {_ni("text",    L["tab_text"])}
+      {_ni("image",   L["tab_image"])}
+      {_ni("video",   L["tab_video"])}
+      {_ni("voice",   L["tab_voice"])}
+      {_ni("podcast", L["tab_podcast"])}
+      {_ni("history", L["tab_history"])}
+    </ul>
+    <div class="rcjy-nav-right">
+      <a href="{_other_lang_href}" class="rcjy-lang-link" target="_self">{_other_lang_text}</a>
     </div>
   </div>
 </nav>
 """, unsafe_allow_html=True)
-
-# Tab buttons row
-_tab_labels = [L["tab_text"], L["tab_image"], L["tab_video"], L["tab_voice"], L["tab_podcast"], L["tab_history"]]
-_tab_keys = ["text", "image", "video", "voice", "podcast", "history"]
-_tab_cols = st.columns(len(_tab_keys) + 1)
-for _i, (_tk, _tl) in enumerate(zip(_tab_keys, _tab_labels)):
-    with _tab_cols[_i]:
-        _btn_type = "primary" if _tk == active_tab else "secondary"
-        st.button(_tl, key=f"_nav_{_tk}", on_click=_switch_tab, args=(_tk,),
-                  use_container_width=True, type=_btn_type)
-with _tab_cols[-1]:
-    st.button(_other_lang_text, key="_nav_lang", on_click=_switch_lang,
-              use_container_width=True)
 
 if not _api_ok:
     st.warning(L["warn_api"])
