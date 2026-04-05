@@ -208,6 +208,7 @@ T = {
         "hist_confirm_no":        "Cancel",
         "hist_cleared":           "History cleared.",
         "hist_download":          "Download",
+        "hist_view":              "View",
     },
     "ar": {
         "app_name":               "مولّد الوسائط",
@@ -316,6 +317,7 @@ T = {
         "hist_confirm_no":        "إلغاء",
         "hist_cleared":           "تم مسح السجل.",
         "hist_download":          "تحميل",
+        "hist_view":              "عرض",
     },
 }
 
@@ -1438,6 +1440,24 @@ elif active_tab == "history":
                 history.delete_entry(_del_id)
                 st.rerun()
 
+            # Pending view
+            if st.session_state.get("_hist_view_id"):
+                _view_id = st.session_state.pop("_hist_view_id")
+                _view_data, _view_mime, _view_name = history.load_file(_view_id)
+                if _view_data:
+                    st.subheader(_view_name)
+                    if _view_mime and _view_mime.startswith("image/"):
+                        st.image(_view_data, width="stretch")
+                    elif _view_mime and _view_mime.startswith("video/"):
+                        st.video(_view_data, format=_view_mime)
+                    elif _view_mime and _view_mime.startswith("audio/"):
+                        st.audio(_view_data, format=_view_mime)
+                    elif _view_mime and _view_mime.startswith("text/"):
+                        st.markdown(_view_data if isinstance(_view_data, str) else _view_data.decode("utf-8", errors="ignore"))
+                    else:
+                        st.info(f"Preview not available for {_view_mime}")
+                    st.divider()
+
             # Pending download
             if st.session_state.get("_hist_download_id"):
                 _dl_id = st.session_state.pop("_hist_download_id")
@@ -1517,11 +1537,14 @@ elif active_tab == "history":
                         f'</div>',
                         unsafe_allow_html=True,
                     )
-                    _hc1, _hc2, _hc3 = st.columns([6, 1, 1])
+                    _hc1, _hc2, _hc3, _hc4 = st.columns([5, 1, 1, 1])
                     with _hc2:
+                        st.button(L["hist_view"], key=f"view_{_eid}",
+                                  on_click=lambda eid=_eid: st.session_state.update({"_hist_view_id": eid}))
+                    with _hc3:
                         st.button(L["hist_download"], key=f"dl_{_eid}",
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_download_id": eid}))
-                    with _hc3:
+                    with _hc4:
                         st.button(L["hist_delete"], key=f"del_{_eid}",
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_delete_id": eid}))
                     st.markdown('<hr class="hist-sep">', unsafe_allow_html=True)
