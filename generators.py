@@ -105,7 +105,10 @@ def _retry(fn, retries=2):
         except Exception as e:
             last_err = e
             msg = str(e).lower()
-            if "429" in str(e) or "rate" in msg or "quota" in msg or "resource_exhausted" in msg:
+            # Don't retry safety/content filter errors
+            if "filtered" in msg or "responsible ai" in msg or "safety" in msg or "blocked" in msg:
+                raise
+            if "429" in str(e) or "rate limit" in msg or "quota" in msg or "resource_exhausted" in msg:
                 wait = min(30 * (attempt + 1), 120)
                 logger.warning("Rate limited, waiting %ds (attempt %d/%d)", wait, attempt + 1, retries + 1)
                 if attempt < retries:
@@ -409,7 +412,7 @@ def generate_video(
                 )
                 break
             except Exception as e:
-                if ("429" in str(e) or "rate" in str(e).lower() or "quota" in str(e).lower()) and attempt < 2:
+                if ("429" in str(e) or "rate limit" in str(e).lower() or "quota" in str(e).lower()) and attempt < 2:
                     wait = 30 * (attempt + 1)
                     logger.warning("Rate limited on extension, waiting %ds (attempt %d/3)", wait, attempt + 1)
                     if progress_callback:
