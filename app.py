@@ -1110,7 +1110,7 @@ elif active_tab == "image":
         with _i1:
             _img_model_map = {
                 L["img_generate_new"]:  "imagen",
-                L["img_generate_edit"]: "gemini_flash",
+                L["img_generate_edit"]: "gemini_pro",
             }
             img_model = _img_model_map[st.selectbox(
                 L["model_label"],
