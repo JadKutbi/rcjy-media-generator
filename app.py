@@ -1537,15 +1537,15 @@ elif active_tab == "history":
                         f'</div>',
                         unsafe_allow_html=True,
                     )
-                    _hc1, _hc2, _hc3, _hc4 = st.columns([5, 1, 1, 1])
+                    _hc1, _hc2, _hc3, _hc4 = st.columns([4, 2, 2, 2])
                     with _hc2:
-                        st.button(L["hist_view"], key=f"view_{_eid}",
+                        st.button(L["hist_view"], key=f"view_{_eid}", use_container_width=True,
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_view_id": eid}))
                     with _hc3:
-                        st.button(L["hist_download"], key=f"dl_{_eid}",
+                        st.button(L["hist_download"], key=f"dl_{_eid}", use_container_width=True,
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_download_id": eid}))
                     with _hc4:
-                        st.button(L["hist_delete"], key=f"del_{_eid}",
+                        st.button(L["hist_delete"], key=f"del_{_eid}", use_container_width=True,
                                   on_click=lambda eid=_eid: st.session_state.update({"_hist_delete_id": eid}))
                     st.markdown('<hr class="hist-sep">', unsafe_allow_html=True)
 
