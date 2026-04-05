@@ -919,17 +919,20 @@ hr.hist-sep {{
 .rcjy-disclaimer {{
   display: flex;
   align-items: center;
-  gap: .625rem;
-  padding: .75rem 1.25rem;
-  background: linear-gradient(135deg, #FFF7ED, #FFFBF5);
-  border: 1px solid #F5C27A;
-  border-radius: 10px;
+  gap: .5rem;
+  padding: .5rem 1rem;
+  background: #F8F9FA;
+  border-left: 3px solid #1B8354;
   font-family: 'IBM Plex Sans','Noto Kufi Arabic',sans-serif;
-  font-size: .85rem;
-  font-weight: 500;
-  color: #92600A;
+  font-size: .8rem;
+  font-weight: 400;
+  color: #5F6B7A;
   margin-bottom: .75rem;
-  line-height: 1.5;
+  line-height: 1.4;
+}}
+.rcjy-disclaimer[style*="rtl"] {{
+  border-left: none;
+  border-right: 3px solid #1B8354;
 }}
 
 /* responsive */
@@ -1008,14 +1011,7 @@ if not _api_ok:
 _disc_dir = "rtl" if is_ar else "ltr"
 _disc_text = ("هذه الأداة مخصصة للبيانات العامة فقط. لا تقم بإدخال أو إرفاق أي بيانات سرية أو خاصة."
               if is_ar else "This tool is for public data use only. Do not enter or attach any confidential or private information.")
-st.markdown(f"""
-<div class="rcjy-disclaimer" style="direction:{_disc_dir}">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
-    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-  </svg>
-  <span>{_disc_text}</span>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(f'<div class="rcjy-disclaimer" style="direction:{_disc_dir}">{_disc_text}</div>', unsafe_allow_html=True)
 
 
 # helpers
@@ -1441,20 +1437,10 @@ elif active_tab == "history":
                              if is_ar else "History service unavailable — check storage permissions for the service account")
             st.warning(_hist_unavail)
         else:
-            @st.cache_data(ttl=30)
-            def _cached_stats():
-                return history.get_stats()
-
-            @st.cache_data(ttl=30)
-            def _cached_entries(_type, _limit):
-                return history.get_entries(content_type=_type, limit=_limit)
-
             # Pending delete
             if st.session_state.get("_hist_delete_id"):
                 _del_id = st.session_state.pop("_hist_delete_id")
                 history.delete_entry(_del_id)
-                _cached_stats.clear()
-                _cached_entries.clear()
                 st.rerun()
 
             # Pending download
@@ -1468,7 +1454,7 @@ elif active_tab == "history":
                         key=f"dl_actual_{_dl_id}",
                     )
 
-            _stats = _cached_stats()
+            _stats = history.get_stats()
 
             # Filter + stats
             _fc, _sc1, _sc2 = st.columns([3, 1, 1])
@@ -1495,7 +1481,7 @@ elif active_tab == "history":
 
             st.divider()
 
-            _entries = _cached_entries(_filter_type, 50)
+            _entries = history.get_entries(content_type=_filter_type, limit=50)
             if not _entries:
                 st.markdown(
                     f'<div class="hist-empty">'
