@@ -265,14 +265,17 @@ def generate_image(
             for part in response.candidates[0].content.parts:
                 if part.inline_data and part.inline_data.data:
                     return part.inline_data.data, part.inline_data.mime_type or "image/png"
-        # Log details for debugging
+        # Check finish reason for specific errors
         if response.candidates:
             c = response.candidates[0]
-            logger.warning("Gemini image: no image data. finish_reason=%s, content=%s",
-                           getattr(c, 'finish_reason', 'N/A'),
-                           c.content if c.content else 'None')
-        else:
-            logger.warning("Gemini image: no candidates in response")
+            fr = getattr(c, 'finish_reason', None)
+            logger.warning("Gemini image: finish_reason=%s", fr)
+            if fr and "NO_IMAGE" in str(fr):
+                raise RuntimeError(
+                    "Image was blocked by safety filters. "
+                    "Avoid brand names, logos, government symbols, or trademarked terms. "
+                    "Try rephrasing your prompt."
+                )
 
     raise RuntimeError("No image in API response. Try a different prompt.")
 
