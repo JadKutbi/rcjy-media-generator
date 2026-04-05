@@ -1,4 +1,7 @@
+import atexit
+import json
 import os
+import tempfile
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -7,11 +10,14 @@ OUTPUT_DIR = BASE_DIR / "generated_outputs"
 ASSETS_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
+# GCP config
 GCP_PROJECT = os.getenv("GCP_PROJECT", "rcjy-ai-shared-services-proj")
 GCP_LOCATION = os.getenv("GCP_LOCATION", "me-central2")
 
+# GCS bucket
 GCS_HISTORY_BUCKET = os.getenv("GCS_HISTORY_BUCKET", "rcjy-ai-shared-services-storage")
 
+# API key resolution
 def get_api_key() -> str:
     key = os.getenv("GEMINI_API_KEY", "").strip()
     if key:
@@ -33,6 +39,7 @@ def get_api_key() -> str:
                     return val
     return ""
 
+
 def require_api_key() -> str:
     key = get_api_key()
     if not key:
@@ -43,57 +50,72 @@ def require_api_key() -> str:
         )
     return key
 
-_sa_credentials = None
 
-def _get_sa_credentials():
-    global _sa_credentials
-    if _sa_credentials is not None:
-        return _sa_credentials
+# Vertex AI client
+
+_creds_setup_done = False
+
+
+def _cleanup_temp_creds():
+    # Remove temp credentials file on shutdown
+    path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    if path and os.path.basename(path).startswith("gcp_sa_"):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def _setup_gcp_credentials():
+    # Write GCP service account JSON from Streamlit secrets to temp file
+    global _creds_setup_done
+    if _creds_setup_done or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+        return
+    _creds_setup_done = True
     try:
         import streamlit as st
         sa = st.secrets.get("gcp_service_account")
         if sa:
-            from google.oauth2 import service_account
-            _sa_credentials = service_account.Credentials.from_service_account_info(dict(sa))
-            return _sa_credentials
+            sa_dict = dict(sa)
+            fd, path = tempfile.mkstemp(suffix=".json", prefix="gcp_sa_")
+            os.chmod(path, 0o600)
+            with os.fdopen(fd, "w") as f:
+                json.dump(sa_dict, f)
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = path
+            atexit.register(_cleanup_temp_creds)
     except Exception:
         pass
-    return None
+
 
 def has_credentials() -> bool:
+    # Check if credentials are available
+    _setup_gcp_credentials()
+    # Cloud Run ADC or explicit creds
     if os.environ.get("K_SERVICE") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
-        return True
-    if _get_sa_credentials():
         return True
     return bool(get_api_key())
 
+
 _genai_client = None
 
+
 def get_genai_client():
+    # Get genai client: API key first, fallback to Vertex AI
     global _genai_client
     if _genai_client is not None:
         return _genai_client
 
     from google import genai
 
+    # Prefer API key
     key = get_api_key()
     if key:
         _genai_client = genai.Client(api_key=key)
         return _genai_client
 
-    sa_creds = _get_sa_credentials()
-    if sa_creds:
-        try:
-            _genai_client = genai.Client(
-                vertexai=True,
-                project=GCP_PROJECT,
-                location=GCP_LOCATION,
-                credentials=sa_creds,
-            )
-            return _genai_client
-        except Exception:
-            pass
+    _setup_gcp_credentials()
 
+    # Fallback to Vertex AI
     if os.environ.get("K_SERVICE") or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
         try:
             _genai_client = genai.Client(
@@ -110,6 +132,8 @@ def get_genai_client():
         "with Vertex AI User role, or locally run 'gcloud auth application-default login'."
     )
 
+
+# Models
 MODELS = {
     "image": {
         "imagen_fast": "imagen-4.0-fast-generate-001",

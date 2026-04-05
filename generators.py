@@ -19,6 +19,7 @@ MAX_TTS_TEXT_LENGTH = 5_000
 
 
 def _scrub_api_key(text: str) -> str:
+    # Remove API key patterns from text
     import re
     text = re.sub(r'(?i)key=[\w\-]{10,}', 'key=***REDACTED***', text)
     text = re.sub(r'AIza[A-Za-z0-9_\-]{30,}', '***REDACTED***', text)
@@ -57,6 +58,7 @@ def _validate_prompt(prompt: str, max_len: int = MAX_PROMPT_LENGTH) -> str:
     return prompt
 
 
+# Allowlists
 _ALLOWED_TEXT_TYPES = {"article", "social", "press", "ad", "email", "script", "summary", "creative"}
 _ALLOWED_TONES = {"professional", "friendly", "formal", "persuasive", "informative"}
 _ALLOWED_LANGS = {"en", "ar", "both"}
@@ -94,6 +96,7 @@ def _concat_wavs(wav_list: list[bytes]) -> bytes:
 
 
 def _retry(fn, retries=2):
+    # Retry on rate-limit and timeout errors
     last_err = None
     for attempt in range(retries + 1):
         try:
@@ -233,6 +236,7 @@ def generate_image(
         return img.image.image_bytes, "image/png"
 
     else:
+        # Gemini native image generation
         parts = [genai_types.Part(text=full_prompt)]
         if files:
             _, file_attachments = get_content_from_input(files=files)
@@ -257,6 +261,7 @@ def generate_image(
 
 
 def _build_video_prompt(prompt: str, context_text: str, lang: str) -> str:
+    # Build prompt for video generation with standard rules
     no_text_rule = (
         "CRITICAL: Do NOT include any text, titles, subtitles, captions, watermarks, "
         "labels, or writing of any kind in the video. The video must be purely visual "
@@ -275,6 +280,7 @@ def _build_video_prompt(prompt: str, context_text: str, lang: str) -> str:
 
 
 def _poll_video_operation(client, operation, timeout: int = 900):
+    # Poll video generation operation until done or timeout
     elapsed = 0
     while not operation.done:
         time.sleep(15)
@@ -288,6 +294,7 @@ def _poll_video_operation(client, operation, timeout: int = 900):
 
 
 def _save_video_to_bytes(client, video) -> bytes:
+    # Download generated video and return bytes
     client.files.download(file=video.video)
     fd, tmp_path = tempfile.mkstemp(suffix=".mp4")
     try:
@@ -311,6 +318,7 @@ def generate_video(
     extend_seconds: int = 0,
     progress_callback=None,
 ) -> tuple[bytes, str]:
+    # Generate video, optionally extended via Veo 3.1 extension loop
     prompt = _validate_prompt(prompt)
     lang = lang if lang in _ALLOWED_LANGS else "en"
     aspect_ratio = aspect_ratio if aspect_ratio in {"16:9", "9:16"} else "16:9"
@@ -327,6 +335,7 @@ def generate_video(
 
     full_prompt = _build_video_prompt(prompt, context_text, lang)
 
+    # force 720p when extending
     if extend_seconds > 0:
         resolution = "720p"
 
@@ -338,6 +347,7 @@ def generate_video(
 
     client = get_genai_client()
 
+    # generate initial clip
     if progress_callback:
         progress_callback("Generating initial clip...")
     operation = client.models.generate_videos(
@@ -353,10 +363,12 @@ def generate_video(
     video_obj = operation.response.generated_videos[0]
 
     if extend_seconds <= 0:
+        # single clip, return directly
         result = _save_video_to_bytes(client, video_obj)
         logger.info("Video generated (%d bytes)", len(result))
         return result, "video/mp4"
 
+    # extension loop
     initial_dur = int(duration)
     current_dur = initial_dur
     target_dur = min(initial_dur + extend_seconds, 148)
@@ -407,6 +419,7 @@ def generate_video(
         video_obj = operation.response.generated_videos[0]
         current_dur += 7
 
+    # download final extended video
     if progress_callback:
         progress_callback("Downloading final video...")
     result = _save_video_to_bytes(client, video_obj)
@@ -419,6 +432,7 @@ def generate_video(
 
 
 def _tts_single(text: str, voice_name: str, model_id: str, client) -> bytes:
+    # Single-speaker TTS audio via SDK
     response = _retry(lambda: client.models.generate_content(
         model=model_id,
         contents=text,
@@ -516,6 +530,7 @@ def _multi_speaker_tts(script: str, voice_host: str, voice_guest: str, client, l
         else:
             tts_instruction = f"Read this podcast dialogue naturally:\n\n{chunk}"
 
+        # capture loop var
         _inst = tts_instruction
         response = _retry(lambda _t=_inst: client.models.generate_content(
             model=model_id,

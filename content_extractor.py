@@ -14,22 +14,23 @@ from PIL import Image
 
 logger = logging.getLogger("rcjy.content_extractor")
 
+# SSRF limits
 _ALLOWED_SCHEMES = {"http", "https"}
 _MAX_URL_RESPONSE_BYTES = 10 * 1024 * 1024  # 10 MB max download from URL
 _URL_REQUEST_TIMEOUT = 15  # seconds
 _MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB per uploaded file
+
 
 _BLOCKED_HOSTS = {
     "metadata.google.internal",
     "metadata.google",
     "169.254.169.254",
     "100.100.100.200",
-    "fd00::c0a8:a9fe",
-    "metadata.azure.internal",
 }
-_ALLOWED_PORTS = {80, 443}
+
 
 def _is_safe_ip(ip_str: str) -> bool:
+    # Check if IP is safe (not private/reserved/loopback)
     try:
         ip = ipaddress.ip_address(ip_str)
         return not (
@@ -43,7 +44,9 @@ def _is_safe_ip(ip_str: str) -> bool:
     except ValueError:
         return False
 
+
 def _resolve_and_validate(hostname: str) -> str:
+    # Resolve hostname once and return a safe IP, or raise ValueError
     if hostname.lower() in _BLOCKED_HOSTS:
         raise ValueError("Access to cloud metadata endpoints is not allowed.")
     try:
@@ -56,7 +59,9 @@ def _resolve_and_validate(hostname: str) -> str:
             return ip_str
     raise ValueError("URLs pointing to internal/private network addresses are not allowed.")
 
+
 def _validate_url(url: str) -> tuple[str, str]:
+    # Validate URL, resolve DNS once. Returns (url, resolved_ip)
     url = url.strip()
     if not url:
         raise ValueError("Empty URL")
@@ -66,9 +71,6 @@ def _validate_url(url: str) -> tuple[str, str]:
     hostname = parsed.hostname
     if not hostname:
         raise ValueError("URL has no hostname.")
-    port = parsed.port
-    if port and port not in _ALLOWED_PORTS:
-        raise ValueError(f"Port {port} is not allowed. Only ports 80 and 443 are permitted.")
     resolved_ip = _resolve_and_validate(hostname)
     return url, resolved_ip
 
@@ -108,17 +110,22 @@ MIME_MAP = {
     ".txt": "text/plain", ".md": "text/markdown", ".rtf": "application/rtf",
 }
 
+
 def get_mime_type(filename: str) -> str:
     return MIME_MAP.get(Path(filename).suffix.lower(), "application/octet-stream")
+
 
 def is_image(filename: str) -> bool:
     return get_mime_type(filename).startswith("image/")
 
+
 def is_audio(filename: str) -> bool:
     return get_mime_type(filename).startswith("audio/")
 
+
 def is_video(filename: str) -> bool:
     return get_mime_type(filename).startswith("video/")
+
 
 def extract_from_url(url: str, max_chars: int = 50000) -> str:
     try:
@@ -214,6 +221,7 @@ def extract_from_url(url: str, max_chars: int = 50000) -> str:
         logger.exception("Unexpected error fetching URL")
         return "Error: Could not fetch content from URL."
 
+
 def extract_from_pdf(file) -> str:
     if PdfReader is None:
         return "Error: PDF reader not available."
@@ -225,6 +233,7 @@ def extract_from_pdf(file) -> str:
         logger.exception("Error reading PDF")
         return "Error: Could not read PDF file."
 
+
 def extract_from_docx(file) -> str:
     if DocxDocument is None:
         return "Error: DOCX reader not available."
@@ -235,6 +244,7 @@ def extract_from_docx(file) -> str:
         logger.exception("Error reading DOCX")
         return "Error: Could not read DOCX file."
 
+
 def extract_from_txt(file) -> str:
     try:
         content = file.read()
@@ -244,6 +254,7 @@ def extract_from_txt(file) -> str:
     except Exception:
         logger.exception("Error reading text file")
         return "Error: Could not read text file."
+
 
 def extract_from_csv(file) -> str:
     try:
@@ -261,6 +272,7 @@ def extract_from_csv(file) -> str:
     except Exception:
         logger.exception("Error reading CSV")
         return "Error: Could not read CSV file."
+
 
 def extract_from_pptx(file) -> str:
     try:
@@ -283,6 +295,7 @@ def extract_from_pptx(file) -> str:
         logger.exception("Error reading PPTX")
         return "Error: Could not read PPTX file."
 
+
 def extract_from_xlsx(file) -> str:
     try:
         import openpyxl
@@ -303,6 +316,7 @@ def extract_from_xlsx(file) -> str:
     except Exception:
         logger.exception("Error reading Excel")
         return "Error: Could not read Excel file."
+
 
 def get_content_from_input(
     text: Optional[str] = None,

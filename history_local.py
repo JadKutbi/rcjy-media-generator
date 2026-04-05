@@ -1,3 +1,5 @@
+# Session-state based history fallback (for when GCS is unavailable)
+
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
