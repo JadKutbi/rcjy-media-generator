@@ -243,17 +243,20 @@ def generate_image(
 
     else:
         # Gemini native image generation
-        parts = [genai_types.Part(text=full_prompt)]
+        contents = full_prompt
         if files:
             _, file_attachments = get_content_from_input(files=files)
+            image_parts = []
             for name, mime, raw in file_attachments:
                 if "image" in mime:
-                    parts.append(genai_types.Part(
+                    image_parts.append(genai_types.Part(
                         inline_data=genai_types.Blob(mime_type=mime, data=raw)
                     ))
+            if image_parts:
+                contents = [genai_types.Part(text=full_prompt)] + image_parts
         response = _retry(lambda: client.models.generate_content(
             model=model_id,
-            contents=genai_types.Content(role="user", parts=parts),
+            contents=contents,
             config=genai_types.GenerateContentConfig(
                 response_modalities=["IMAGE"],
             ),
